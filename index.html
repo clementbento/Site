@@ -1,9 +1,137 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>cute</title>
+    <title>My Flower Farm (1st version)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 20px);
+            grid-template-rows: repeat(10, 20px);
+            gap: 2px;
+        }
+
+        .grid div {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            background-color: rgb(139, 69, 19);
+            border: 1px solid #fff;
+            cursor: pointer;
+        }
+
+        .countdown-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+        }
+
+        /* Styles pour la fenêtre modale */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>You are a cutie pie</h1>
+    <h1>My Flower Farm (1st version)</h1>
+    <div class="grid" id="grid"></div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <label for="colorSelect">Choisissez une couleur :</label>
+            <select id="colorSelect">
+                <option value="#fff">White Tulip</option>
+                <option value="#ff0000">Red Rose</option>
+                <option value="#ff69b4">Pink Rose</option>
+            </select>
+            <button id="confirmBtn">Confirmer</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const grid = document.getElementById("grid");
+            const modal = document.getElementById("myModal");
+            const colorSelect = document.getElementById("colorSelect");
+            const confirmBtn = document.getElementById("confirmBtn");
+
+            let selectedSquare = null; // Garde une référence au carré sélectionné
+
+            for (let i = 0; i < 100; i++) {
+                const square = document.createElement("div");
+                square.className = "grid-item";
+                square.addEventListener("click", () => openModal(square));
+                grid.appendChild(square);
+            }
+
+            function openModal(square) {
+                selectedSquare = square; // Garde une référence au carré sélectionné
+                modal.style.display = "flex"; // Affiche la fenêtre modale
+
+                confirmBtn.addEventListener("click", function() {
+                    const selectedColor = colorSelect.value;
+                    modal.style.display = "none"; // Cache la fenêtre modale
+
+                    let seconds = 10;
+                    const countdownText = document.createElement("div");
+                    countdownText.className = "countdown-text";
+                    square.appendChild(countdownText); // Ajoute l'élément de texte au carré
+
+                    const timer = setInterval(function() {
+                        seconds--;
+                        countdownText.innerText = seconds;
+
+                        if (seconds === 0) {
+                            clearInterval(timer); // Arrête le chronomètre lorsque le compte à rebours atteint 0
+                            square.style.backgroundColor = selectedColor; // Change la couleur du carré sélectionné
+                            square.removeChild(countdownText); // Supprime l'élément de texte
+                        }
+                    }, 1000);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
