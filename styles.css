@@ -10,4 +10,9 @@ body {
 
 #helloText {
     color: #333;
+    margin-top: 20px;
+}
+
+button {
+    margin-bottom: 10px;
 }
