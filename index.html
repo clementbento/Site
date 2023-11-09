@@ -1,19 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>My Flower Farm (1st version)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 20px);
+            grid-template-rows: repeat(10, 20px);
+            gap: 2px;
+        }
+
+        .grid div {
+            width: 20px;
+            height: 20px;
+            background-color: rgb(139, 69, 19); /* Marron */
+            border: 1px solid #fff;
+            cursor: pointer; /* Curseur de la main au survol pour indiquer le clic */
+        }
+
+        /* Styles pour la fenêtre modale */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1 id="helloText\n">Hello </h1>
+    <h1>My Flower Farm (1st version)</h1>
+    <div class="grid" id="grid"></div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <label for="colorSelect">Choisissez une couleur :</label>
+            <select id="colorSelect">
+                <option value="blanc">Blanc</option>
+                <option value="rouge">Rouge</option>
+                <option value="rose">Rose</option>
+            </select>
+            <button id="confirmBtn">Confirmer</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const grid = document.getElementById("grid");
+            const modal = document.getElementById("myModal");
+            const colorSelect = document.getElementById("colorSelect");
+            const confirmBtn = document.getElementById("confirmBtn");
 
-    <button id="button1">Bouton 1</button>
-    <button id="button2">Bouton 2</button>
-    <button id="button3">Bouton 3</button>
-    <button id="button4">Bouton 4</button>
+            let selectedSquare = null; // Garde une référence au carré sélectionné
 
-    <script src="script.js"></script>
+            for (let i = 0; i < 100; i++) {
+                const square = document.createElement("div");
+                square.className = "grid-item";
+                square.addEventListener("click", () => openModal(square));
+                grid.appendChild(square);
+            }
+
+            function openModal(square) {
+                selectedSquare = square; // Garde une référence au carré sélectionné
+                modal.style.display = "block";
+
+                confirmBtn.addEventListener("click", function() {
+                    const selectedColor = colorSelect.value;
+                    selectedSquare.style.backgroundColor = selectedColor; // Met à jour la couleur du carré sélectionné
+                    modal.style.display = "none";
+                });
+            }
+        });
+    </script>
 </body>
 </html>

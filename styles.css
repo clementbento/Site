@@ -1,19 +1,22 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
     margin: 0;
+    padding: 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     height: 100vh;
 }
 
-#helloText {
-    color: #333;
-    margin-bottom: 20px;
+.grid {
+    display: grid;
+    grid-template-columns: repeat(10, 20px);
+    grid-template-rows: repeat(10, 20px);
+    gap: 2px; /* Espace entre les carrés */
 }
 
-button {
-    margin-bottom: 10px;
+.grid div {
+    width: 20px;
+    height: 20px;
+    background-color: #000; /* Couleur de fond des carrés */
+    border: 1px solid #fff; /* Bordure blanche autour des carrés */
 }
