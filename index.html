@@ -24,11 +24,20 @@
         }
 
         .grid div {
+            position: relative;
             width: 20px;
             height: 20px;
-            background-color: rgb(139, 69, 19); /* Marron */
+            background-color: rgb(139, 69, 19);
             border: 1px solid #fff;
-            cursor: pointer; /* Curseur de la main au survol pour indiquer le clic */
+            cursor: pointer;
+        }
+
+        .countdown-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
         }
 
         /* Styles pour la fenêtre modale */
@@ -74,9 +83,9 @@
         <div class="modal-content">
             <label for="colorSelect">Choisissez une couleur :</label>
             <select id="colorSelect">
-                <option value="blanc">Blanc</option>
-                <option value="rouge">Rouge</option>
-                <option value="rose">Rose</option>
+                <option value="#fff">White Tulip</option>
+                <option value="#ff0000">Red Rose</option>
+                <option value="#ff69b4">Pink Rose</option>
             </select>
             <button id="confirmBtn">Confirmer</button>
         </div>
@@ -99,12 +108,27 @@
 
             function openModal(square) {
                 selectedSquare = square; // Garde une référence au carré sélectionné
-                modal.style.display = "block";
+                modal.style.display = "flex"; // Affiche la fenêtre modale
 
                 confirmBtn.addEventListener("click", function() {
                     const selectedColor = colorSelect.value;
-                    selectedSquare.style.backgroundColor = selectedColor; // Met à jour la couleur du carré sélectionné
-                    modal.style.display = "none";
+                    modal.style.display = "none"; // Cache la fenêtre modale
+
+                    let seconds = 10;
+                    const countdownText = document.createElement("div");
+                    countdownText.className = "countdown-text";
+                    square.appendChild(countdownText); // Ajoute l'élément de texte au carré
+
+                    const timer = setInterval(function() {
+                        seconds--;
+                        countdownText.innerText = seconds;
+
+                        if (seconds === 0) {
+                            clearInterval(timer); // Arrête le chronomètre lorsque le compte à rebours atteint 0
+                            square.style.backgroundColor = selectedColor; // Change la couleur du carré sélectionné
+                            square.removeChild(countdownText); // Supprime l'élément de texte
+                        }
+                    }, 1000);
                 });
             }
         });
