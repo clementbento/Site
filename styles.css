@@ -5,6 +5,7 @@ body {
     flex-direction: column;
     align-items: center;
     height: 100vh;
+    background-color: rgb(29, 82, 29);
 }
 
 h1 {
@@ -18,7 +19,7 @@ h1 {
     gap: 2px;
 }
 .grid-container {
-    border: 3px solid #333; 
+    border: 3px dashed #ffffff; 
     padding: 4px; 
 }
 
@@ -102,4 +103,27 @@ button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+}
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+}
+
+.argent-container {
+    display: flex;
+    align-items: center;
+}
+
+.argent-image {
+    width: 30px; 
+    height: 30px;
+    margin-right: 20px; /* Ajustez la valeur selon vos besoins */
+    margin-bottom: 10px;
+}
+
+.argent-value {
+    font-size: 18px; 
+    margin-right: 20px; /* Ajustez la valeur selon vos besoins */
+    margin-bottom: 10px;
 }

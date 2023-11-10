@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const whiteStockElement = document.getElementById("whiteStock");
     const redStockElement = document.getElementById("redStock");
     const pinkStockElement = document.getElementById("pinkStock");
+    const resizeButton = document.getElementById("resizeButton");
+    const argentElement = document.getElementById("argent");
 
     let selectedSquare = null;
     let whiteCount = 0;
@@ -18,6 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let whiteStock = 10;
     let redStock = 10;
     let pinkStock = 10;
+    let argent = 100;
 
     for (let i = 0; i < 100; i++) {
         const square = document.createElement("div");
@@ -64,6 +67,16 @@ document.addEventListener("DOMContentLoaded", function () {
         resetImages();
     });
 
+    resizeButton.addEventListener("click", function () {
+        if (argent >= 10) {
+            resizeGrid();
+            argent -= 10;
+            updateArgent();
+        } else {
+            alert("Pas assez d'argent pour agrandir la grille !");
+        }
+    });
+
     function updateCounters() {
         const squares = document.querySelectorAll(".grid-item");
         squares.forEach((square) => {
@@ -94,5 +107,30 @@ document.addEventListener("DOMContentLoaded", function () {
         squares.forEach((square) => {
             square.innerHTML = "";
         });
+    }
+
+    function updateArgent() {
+        argentElement.innerHTML = `Money ${argent} €`;
+    }
+
+    function resizeGrid() {
+        const currentRowCount = grid.children.length / 10; // Assuming 10 columns per row
+
+        // Add a new row
+        const newRow = document.createElement("div");
+        newRow.className = "grid-row";
+        grid.appendChild(newRow);
+
+        // Add new squares to the new row (one for each column)
+        for (let i = 0; i < 1; i++) {
+            const square = document.createElement("div");
+            square.className = "grid-item";
+            newRow.appendChild(square);
+
+            square.addEventListener("click", function () {
+                selectedSquare = square;
+                modal.style.display = "flex";
+            });
+        }
     }
 });
