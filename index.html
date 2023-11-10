@@ -21,9 +21,10 @@
             grid-template-columns: repeat(10, 20px);
             grid-template-rows: repeat(10, 20px);
             gap: 2px;
+            float: left;
         }
 
-        .grid-item {
+        .grid div {
             position: relative;
             width: 20px;
             height: 20px;
@@ -32,12 +33,9 @@
             cursor: pointer;
         }
 
-        .countdown-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 14px;
+        .counter {
+            font-size: 18px;
+            margin-left: 20px;
         }
 
         /* Styles for the modal window */
@@ -79,6 +77,10 @@
 <body>
     <h1>My Flower Farm (1st version)</h1>
     <div class="grid" id="grid"></div>
+    <button id="countButton">Harvest</button>
+    <div class="counter" id="whiteCounter">White Tulip: 0</div>
+    <div class="counter" id="redCounter">Red Rose: 0</div>
+    <div class="counter" id="pinkCounter">Pink Rose: 0</div>
     <div id="myModal" class="modal">
         <div class="modal-content">
             <label for="colorSelect">Choisissez une couleur :</label>
@@ -87,7 +89,7 @@
                 <option value="#ff0000">Red Rose</option>
                 <option value="#ff69b4">Pink Rose</option>
             </select>
-            <button id="confirmBtn">Confirmer</button>
+            <button id="confirmBtn">Validate</button>
         </div>
     </div>
     <script>
@@ -96,18 +98,19 @@
             const modal = document.getElementById("myModal");
             const colorSelect = document.getElementById("colorSelect");
             const confirmBtn = document.getElementById("confirmBtn");
-            let selectedSquare = null;
+            const countButton = document.getElementById("countButton");
+            const whiteCounter = document.getElementById("whiteCounter");
+            const redCounter = document.getElementById("redCounter");
+            const pinkCounter = document.getElementById("pinkCounter");
 
-            // Utiliser un tableau pour stocker les états des carrés
-            const squareStates = new Array(100).fill({
-                timer: null,
-                color: null,
-            });
+            let selectedSquare = null;
+            let whiteCount = 0;
+            let redCount = 0;
+            let pinkCount = 0;
 
             for (let i = 0; i < 100; i++) {
                 const square = document.createElement("div");
                 square.className = "grid-item";
-                square.setAttribute("data-id", i); // Ajouter un identifiant unique
                 grid.appendChild(square);
 
                 square.addEventListener("click", function() {
@@ -117,39 +120,42 @@
             }
 
             confirmBtn.addEventListener("click", function() {
-                if (selectedSquare) {
-                    createCountdownText(selectedSquare); // Ne pas stocker countdownText ici
-                    modal.style.display = "none";
-                }
+                const selectedColor = colorSelect.value;
+                modal.style.display = "none";
+
+                selectedSquare.style.backgroundColor = selectedColor;
             });
 
-            function createCountdownText(square) {
-                let seconds = 10;
-                const text = document.createElement("div");
-                text.className = "countdown-text";
-                square.appendChild(text);
+            countButton.addEventListener("click", function() {
+                updateCounters();
+                resetColors();
+            });
 
-                const timer = setInterval(function() {
-                    seconds--;
-                    text.innerText = seconds;
+            function updateCounters() {
+                const squares = document.querySelectorAll(".grid-item");
+                
 
-                    if (seconds === 0) {
-                        clearInterval(timer);
-                        squareStates[getSquareIndex(square)] = {
-                            timer: null,
-                            color: colorSelect.value,
-                        };
-                        square.style.backgroundColor = colorSelect.value;
-                        square.removeChild(text);
-                        selectedSquare = null;
+                squares.forEach((square) => {
+                    const backgroundColor = square.style.backgroundColor;
+                    if (backgroundColor === "rgb(255, 255, 255)") {
+                        whiteCount++;
+                    } else if (backgroundColor === "rgb(255, 0, 0)") {
+                        redCount++;
+                    } else if (backgroundColor === "rgb(255, 105, 180)") {
+                        pinkCount++;
                     }
-                }, 1000);
+                });
 
-                squareStates[getSquareIndex(square)] = { timer, color: null };
+                whiteCounter.textContent = `White Tulip: ${whiteCount}`;
+                redCounter.textContent = `Red Rose: ${redCount}`;
+                pinkCounter.textContent = `Pink Rose: ${pinkCount}`;
             }
 
-            function getSquareIndex(square) {
-                return square.getAttribute("data-id"); // Utiliser l'identifiant unique
+            function resetColors() {
+                const squares = document.querySelectorAll(".grid-item");
+                squares.forEach((square) => {
+                    square.style.backgroundColor = "rgb(139, 69, 19)";
+                });
             }
         });
     </script>
