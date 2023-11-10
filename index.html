@@ -3,92 +3,33 @@
 
 <head>
     <title>My Flower Farm (1st version)</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-        }
-    
-        h1 {
-            margin-bottom: 20px;
-        }
-    
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(10, 20px);
-            grid-template-rows: repeat(10, 20px);
-            gap: 2px;
-        }
-    
-        .grid-item { /* Correction de la classe */
-            position: relative;
-            width: 20px;
-            height: 20px;
-            border: 1px solid #4c0909;
-            background-color: rgb(139, 69, 19);
-            cursor: pointer;
-        }
-    
-        .counter {
-            font-size: 18px;
-            margin-left: 20px;
-            display: flex;
-            align-items: center;
-        }
-    
-        .counter img {
-            width: 20px;
-            height: 20px;
-            margin-right: 5px;
-        }
-    
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1;
-            justify-content: center;
-            align-items: center;
-        }
-    
-        .modal-content {
-            background: #fff;
-            padding: 20px;
-            border-radius: 5px;
-        }
-    
-        select {
-            width: 100%;
-            padding: 5px;
-        }
-    
-        button {
-            margin-top: 10px;
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
     </style>
 </head>
 
 <body>
     <h1>My Flower Farm (1st version)</h1>
-    <div class="grid" id="grid"></div>
-    <button id="countButton">Harvest</button>
-    <div class="counter" id="whiteCounter"><img src="White_Tulip.jpg" alt="Image 1"> White Tulip: 0 </div>
-    <div class="counter" id="redCounter"><img src="Red_Rose.jpg" alt="Image 2"> Red Rose: 0 </div>
-    <div class="counter" id="pinkCounter"><img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose: 0 </div>
+    <div class="grid-container">
+        <div class="grid" id="grid"></div>
+        
+    </div>
+    <div>
+        <button id="countButton">Harvest</button>
+    </div>
+    
+    <div><div class="counters-container">
+        <div class="counter" id="whiteCounter"><img src="White_Tulip.jpg" alt="Image 1"> White Tulip: 0 </div>
+        <div class="counter" id="redCounter"><img src="Red_Rose.jpg" alt="Image 2"> Red Rose: 0 </div>
+        <div class="counter" id="pinkCounter"><img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose: 0 </div>
+    </div></div>
+
+    <div><div class="counters-container2">
+        <div class="counter2" id="whiteStock"><img src="White_Tulip.jpg" alt="Image 1"> Stock : 10 </div>
+        <div class="counter2" id="redStock"><img src="Red_Rose.jpg" alt="Image 2"> Stock : 10 </div>
+        <div class="counter2" id="pinkStock"><img src="Pink_Rose.jpg" alt="Image 3"> Stock : 10 </div>
+    </div></div>
+
     <div id="myModal" class="modal">
         <div class="modal-content">
             <label for="colorSelect">Choisissez une couleur :</label>
@@ -100,75 +41,6 @@
             <button id="confirmBtn">Validate</button>
         </div>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const grid = document.getElementById("grid");
-            const modal = document.getElementById("myModal");
-            const colorSelect = document.getElementById("colorSelect");
-            const confirmBtn = document.getElementById("confirmBtn");
-            const countButton = document.getElementById("countButton");
-            const whiteCounter = document.getElementById("whiteCounter");
-            const redCounter = document.getElementById("redCounter");
-            const pinkCounter = document.getElementById("pinkCounter");
-
-            let selectedSquare = null;
-            let whiteCount = 0;
-            let redCount = 0;
-            let pinkCount = 0;
-
-            for (let i = 0; i < 100; i++) {
-                const square = document.createElement("div");
-                square.className = "grid-item"; // Correction de la classe
-                grid.appendChild(square);
-
-                square.addEventListener("click", function () {
-                    selectedSquare = square;
-                    modal.style.display = "flex";
-                });
-            }
-
-            confirmBtn.addEventListener("click", function () {
-                const selectedImage = colorSelect.value;
-                modal.style.display = "none";
-
-                // Remplacer la couleur par l'image sélectionnée
-                selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
-
-                
-            });
-
-            countButton.addEventListener("click", function () {
-                updateCounters();
-                resetImages();
-            });
-
-            function updateCounters() {
-                const squares = document.querySelectorAll(".grid-item");
-                squares.forEach((square) => {
-                    const imageSrc = square.querySelector("img");
-
-                    if (imageSrc && imageSrc.src.includes("White_Tulip.jpg")) {
-                        whiteCount++;
-                    } else if (imageSrc && imageSrc.src.includes("Red_Rose.jpg")) {
-                        redCount++;
-                    } else if (imageSrc && imageSrc.src.includes("Pink_Rose.jpg")) {
-                        pinkCount++;
-                    }
-                });
-
-                whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip: ${whiteCount}`;
-                redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose: ${redCount}`;
-                pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose: ${pinkCount}`;
-            }
-
-            function resetImages() {
-                const squares = document.querySelectorAll(".grid-item");
-                squares.forEach((square) => {
-                    square.innerHTML = ""; // Effacer le contenu de la case
-                });
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
-
 </html>
