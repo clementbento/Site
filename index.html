@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>My Flower Farm (1st version)</title>
     <style>
@@ -11,34 +12,40 @@
             align-items: center;
             height: 100vh;
         }
-
+    
         h1 {
             margin-bottom: 20px;
         }
-
+    
         .grid {
             display: grid;
             grid-template-columns: repeat(10, 20px);
             grid-template-rows: repeat(10, 20px);
             gap: 2px;
-            float: left;
         }
-
-        .grid div {
+    
+        .grid-item { /* Correction de la classe */
             position: relative;
             width: 20px;
             height: 20px;
+            border: 1px solid #4c0909;
             background-color: rgb(139, 69, 19);
-            border: 1px solid #fff;
             cursor: pointer;
         }
-
+    
         .counter {
             font-size: 18px;
             margin-left: 20px;
+            display: flex;
+            align-items: center;
         }
-
-        /* Styles for the modal window */
+    
+        .counter img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+    
         .modal {
             display: none;
             position: fixed;
@@ -51,18 +58,18 @@
             justify-content: center;
             align-items: center;
         }
-
+    
         .modal-content {
             background: #fff;
             padding: 20px;
             border-radius: 5px;
         }
-
+    
         select {
             width: 100%;
             padding: 5px;
         }
-
+    
         button {
             margin-top: 10px;
             padding: 5px 10px;
@@ -74,26 +81,27 @@
         }
     </style>
 </head>
+
 <body>
     <h1>My Flower Farm (1st version)</h1>
     <div class="grid" id="grid"></div>
     <button id="countButton">Harvest</button>
-    <div class="counter" id="whiteCounter">White Tulip: 0</div>
-    <div class="counter" id="redCounter">Red Rose: 0</div>
-    <div class="counter" id="pinkCounter">Pink Rose: 0</div>
+    <div class="counter" id="whiteCounter"><img src="White_Tulip.jpg" alt="Image 1"> White Tulip: 0 </div>
+    <div class="counter" id="redCounter"><img src="Red_Rose.jpg" alt="Image 2"> Red Rose: 0 </div>
+    <div class="counter" id="pinkCounter"><img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose: 0 </div>
     <div id="myModal" class="modal">
         <div class="modal-content">
             <label for="colorSelect">Choisissez une couleur :</label>
             <select id="colorSelect">
-                <option value="#fff">White Tulip</option>
-                <option value="#ff0000">Red Rose</option>
-                <option value="#ff69b4">Pink Rose</option>
+                <option value="White_Tulip.jpg">White Tulip</option>
+                <option value="Red_Rose.jpg">Red Rose</option>
+                <option value="Pink_Rose.jpg">Pink Rose</option>
             </select>
             <button id="confirmBtn">Validate</button>
         </div>
     </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const grid = document.getElementById("grid");
             const modal = document.getElementById("myModal");
             const colorSelect = document.getElementById("colorSelect");
@@ -110,54 +118,57 @@
 
             for (let i = 0; i < 100; i++) {
                 const square = document.createElement("div");
-                square.className = "grid-item";
+                square.className = "grid-item"; // Correction de la classe
                 grid.appendChild(square);
 
-                square.addEventListener("click", function() {
+                square.addEventListener("click", function () {
                     selectedSquare = square;
                     modal.style.display = "flex";
                 });
             }
 
-            confirmBtn.addEventListener("click", function() {
-                const selectedColor = colorSelect.value;
+            confirmBtn.addEventListener("click", function () {
+                const selectedImage = colorSelect.value;
                 modal.style.display = "none";
 
-                selectedSquare.style.backgroundColor = selectedColor;
+                // Remplacer la couleur par l'image sélectionnée
+                selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
+
+                
             });
 
-            countButton.addEventListener("click", function() {
+            countButton.addEventListener("click", function () {
                 updateCounters();
-                resetColors();
+                resetImages();
             });
 
             function updateCounters() {
                 const squares = document.querySelectorAll(".grid-item");
-                
-
                 squares.forEach((square) => {
-                    const backgroundColor = square.style.backgroundColor;
-                    if (backgroundColor === "rgb(255, 255, 255)") {
+                    const imageSrc = square.querySelector("img");
+
+                    if (imageSrc && imageSrc.src.includes("White_Tulip.jpg")) {
                         whiteCount++;
-                    } else if (backgroundColor === "rgb(255, 0, 0)") {
+                    } else if (imageSrc && imageSrc.src.includes("Red_Rose.jpg")) {
                         redCount++;
-                    } else if (backgroundColor === "rgb(255, 105, 180)") {
+                    } else if (imageSrc && imageSrc.src.includes("Pink_Rose.jpg")) {
                         pinkCount++;
                     }
                 });
 
-                whiteCounter.textContent = `White Tulip: ${whiteCount}`;
-                redCounter.textContent = `Red Rose: ${redCount}`;
-                pinkCounter.textContent = `Pink Rose: ${pinkCount}`;
+                whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip: ${whiteCount}`;
+                redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose: ${redCount}`;
+                pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose: ${pinkCount}`;
             }
 
-            function resetColors() {
+            function resetImages() {
                 const squares = document.querySelectorAll(".grid-item");
                 squares.forEach((square) => {
-                    square.style.backgroundColor = "rgb(139, 69, 19)";
+                    square.innerHTML = ""; // Effacer le contenu de la case
                 });
             }
         });
     </script>
 </body>
+
 </html>
