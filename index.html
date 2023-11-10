@@ -102,35 +102,34 @@
             for (let i = 0; i < 100; i++) {
                 const square = document.createElement("div");
                 square.className = "grid-item";
-                square.addEventListener("click", () => openModal(square));
                 grid.appendChild(square);
-            }
 
-            function openModal(square) {
-                selectedSquare = square; // Garde une référence au carré sélectionné
-                modal.style.display = "flex"; // Affiche la fenêtre modale
-
-                confirmBtn.addEventListener("click", function() {
-                    const selectedColor = colorSelect.value;
-                    modal.style.display = "none"; // Cache la fenêtre modale
-
-                    let seconds = 10;
-                    const countdownText = document.createElement("div");
-                    countdownText.className = "countdown-text";
-                    square.appendChild(countdownText); // Ajoute l'élément de texte au carré
-
-                    const timer = setInterval(function() {
-                        seconds--;
-                        countdownText.innerText = seconds;
-
-                        if (seconds === 0) {
-                            clearInterval(timer); // Arrête le chronomètre lorsque le compte à rebours atteint 0
-                            square.style.backgroundColor = selectedColor; // Change la couleur du carré sélectionné
-                            square.removeChild(countdownText); // Supprime l'élément de texte
-                        }
-                    }, 1000);
+                square.addEventListener("click", function() {
+                    selectedSquare = square; // Garde une référence au carré sélectionné
+                    modal.style.display = "flex"; // Affiche la fenêtre modale
                 });
             }
+
+            confirmBtn.addEventListener("click", function() {
+                const selectedColor = colorSelect.value;
+                modal.style.display = "none"; // Cache la fenêtre modale
+
+                let seconds = 10;
+                const countdownText = document.createElement("div");
+                countdownText.className = "countdown-text";
+                selectedSquare.appendChild(countdownText); // Ajoute l'élément de texte au carré
+
+                const timer = setInterval(function() {
+                    seconds--;
+                    countdownText.innerText = seconds;
+
+                    if (seconds === 0) {
+                        clearInterval(timer); // Arrête le chronomètre lorsque le compte à rebours atteint 0
+                        selectedSquare.style.backgroundColor = selectedColor; // Change la couleur du carré sélectionné
+                        selectedSquare.removeChild(countdownText); // Supprime l'élément de texte
+                    }
+                }, 1000);
+            });
         });
     </script>
 </body>
