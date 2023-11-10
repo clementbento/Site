@@ -7,9 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const whiteCounter = document.getElementById("whiteCounter");
     const redCounter = document.getElementById("redCounter");
     const pinkCounter = document.getElementById("pinkCounter");
-    const whiteStockElement = document.getElementById("whiteStock"); // Use a different name for the element
-    const redStockElement = document.getElementById("redStock"); // Use a different name for the element
-    const pinkStockElement = document.getElementById("pinkStock"); // Use a different name for the element
+    const whiteStockElement = document.getElementById("whiteStock");
+    const redStockElement = document.getElementById("redStock");
+    const pinkStockElement = document.getElementById("pinkStock");
 
     let selectedSquare = null;
     let whiteCount = 0;
@@ -44,15 +44,18 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
-
-        if (selectedImage.includes("White_Tulip.jpg")) {
+        // Check if there is enough stock before decrementing
+        if (selectedImage.includes("White_Tulip.jpg") && whiteStock > 0) {
             whiteStock--;
-        } else if (selectedImage.includes("Red_Rose.jpg")) {
+            selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
+        } else if (selectedImage.includes("Red_Rose.jpg") && redStock > 0) {
             redStock--;
-        } else if (selectedImage.includes("Pink_Rose.jpg")) {
+            selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
+        } else if (selectedImage.includes("Pink_Rose.jpg") && pinkStock > 0) {
             pinkStock--;
+            selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
         }
+
         updateCounters2();
     });
 
