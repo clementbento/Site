@@ -23,7 +23,7 @@
             gap: 2px;
         }
 
-        .grid div {
+        .grid-item {
             position: relative;
             width: 20px;
             height: 20px;
@@ -40,7 +40,7 @@
             font-size: 14px;
         }
 
-        /* Styles pour la fenêtre modale */
+        /* Styles for the modal window */
         .modal {
             display: none;
             position: fixed;
@@ -96,40 +96,61 @@
             const modal = document.getElementById("myModal");
             const colorSelect = document.getElementById("colorSelect");
             const confirmBtn = document.getElementById("confirmBtn");
+            let selectedSquare = null;
 
-            let selectedSquare = null; // Garde une référence au carré sélectionné
+            // Utiliser un tableau pour stocker les états des carrés
+            const squareStates = new Array(100).fill({
+                timer: null,
+                color: null,
+            });
 
             for (let i = 0; i < 100; i++) {
                 const square = document.createElement("div");
                 square.className = "grid-item";
+                square.setAttribute("data-id", i); // Ajouter un identifiant unique
                 grid.appendChild(square);
 
                 square.addEventListener("click", function() {
-                    selectedSquare = square; // Garde une référence au carré sélectionné
-                    modal.style.display = "flex"; // Affiche la fenêtre modale
+                    selectedSquare = square;
+                    modal.style.display = "flex";
                 });
             }
 
             confirmBtn.addEventListener("click", function() {
-                const selectedColor = colorSelect.value;
-                modal.style.display = "none"; // Cache la fenêtre modale
+                if (selectedSquare) {
+                    createCountdownText(selectedSquare); // Ne pas stocker countdownText ici
+                    modal.style.display = "none";
+                }
+            });
 
+            function createCountdownText(square) {
                 let seconds = 10;
-                const countdownText = document.createElement("div");
-                countdownText.className = "countdown-text";
-                selectedSquare.appendChild(countdownText); // Ajoute l'élément de texte au carré
+                const text = document.createElement("div");
+                text.className = "countdown-text";
+                square.appendChild(text);
 
                 const timer = setInterval(function() {
                     seconds--;
-                    countdownText.innerText = seconds;
+                    text.innerText = seconds;
 
                     if (seconds === 0) {
-                        clearInterval(timer); // Arrête le chronomètre lorsque le compte à rebours atteint 0
-                        selectedSquare.style.backgroundColor = selectedColor; // Change la couleur du carré sélectionné
-                        selectedSquare.removeChild(countdownText); // Supprime l'élément de texte
+                        clearInterval(timer);
+                        squareStates[getSquareIndex(square)] = {
+                            timer: null,
+                            color: colorSelect.value,
+                        };
+                        square.style.backgroundColor = colorSelect.value;
+                        square.removeChild(text);
+                        selectedSquare = null;
                     }
                 }, 1000);
-            });
+
+                squareStates[getSquareIndex(square)] = { timer, color: null };
+            }
+
+            function getSquareIndex(square) {
+                return square.getAttribute("data-id"); // Utiliser l'identifiant unique
+            }
         });
     </script>
 </body>
