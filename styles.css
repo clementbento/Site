@@ -33,17 +33,16 @@ h1 {
 }
 
 .counter {
-    font-size: 18px;
+    font-size: 15px;
     display: flex;
     align-items: middle;
     margin-bottom: 0px;
     margin-top: 0px; 
-    margin-left: 350px;
+    margin-left: 430px;
 }
 .counter img {
     width: 20px;
     height: 20px;
-    margin-right: 5px;
 }
 
 .counters-container {
@@ -55,12 +54,19 @@ h1 {
 }
 
 .counter2 {
-    font-size: 18px;
+    font-size: 15px;
     display: flex;
     align-items: middle;
     margin-bottom: 0px;
     margin-top: 0px; 
-    margin-right: 410px;
+    margin-right: 480px;
+    margin-left: 3px;
+}
+.counter2 img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    margin-bottom: 10px;
 }
 .counters-container2 {
     display: flex;
@@ -125,5 +131,27 @@ button {
 .argent-value {
     font-size: 18px; 
     margin-right: 20px; /* Ajustez la valeur selon vos besoins */
+    margin-bottom: 10px;
+}
+
+button2 {
+    margin-top: -2px;
+    padding: 3px 6px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+button3 {
+    margin-top: -2px;
+    padding: 3px 6px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
     margin-bottom: 10px;
 }
