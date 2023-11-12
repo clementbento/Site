@@ -36,7 +36,7 @@ h1 {
     font-size: 15px;
     display: flex;
     align-items: middle;
-    margin-bottom: 0px;
+    margin-bottom: 10px;
     margin-top: 0px; 
     margin-left: 430px;
 }
@@ -49,7 +49,15 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    margin-top: -200px;
+    margin-top: -300px;
+    margin-right: -30px; 
+}
+
+.counters-container2 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: -300px;
     margin-right: -30px; 
 }
 
@@ -57,23 +65,17 @@ h1 {
     font-size: 15px;
     display: flex;
     align-items: middle;
-    margin-bottom: 0px;
+    margin-bottom: 0px; /* Ajustez la valeur selon vos besoins pour ajouter de l'espace */
     margin-top: 0px; 
     margin-right: 480px;
     margin-left: 3px;
 }
+
 .counter2 img {
     width: 20px;
     height: 20px;
     margin-right: 8px;
     margin-bottom: 10px;
-}
-.counters-container2 {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    margin-top: -200px;
-    margin-right: -30px; 
 }
 
 
@@ -110,6 +112,12 @@ button {
     border-radius: 5px;
     cursor: pointer;
 }
+
+.button2,
+.button3 {
+    display: none; /* Cette propriété cache les boutons Sell et Buy */
+}
+
 .header-container {
     display: flex;
     align-items: center;
@@ -133,25 +141,59 @@ button {
     margin-right: 20px; /* Ajustez la valeur selon vos besoins */
     margin-bottom: 10px;
 }
-
-button2 {
-    margin-top: -2px;
-    padding: 3px 6px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-bottom: 10px;
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-button3 {
-    margin-top: -2px;
-    padding: 3px 6px;
-    background-color: #007bff;
+.buttons-container div {
+    margin-bottom: 0px; /* Optional: Add some spacing between the buttons */
+}
+#buySeedModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0; /* Aligner complètement à gauche */
+    transform: translate(0%, -50%);
+    width: 150px; /* Ajustez la largeur selon vos besoins */
+    background-color: rgb(29, 82, 29);
+    border: 0px solid #4CAF50; /* Couleur du cadre */
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5); /* Ombre portée */
+}
+
+#buySeedModal button {
+    display: block;
+    margin: 0 auto;
+    padding: 8px;
+    background-color: #4CAF50;
     color: #fff;
     border: none;
-    border-radius: 10px;
     cursor: pointer;
-    margin-bottom: 10px;
+}
+
+
+#sellFlowerModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    transform: translate(550%, -50%);
+    width: 150px; /* Ajustez la largeur selon vos besoins */
+    background-color: rgb(29, 82, 29);
+    border: 0px solid #4CAF50; /* Couleur du cadre */
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5); /* Ombre portée */
+}
+#sellFlowerModal button {
+    display: block;
+    margin: 0 auto;
+    padding: 8px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    cursor: pointer;
 }

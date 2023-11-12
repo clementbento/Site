@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const modal = document.getElementById("myModal");
     const colorSelect = document.getElementById("colorSelect");
     const confirmBtn = document.getElementById("confirmBtn");
-    const countButton = document.getElementById("countButton");
+    const harvest = document.getElementById("Harvest");
     const whiteCounter = document.getElementById("whiteCounter");
     const redCounter = document.getElementById("redCounter");
     const pinkCounter = document.getElementById("pinkCounter");
@@ -12,12 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const pinkStockElement = document.getElementById("pinkStock");
     const resizeButton = document.getElementById("resizeButton");
     const argentElement = document.getElementById("argent");
-    const incrementButtonW = document.getElementById("incrementButtonW");
-    const incrementButtonR = document.getElementById("incrementButtonR");
-    const incrementButtonP = document.getElementById("incrementButtonP");
-    const sellButtonW = document.getElementById("SellW");
-    const sellButtonR = document.getElementById("SellR");
-    const sellButtonP = document.getElementById("SellP");
+    const buySeed = document.getElementById("buySeed");
 
     let selectedSquare = null;
     let whiteTulipStock = 0;
@@ -27,16 +22,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let redSeedStock = 10;
     let pinkSeedStock = 10;
     let argent = 100;
-
-    // Créez les boutons d'achat une seule fois
-    createBuyButton(incrementButtonW, "White_Tulip.jpg");
-    createBuyButton(incrementButtonR, "Red_Rose.jpg");
-    createBuyButton(incrementButtonP, "Pink_Rose.jpg");
-
-    // Créez les boutons de vente une seule fois
-    createSellButton(sellButtonW, "White_Tulip.jpg");
-    createSellButton(sellButtonR, "Red_Rose.jpg");
-    createSellButton(sellButtonP, "Pink_Rose.jpg");
 
     for (let i = 0; i < 100; i++) {
         const square = document.createElement("div");
@@ -53,172 +38,32 @@ document.addEventListener("DOMContentLoaded", function () {
         const selectedImage = colorSelect.value;
         modal.style.display = "none";
 
-        if (selectedSquare.innerHTML !== "") {
-            if (selectedSquare.innerHTML.includes("White_Tulip.jpg")) {
-                whiteSeedStock--;
-            } else if (selectedSquare.innerHTML.includes("Red_Rose.jpg")) {
-                redSeedStock--;
-            } else if (selectedSquare.innerHTML.includes("Pink_Rose.jpg")) {
-                pinkSeedStock--;
-            }
-        }
-
-        // Check if there is enough stock before decrementing
         if (selectedImage.includes("White_Tulip.jpg") && whiteSeedStock > 0) {
             whiteSeedStock--;
             selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
-        } else if (selectedImage.includes("Red_Rose.jpg") && redSeedStock > 0) {
+        } 
+        else if (selectedImage.includes("Red_Rose.jpg") && redSeedStock > 0) {
             redSeedStock--;
             selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
-        } else if (selectedImage.includes("Pink_Rose.jpg") && pinkSeedStock > 0) {
+        } 
+        else if (selectedImage.includes("Pink_Rose.jpg") && pinkSeedStock > 0) {
             pinkSeedStock--;
             selectedSquare.innerHTML = `<img src="${selectedImage}" alt="Selected Image">`;
         }
-
-        updateCounters2();
+        updateSeedCounters();
+        updateBuySeedModalDisplay()
     });
 
-    countButton.addEventListener("click", function () {
-        updateCounters();
+    function updateSeedCounters() {
+        whiteStockElement.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White seed : ${whiteSeedStock}`;
+        redStockElement.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red seed : ${redSeedStock}`;
+        pinkStockElement.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink seed : ${pinkSeedStock}`;
+    }
+
+    harvest.addEventListener("click", function(){
+        comptageFleurs();
         resetImages();
     });
-
-    resizeButton.addEventListener("click", function () {
-        if (argent >= 10) {
-            resizeGrid();
-            argent -= 10;
-            updateArgent();
-        } else {
-            alert("Pas assez d'argent pour agrandir la grille !");
-        }
-    });
-
-    function createBuyButton(button, imageType) {
-        button.addEventListener("click", function () {
-            // Mettez à jour le stock et l'affichage
-            if (imageType === "White_Tulip.jpg" && argent >= 10) {
-                whiteSeedStock++;
-                argent -= 10;
-            } else if (imageType === "Red_Rose.jpg" && argent >= 10) {
-                redSeedStock++;
-                argent -= 10;
-            } else if (imageType === "Pink_Rose.jpg" && argent >= 10) {
-                pinkSeedStock++;
-                argent -= 10;
-            } else {
-                alert("Pas assez d'argent pour acheter !");
-            }
-
-            updateCounters2();
-            updateArgent();
-        });
-    }
-
-    function createSellButton(button, imageType) {
-        button.addEventListener("click", function () {
-            // Vérifiez si le stock est supérieur à zéro avant de vendre
-            if (whiteTulipStock > 0 && redRoseStock > 0 && pinkRoseStock > 0) {
-                // Mettez à jour le stock et l'affichage
-                if (imageType === "White_Tulip.jpg") {
-                    whiteTulipStock--;
-                    argent += 10;
-                } else if (imageType === "Red_Rose.jpg") {
-                    redRoseStock--;
-                    argent += 10;
-                } else if (imageType === "Pink_Rose.jpg") {
-                    pinkRoseStock--;
-                    argent += 10;
-                } else {
-                    alert("Pas assez d'argent pour acheter !");
-                }
-
-                updateCounters2();
-                updateArgent();
-            } else {
-                alert("Pas de stock disponible pour la vente !");
-            }
-        });
-    }
-
-    function updateCounters() {
-        const whiteButton = document.getElementById("SellW");
-        const redButton = document.getElementById("SellR");
-        const pinkButton = document.getElementById("SellP");
-
-        const squares = document.querySelectorAll(".grid-item");
-        squares.forEach((square) => {
-            const imageSrc = square.querySelector("img");
-
-            if (imageSrc && imageSrc.src.includes("White_Tulip.jpg")) {
-                whiteTulipStock++;
-            } else if (imageSrc && imageSrc.src.includes("Red_Rose.jpg")) {
-                redRoseStock++;
-            } else if (imageSrc && imageSrc.src.includes("Pink_Rose.jpg")) {
-                pinkRoseStock++;
-            }
-        });
-
-        whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip : ${whiteTulipStock}   
-            <button2 class="incrementButton" id="SellW">Sell</button2>`;
-        redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose : ${redRoseStock}  
-            <button2 class="incrementButton" id="SellR">Sell</button2>`;
-        pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : ${pinkRoseStock}
-            <button2 class="incrementButton" id="SellP">Sell</button2>`;
-
-        updateSellButton(whiteButton, "White_Tulip.jpg");
-        updateSellButton(redButton, "Red_Rose.jpg");
-        updateSellButton(pinkButton, "Pink_Rose.jpg");
-    }
-
-    function updateSellButton(button, imageType) {
-        button.addEventListener("click", function () {
-            // Vérifiez si le stock est supérieur à zéro avant de vendre
-            if (whiteTulipStock > 0 && redRoseStock > 0 && pinkRoseStock > 0) {
-                // Mettez à jour le stock et l'affichage
-                if (imageType === "White_Tulip.jpg") {
-                    whiteTulipStock--;
-                    argent += 10;
-                } else if (imageType === "Red_Rose.jpg") {
-                    redRoseStock--;
-                    argent += 10;
-                } else if (imageType === "Pink_Rose.jpg") {
-                    pinkRoseStock--;
-                    argent += 10;
-                } else {
-                    alert("Pas assez d'argent pour acheter !");
-                }
-
-                updateCounters2();
-                updateArgent();
-            } else {
-                alert("Pas de stock disponible pour la vente !");
-            }
-        });
-    }
-
-    function updateCounters2() {
-        updateStockButton(whiteStockElement, whiteSeedStock, "incrementButtonW");
-        updateStockButton(redStockElement, redSeedStock, "incrementButtonR");
-        updateStockButton(pinkStockElement, pinkSeedStock, "incrementButtonP");
-    }
-
-    function updateStockButton(stockElement, stock, buttonId) {
-        if (stockElement == whiteStockElement) {
-            stockElement.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White seed : ${stock}
-                <button3 class="incrementButtonW" id="${buttonId}">Buy</button3>`;
-        } else if (stockElement == redStockElement) {
-            stockElement.innerHTML = `<img src="Red_Rose.jpg" alt="Image 1"> Red seed : ${stock}
-                <button3 class="incrementButtonR" id="${buttonId}">Buy</button3>`;
-        } else if (stockElement == pinkStockElement) {
-            stockElement.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 1"> Pink seed : ${stock}
-                <button3 class="incrementButtonP" id="${buttonId}">Buy</button3>`;
-        }
-
-        const buyButton = document.getElementById(buttonId);
-        if (buyButton) {
-            createBuyButton(buyButton, buttonId === "incrementButtonW" ? "White_Tulip.jpg" : (buttonId === "incrementButtonR" ? "Red_Rose.jpg" : "Pink_Rose.jpg"));
-        }
-    }
 
     function resetImages() {
         const squares = document.querySelectorAll(".grid-item");
@@ -230,13 +75,26 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function updateArgent() {
-        argentElement.innerHTML = `Money ${argent} €`;
+    function comptageFleurs() {
+        const squares = document.querySelectorAll(".grid-item");
+        squares.forEach((square) => {
+            const imageSrc = square.querySelector("img");
+
+            if (imageSrc && imageSrc.src.includes("White_Tulip.jpg")) {
+                whiteTulipStock++;
+            } else if (imageSrc && imageSrc.src.includes("Red_Rose.jpg")) {
+                redRoseStock++;
+            } else if (imageSrc && imageSrc.src.includes("Pink_Rose.jpg")) {
+                pinkRoseStock++;
+            }
+
+            whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip : ${whiteTulipStock}   `;
+            redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose : ${redRoseStock}`;
+            pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : ${pinkRoseStock}`;
+        });
     }
 
     function resizeGrid() {
-        const currentRowCount = grid.children.length / 10; // Assuming 10 columns per row
-
         // Add a new row
         const newRow = document.createElement("div");
         newRow.className = "grid-row";
@@ -255,52 +113,165 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    incrementButtonW.addEventListener("click", function () {
-        updateCounters2();
-    });
-
-    incrementButtonR.addEventListener("click", function () {
-        updateCounters2();
-    });
-
-    incrementButtonP.addEventListener("click", function () {
-        updateCounters2();
-    });
-
-    sellButtonW.addEventListener("click", function () {
-        updateSellButton(sellButtonW, "White_Tulip.jpg");
-    });
-    
-    sellButtonR.addEventListener("click", function () {
-        updateSellButton(sellButtonR, "Red_Rose.jpg");
-    });
-    
-    sellButtonP.addEventListener("click", function () {
-        updateSellButton(sellButtonP, "Pink_Rose.jpg");
-    });
-    
-
-    function updateSellButton(button, imageType) {
-        // Vérifiez si le stock est supérieur à zéro avant de vendre
-        if (whiteTulipStock > 0 && redRoseStock > 0 && pinkRoseStock > 0) {
-            // Mettez à jour le stock et l'affichage
-            if (imageType === "White_Tulip.jpg") {
-                whiteTulipStock--;
-                argent += 10;
-            } else if (imageType === "Red_Rose.jpg") {
-                redRoseStock--;
-                argent += 10;
-            } else if (imageType === "Pink_Rose.jpg") {
-                pinkRoseStock--;
-                argent += 10;
-            } else {
-                alert("Pas assez d'argent pour acheter !");
-            }
-
-            updateCounters2();
+    resizeButton.addEventListener("click", function () {
+        if (argent >= 100) {
+            resizeGrid();
+            argent -= 100;
             updateArgent();
         } else {
-            alert("Pas de stock disponible pour la vente !");
+            alert("Pas assez d'argent pour agrandir la grille !");
         }
+    });
+
+    function updateArgent() {
+        argentElement.innerHTML = `Money ${argent} €`;
+    }
+
+    buySeed.addEventListener("click", function() {
+        openBuySeedModal();
+    });
+
+    function openBuySeedModal() {
+        const buySeedModal = document.getElementById("buySeedModal");
+        const whiteStockDisplay = document.getElementById("whiteStockDisplay");
+        const redStockDisplay = document.getElementById("redStockDisplay");
+        const pinkStockDisplay = document.getElementById("pinkStockDisplay");
+        const buyWhiteSeedBtn = document.getElementById("buyWhiteSeedBtn");
+        const buyRedSeedBtn = document.getElementById("buyRedSeedBtn");
+        const buyPinkSeedBtn = document.getElementById("buyPinkSeedBtn");
+        const closeBuySeedModalBtn = document.getElementById("closeBuySeedModalBtn");
+
+        whiteStockDisplay.textContent = `White Seed Stock: ${whiteSeedStock}`;
+        redStockDisplay.textContent = `Red Seed Stock: ${redSeedStock}`;
+        pinkStockDisplay.textContent = `Pink Seed Stock: ${pinkSeedStock}`;
+
+        buyWhiteSeedBtn.addEventListener("click", buyWhiteSeed);
+        buyRedSeedBtn.addEventListener("click", buyRedSeed);
+        buyPinkSeedBtn.addEventListener("click", buyPinkSeed);
+
+        closeBuySeedModalBtn.addEventListener("click", closeBuySeedModal);
+
+        buySeedModal.style.display = "block";
+    }
+
+    function closeBuySeedModal() {
+        const buySeedModal = document.getElementById("buySeedModal");
+        buySeedModal.style.display = "none";
+    }
+
+    function buyWhiteSeed() {
+        if (argent >= 5) { // Coût d'une graine blanche
+            whiteSeedStock++;
+            argent -= 5;
+            updateArgent();
+            updateSeedCounters();
+            updateBuySeedModalDisplay();
+        }
+    }
+
+    function buyRedSeed() {
+        if (argent >= 7) { // Coût d'une graine rouge
+            redSeedStock++;
+            argent -= 7;
+            updateArgent();
+            updateSeedCounters();
+            updateBuySeedModalDisplay();
+        }
+    }
+
+    function buyPinkSeed() {
+        if (argent >= 10) { // Coût d'une graine rose
+            pinkSeedStock++;
+            argent -= 10;
+            updateArgent();
+            updateSeedCounters();
+            updateBuySeedModalDisplay();
+        }
+    }
+    function updateBuySeedModalDisplay() {
+        const whiteStockDisplay = document.getElementById("whiteStockDisplay");
+        const redStockDisplay = document.getElementById("redStockDisplay");
+        const pinkStockDisplay = document.getElementById("pinkStockDisplay");
+    
+        whiteStockDisplay.textContent = `White Seed Stock: ${whiteSeedStock}`;
+        redStockDisplay.textContent = `Red Seed Stock: ${redSeedStock}`;
+        pinkStockDisplay.textContent = `Pink Seed Stock: ${pinkSeedStock}`;
+    }
+
+
+
+    const sellFlower = document.getElementById("sellFlower");
+    const sellFlowerModalBtn = document.getElementById("sellFlowerModalBtn");
+
+    sellFlower.addEventListener("click", function () {
+        openSellFlowerModal();
+    });
+
+    function openSellFlowerModal() {
+        const sellFlowerModal = document.getElementById("sellFlowerModal");
+        const whiteFlowerStockDisplay = document.getElementById("whiteFlowerStockDisplay");
+        const redFlowerStockDisplay = document.getElementById("redFlowerStockDisplay");
+        const pinkFlowerStockDisplay = document.getElementById("pinkFlowerStockDisplay");
+        const sellWhiteFlowerBtn = document.getElementById("sellWhiteFlowerBtn");
+        const sellRedFlowerBtn = document.getElementById("sellRedFlowerBtn");
+        const sellPinkFlowerBtn = document.getElementById("sellPinkFlowerBtn");
+        const closeSellFlowerModalBtn = document.getElementById("closeSellFlowerModalBtn");
+
+        whiteFlowerStockDisplay.textContent = `White Flower Stock: ${whiteTulipStock}`;
+        redFlowerStockDisplay.textContent = `Red Flower Stock: ${redRoseStock}`;
+        pinkFlowerStockDisplay.textContent = `Pink Flower Stock: ${pinkRoseStock}`;
+
+        sellWhiteFlowerBtn.addEventListener("click", sellWhiteFlower);
+        sellRedFlowerBtn.addEventListener("click", sellRedFlower);
+        sellPinkFlowerBtn.addEventListener("click", sellPinkFlower);
+
+        closeSellFlowerModalBtn.addEventListener("click", closeSellFlowerModal);
+
+        sellFlowerModal.style.display = "block";
+    }
+
+    function closeSellFlowerModal() {
+        const sellFlowerModal = document.getElementById("sellFlowerModal");
+        sellFlowerModal.style.display = "none";
+    }
+
+    function sellWhiteFlower() {
+        if (whiteTulipStock > 0) {
+            whiteTulipStock--;
+            argent += 5; // Prix de vente de la fleur blanche
+            updateArgent();
+            updateFlowerCounters();
+            updateSellFlowerModalDisplay();
+        }
+    }
+
+    function sellRedFlower() {
+        if (redRoseStock > 0) {
+            redRoseStock--;
+            argent += 7; // Prix de vente de la fleur rouge
+            updateArgent();
+            updateFlowerCounters();
+            updateSellFlowerModalDisplay();
+        }
+    }
+
+    function sellPinkFlower() {
+        if (pinkRoseStock > 0) {
+            pinkRoseStock--;
+            argent += 10; // Prix de vente de la fleur rose
+            updateArgent();
+            updateFlowerCounters();
+            updateSellFlowerModalDisplay();
+        }
+    }
+
+    function updateSellFlowerModalDisplay() {
+        const whiteFlowerStockDisplay = document.getElementById("whiteFlowerStockDisplay");
+        const redFlowerStockDisplay = document.getElementById("redFlowerStockDisplay");
+        const pinkFlowerStockDisplay = document.getElementById("pinkFlowerStockDisplay");
+
+        whiteFlowerStockDisplay.textContent = `White Flower Stock: ${whiteTulipStock}`;
+        redFlowerStockDisplay.textContent = `Red Flower Stock: ${redRoseStock}`;
+        pinkFlowerStockDisplay.textContent = `Pink Flower Stock: ${pinkRoseStock}`;
     }
 });

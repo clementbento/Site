@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>My Flower Farm (version 3)</title>
+    <title>My Flower Farm (version 2)</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
     <style>
     </style>
@@ -22,24 +22,32 @@
         <div class="grid" id="grid"></div>
     </div>
 
-    <div>
-        <button id="countButton">Harvest</button>
-        <button id="resizeButton">Extend the field</button>
+    <div class="buttons-container">
+        <div>
+            <button id="Harvest">Harvest</button>
+        </div>
+        <div>
+            <button id="resizeButton">Extend the field (100€)</button>
+        </div>
+        <div>
+            <button id="buySeed">Buy seed</button>
+        </div>
+        <div>
+            <button id="sellFlower">Sell flower</button>
+        </div>
     </div>
+    
 
     <div>
         <div class="counters-container">
             <div class="counter" id="whiteCounter">
                 <img src="White_Tulip.jpg" alt="Image 1"> White Tulip : 0   
-                <button2 class="incrementButton" id="SellW">Sell</button2>
             </div>
             <div class="counter" id="redCounter">
                 <img src="Red_Rose.jpg" alt="Image 2"> Red Rose : 0  
-                <button2 class="incrementButton" id="SellR">Sell</button2>
             </div>
             <div class="counter" id="pinkCounter">
                 <img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : 0
-                <button2 class="incrementButton" id="SellP">Sell</button2>
             </div>
         </div>
     </div>
@@ -48,15 +56,12 @@
         <div class="counters-container2">
             <div class="counter2" id="whiteStock">
                 <img src="White_Tulip.jpg" alt="Image 1"> White seed : 10
-                <button3 class="incrementButtonW" id="incrementButtonW">Buy</button3>
             </div>
             <div class="counter2" id="redStock">
                 <img src="Red_Rose.jpg" alt="Image 2"> Red seed : 10
-                <button3 class="incrementButtonR" id="incrementButtonR">Buy</button3>
             </div>
             <div class="counter2" id="pinkStock">
                 <img src="Pink_Rose.jpg" alt="Image 3"> Pink seed : 10
-                <button3 class="incrementButtonP" id="incrementButtonP">Buy</button3>
             </div>
         </div>
     </div>
@@ -72,6 +77,31 @@
             <button id="confirmBtn">Validate</button>
         </div>
     </div>
+    <!-- Ajoutez ces éléments dans la section body de votre HTML -->
+<div id="buySeedModal" class="modal">
+    <div class="modal-content">
+        <h2>Seed Stock</h2>
+        <p id="whiteStockDisplay"></p>
+        <button id="buyWhiteSeedBtn">Buy White Seed</button>
+        <p id="redStockDisplay"></p>
+        <button id="buyRedSeedBtn">Buy Red Seed</button>
+        <p id="pinkStockDisplay"></p>
+        <button id="buyPinkSeedBtn">Buy Pink Seed</button>
+        <button id="closeBuySeedModalBtn">Close</button>
+    </div>
+</div>
+<div id="sellFlowerModal" class="modal">
+    <div class="modal-content">
+        <h2>Flower Sale</h2>
+        <p id="whiteFlowerStockDisplay"></p>
+        <button id="sellWhiteFlowerBtn">Sell White Tulip</button>
+        <p id="redFlowerStockDisplay"></p>
+        <button id="sellRedFlowerBtn">Sell Red Rose</button>
+        <p id="pinkFlowerStockDisplay"></p>
+        <button id="sellPinkFlowerBtn">Sell Pink Rose</button>
+        <button id="closeSellFlowerModalBtn">Close</button>
+    </div>
+</div>
 
     <script src="script.js"></script>
 </body>
