@@ -157,7 +157,7 @@ button {
     top: 50%;
     left: 0; /* Aligner complètement à gauche */
     transform: translate(0%, -50%);
-    width: 150px; /* Ajustez la largeur selon vos besoins */
+    width: 130px; /* Ajustez la largeur selon vos besoins */
     background-color: rgb(29, 82, 29);
     border: 0px solid #4CAF50; /* Couleur du cadre */
     padding: 20px;
@@ -180,8 +180,8 @@ button {
     display: none;
     position: fixed;
     top: 50%;
-    transform: translate(580%, -50%);
-    width: 150px; /* Ajustez la largeur selon vos besoins */
+    transform: translate(85%, -50%);
+    width: 130px; /* Ajustez la largeur selon vos besoins */
     background-color: rgb(29, 82, 29);
     border: 0px solid #4CAF50; /* Couleur du cadre */
     padding: 20px;
