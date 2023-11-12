@@ -180,7 +180,7 @@ button {
     display: none;
     position: fixed;
     top: 50%;
-    transform: translate(550%, -50%);
+    transform: translate(430%, -50%);
     width: 150px; /* Ajustez la largeur selon vos besoins */
     background-color: rgb(29, 82, 29);
     border: 0px solid #4CAF50; /* Couleur du cadre */
