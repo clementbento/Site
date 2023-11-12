@@ -91,6 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
             whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip : ${whiteTulipStock}   `;
             redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose : ${redRoseStock}`;
             pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : ${pinkRoseStock}`;
+            updateSellFlowerModalDisplay();
         });
     }
 
@@ -238,9 +239,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function sellWhiteFlower() {
         if (whiteTulipStock > 0) {
             whiteTulipStock--;
-            argent += 5; // Prix de vente de la fleur blanche
+            argent += 10; // Prix de vente de la fleur blanche
             updateArgent();
-            updateFlowerCounters();
+            comptageFleurs();
             updateSellFlowerModalDisplay();
         }
     }
@@ -248,9 +249,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function sellRedFlower() {
         if (redRoseStock > 0) {
             redRoseStock--;
-            argent += 7; // Prix de vente de la fleur rouge
+            argent += 14; // Prix de vente de la fleur rouge
             updateArgent();
-            updateFlowerCounters();
+            comptageFleurs();
             updateSellFlowerModalDisplay();
         }
     }
@@ -258,9 +259,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function sellPinkFlower() {
         if (pinkRoseStock > 0) {
             pinkRoseStock--;
-            argent += 10; // Prix de vente de la fleur rose
+            argent += 20; // Prix de vente de la fleur rose
             updateArgent();
-            updateFlowerCounters();
+            comptageFleurs();
             updateSellFlowerModalDisplay();
         }
     }
