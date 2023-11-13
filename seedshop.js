@@ -12,10 +12,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
-    let argent = parseInt(urlParams.get('argent')) || 100;
-    let whiteSeedStock = parseInt(urlParams.get('whiteSeedStock')) || 10;
-    let redSeedStock = parseInt(urlParams.get('redSeedStock')) || 10;
-    let pinkSeedStock = parseInt(urlParams.get('pinkSeedStock')) || 10;
+    let argent = parseInt(urlParams.get('argent')) ;
+    let whiteSeedStock = parseInt(urlParams.get('whiteSeedStock'));
+    let redSeedStock = parseInt(urlParams.get('redSeedStock')) ;
+    let pinkSeedStock = parseInt(urlParams.get('pinkSeedStock')) ;
 
     updateDisplay();
 

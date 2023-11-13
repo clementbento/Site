@@ -12,10 +12,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
-    let argent = parseInt(urlParams.get('argent')) || 100;
-    let whiteTulipStock = parseInt(urlParams.get('whiteTulipsStock')) || 0;
-    let redRoseStock = parseInt(urlParams.get('redRoseStock')) || 0;
-    let pinkRoseStock = parseInt(urlParams.get('pinkRoseStock')) || 0;
+    let argent = parseInt(urlParams.get('argent'));
+    let whiteTulipStock = parseInt(urlParams.get('whiteTulipsStock'));
+    let redRoseStock = parseInt(urlParams.get('redRoseStock'));
+    let pinkRoseStock = parseInt(urlParams.get('pinkRoseStock'));
 
     updateDisplay();
 
