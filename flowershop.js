@@ -13,9 +13,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const urlParams = new URLSearchParams(queryString);
 
     let argent = parseInt(urlParams.get('argent')) || 100;
-    let whiteTulipStock = parseInt(urlParams.get('whiteTulipsStock')) || 10;
-    let redRoseStock = parseInt(urlParams.get('redRoseStock')) || 10;
-    let pinkRoseStock = parseInt(urlParams.get('pinkRoseStock')) || 10;
+    let whiteTulipStock = parseInt(urlParams.get('whiteTulipsStock')) || 0;
+    let redRoseStock = parseInt(urlParams.get('redRoseStock')) || 0;
+    let pinkRoseStock = parseInt(urlParams.get('pinkRoseStock')) || 0;
 
     updateDisplay();
 
