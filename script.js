@@ -1,3 +1,17 @@
+const flowerFarm = {
+    updateSeedCounters: function () {
+        whiteStockElement.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White seed : ${whiteSeedStock}`;
+        redStockElement.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red seed : ${redSeedStock}`;
+        pinkStockElement.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink seed : ${pinkSeedStock}`;
+    },
+    updateFlowerCounters: function() {
+        whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip : ${whiteTulipStock}   `;
+        redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose : ${redRoseStock}`;
+        pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : ${pinkRoseStock}`;
+    }
+    // ... le reste de votre code
+};
+
 document.addEventListener("DOMContentLoaded", function () {
     const grid = document.getElementById("grid");
     const modal = document.getElementById("myModal");
@@ -13,15 +27,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const resizeButton = document.getElementById("resizeButton");
     const argentElement = document.getElementById("argent");
     const buySeed = document.getElementById("buySeed");
+    const sellFlower = document.getElementById("sellFlower");
 
     let selectedSquare = null;
-    let whiteTulipStock = 0;
-    let redRoseStock = 0;
-    let pinkRoseStock = 0;
-    let whiteSeedStock = 10;
-    let redSeedStock = 10;
-    let pinkSeedStock = 10;
-    let argent = 100;
+
+    let whiteTulipStock = parseInt(localStorage.getItem('whiteTulipStock')) || 0;
+    let redRoseStock = parseInt(localStorage.getItem('redRoseStock')) || 0;
+    let pinkRoseStock = parseInt(localStorage.getItem('pinkRoseStock')) || 0;
+
+    let argent = parseInt(localStorage.getItem('argent')) || 100;
+    let whiteSeedStock = parseInt(localStorage.getItem('whiteSeedStock')) || 10;
+    let redSeedStock = parseInt(localStorage.getItem('redSeedStock')) || 10;
+    let pinkSeedStock = parseInt(localStorage.getItem('pinkSeedStock')) || 10;
+    updateArgent();
+    updateSeedCounters();
+    updateFlowerCounters();
 
     for (let i = 0; i < 100; i++) {
         const square = document.createElement("div");
@@ -33,6 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
             modal.style.display = "flex";
         });
     }
+    
 
     confirmBtn.addEventListener("click", function () {
         const selectedImage = colorSelect.value;
@@ -58,6 +79,11 @@ document.addEventListener("DOMContentLoaded", function () {
         whiteStockElement.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White seed : ${whiteSeedStock}`;
         redStockElement.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red seed : ${redSeedStock}`;
         pinkStockElement.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink seed : ${pinkSeedStock}`;
+    }
+    function updateFlowerCounters() {
+        whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip : ${whiteTulipStock}   `;
+        redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose : ${redRoseStock}`;
+        pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : ${pinkRoseStock}`;
     }
 
     harvest.addEventListener("click", function(){
@@ -91,7 +117,6 @@ document.addEventListener("DOMContentLoaded", function () {
             whiteCounter.innerHTML = `<img src="White_Tulip.jpg" alt="Image 1"> White Tulip : ${whiteTulipStock}   `;
             redCounter.innerHTML = `<img src="Red_Rose.jpg" alt="Image 2"> Red Rose : ${redRoseStock}`;
             pinkCounter.innerHTML = `<img src="Pink_Rose.jpg" alt="Image 3"> Pink Rose : ${pinkRoseStock}`;
-            updateSellFlowerModalDisplay();
         });
     }
 
@@ -129,7 +154,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     buySeed.addEventListener("click", function() {
-        openBuySeedModal();
+        window.location.href = `seedshop.html?argent=${argent}&whiteSeedStock=${whiteSeedStock}&redSeedStock=${redSeedStock}&pinkSeedStock=${pinkSeedStock}`;
+    });
+    sellFlower.addEventListener("click", function() {
+        window.location.href = `flowershop.html?argent=${argent}&whiteTulipStock=${whiteTulipStock}&redRoseStock=${redRoseStock}&pinkRoseStock=${pinkRoseStock}`;
     });
 
     function openBuySeedModal() {
@@ -201,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-    const sellFlower = document.getElementById("sellFlower");
+    
     const sellFlowerModalBtn = document.getElementById("sellFlowerModalBtn");
 
     sellFlower.addEventListener("click", function () {
