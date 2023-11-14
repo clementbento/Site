@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const urlParams = new URLSearchParams(queryString);
 
     let argent = parseInt(urlParams.get('argent'));
-    let whiteTulipStock = parseInt(urlParams.get('whiteTulipsStock'));
+    let whiteTulipStock = parseInt(urlParams.get('whiteTulipStock'));
     let redRoseStock = parseInt(urlParams.get('redRoseStock'));
     let pinkRoseStock = parseInt(urlParams.get('pinkRoseStock'));
 
