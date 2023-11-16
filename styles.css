@@ -197,3 +197,17 @@ button {
     border: none;
     cursor: pointer;
 }
+
+.character-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #f2f2f2;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.character-container h2 {
+    margin: 0;
+}
