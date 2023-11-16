@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
+    const currentUrl = window.location.href;
+
     let argent = parseInt(urlParams.get('argent'));
     let whiteTulipStock = parseInt(urlParams.get('whiteTulipStock'));
     let redRoseStock = parseInt(urlParams.get('redRoseStock'));
@@ -70,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (typeof flowerFarm !== 'undefined' && typeof flowerFarm.updateFlowerCounters === 'function') {
             flowerFarm.updateFlowerCounters(); ///////////////////////////
         }
-        window.location.href = "flower-farm.html";
+        window.location.href = "flower-farm.html" + currentUrl.substr(currentUrl.indexOf('?'));
     }
 
     

@@ -17,6 +17,13 @@ document.addEventListener("DOMContentLoaded", function () {
     let redSeedStock = parseInt(urlParams.get('redSeedStock')) ;
     let pinkSeedStock = parseInt(urlParams.get('pinkSeedStock')) ;
 
+
+    // Récupérer l'URL actuelle
+    const currentUrl = window.location.href;
+
+
+
+
     updateDisplay();
 
     buyWhiteSeedBtn.addEventListener("click", buyWhiteSeed);
@@ -70,6 +77,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (typeof flowerFarm !== 'undefined' && typeof flowerFarm.updateSeedCounters === 'function') {
             flowerFarm.updateSeedCounters();
         }
-        window.location.href = "flower-farm.html";
+
+        // Rediriger vers "flower-farm.html" avec les paramètres actuels
+        window.location.href = "flower-farm.html" + currentUrl.substr(currentUrl.indexOf('?'));
     }
 });

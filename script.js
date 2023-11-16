@@ -170,11 +170,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     buySeed.addEventListener("click", function() {
-        window.location.href = `seedshop.html?argent=${argent}&whiteSeedStock=${whiteSeedStock}&redSeedStock=${redSeedStock}&pinkSeedStock=${pinkSeedStock}`;
+        const usernameElement = document.getElementById('username');
+        const username = usernameElement ? usernameElement.textContent : 'John Doe';
+        window.location.href = `seedshop.html?username=${encodeURIComponent(username)}&argent=${argent}&whiteSeedStock=${whiteSeedStock}&redSeedStock=${redSeedStock}&pinkSeedStock=${pinkSeedStock}`;
     });
+    
+
     sellFlower.addEventListener("click", function() {
-        window.location.href = `flowershop.html?argent=${argent}&whiteTulipStock=${whiteTulipStock}&redRoseStock=${redRoseStock}&pinkRoseStock=${pinkRoseStock}`;
+        const usernameElement = document.getElementById('username');
+        const username = usernameElement ? usernameElement.textContent : 'John Doe';
+        window.location.href = `flowershop.html?username=${encodeURIComponent(username)}&argent=${argent}&whiteTulipStock=${whiteTulipStock}&redRoseStock=${redRoseStock}&pinkRoseStock=${pinkRoseStock}`;
     });
+    
 
     
     
