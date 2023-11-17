@@ -216,3 +216,26 @@ button {
     margin: 0;
     
 }
+
+
+
+
+
+/* test.css */
+
+.espacement-entre-sections {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Aligne les éléments en haut de chaque partie */
+    margin: 0 50px; /* Ajustez la marge globale entre les sections */
+}
+
+.colonne-intermediaire {
+    width: 2px; /* Ajustez la largeur de la colonne */
+    background-color: #030303; /* Ajoutez une couleur de fond pour la colonne */
+}
+
+.partie-gauche, .partie-droite {
+    width: calc(50% - 10px); /* Calculez la largeur des parties en tenant compte de la colonne */
+}
+

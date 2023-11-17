@@ -40,6 +40,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let redSeedStock = parseInt(localStorage.getItem('redSeedStock'));
     let pinkSeedStock = parseInt(localStorage.getItem('pinkSeedStock'));
 
+    
+
     function updateCharacterInfo() {
         // Get the username and money from the query parameters
         const queryString = window.location.search;

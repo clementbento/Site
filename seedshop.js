@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
             argent -= 5;
             whiteSeedStock++;
             updateDisplay();
+            updateLocalStorage();
         } else {
             alert("Not enough money to buy white seed!");
         }
@@ -53,6 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
             argent -= 7;
             redSeedStock++;
             updateDisplay();
+            updateLocalStorage();
         } else {
             alert("Not enough money to buy red seed!");
         }
@@ -63,6 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
             argent -= 10;
             pinkSeedStock++;
             updateDisplay();
+            updateLocalStorage();
         } else {
             alert("Not enough money to buy pink seed!");
         }
@@ -80,5 +83,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Rediriger vers "flower-farm.html" avec les paramètres actuels
         window.location.href = "flower-farm.html" + currentUrl.substr(currentUrl.indexOf('?'));
+    }
+    function updateLocalStorage() {
+        localStorage.setItem('argent', argent);
+        localStorage.setItem('whiteSeedStock', whiteSeedStock);
+        localStorage.setItem('redSeedStock', redSeedStock);
+        localStorage.setItem('pinkSeedStock', pinkSeedStock);
     }
 });
