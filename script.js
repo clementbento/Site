@@ -29,17 +29,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const buySeed = document.getElementById("buySeed");
     const sellFlower = document.getElementById("sellFlower");
     
-
     let selectedSquare = null;
 
-    let whiteTulipStock = parseInt(localStorage.getItem('whiteTulipStock')) || 0;
-    let redRoseStock = parseInt(localStorage.getItem('redRoseStock')) || 0;
-    let pinkRoseStock = parseInt(localStorage.getItem('pinkRoseStock')) || 0;
+    let whiteTulipStock = parseInt(localStorage.getItem('whiteTulipStock'));
+    let redRoseStock = parseInt(localStorage.getItem('redRoseStock'));
+    let pinkRoseStock = parseInt(localStorage.getItem('pinkRoseStock'));
 
-    let argent = parseInt(localStorage.getItem('argent')) || 100;
-    let whiteSeedStock = parseInt(localStorage.getItem('whiteSeedStock')) || 10;
-    let redSeedStock = parseInt(localStorage.getItem('redSeedStock')) || 10;
-    let pinkSeedStock = parseInt(localStorage.getItem('pinkSeedStock')) || 10;
+    let argent = parseInt(localStorage.getItem('argent'));
+    let whiteSeedStock = parseInt(localStorage.getItem('whiteSeedStock'));
+    let redSeedStock = parseInt(localStorage.getItem('redSeedStock'));
+    let pinkSeedStock = parseInt(localStorage.getItem('pinkSeedStock'));
 
     function updateCharacterInfo() {
         // Get the username and money from the query parameters
