@@ -1,16 +1,53 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
-#calendar {
-    max-width: 600px;
-    width: 100%;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.container {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+h1 {
+  color: #333;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #3498db;
+}
+
+th {
+  background-color: #3498db;
+  color: #fff;
+}
+
+td {
+  background-color: #ecf0f1;
+}
+
+/* Style pour les jours vides */
+td:empty {
+  background-color: transparent;
+  border: none;
+}
+
+/* Style pour les jours du mois */
+td:not(:empty) {
+  font-weight: bold;
+  color: #333;
 }
