@@ -55,6 +55,6 @@ function addTask() {
         const taskListHTML = taskList.innerHTML;
         localStorage.setItem(`taskList_${selectedMonth}_${selectedDay}`, taskListHTML);
 
-        alert('Tâche ajoutée avec succès!');
+        
     }
 }
