@@ -26,44 +26,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
       // Ajoute un gestionnaire d'événements de clic sur le nom du mois
       monthNameCell.addEventListener('click', function () {
-        // Ouvre une nouvelle fenêtre avec le calendrier du mois sélectionné
-        const newWindow = window.open('', '_blank', 'width=600,height=400');
-  
-        // Ajoute le contenu HTML au nouvel onglet
-        newWindow.document.write('<html><head><title>Calendrier - ' + m + '</title><link rel="stylesheet" type="text/css" href="style.css"></head><body><h2>' + m + '</h2>' +
-          '<table><tr><th>Dim</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th></tr>');
-  
-        // Récupère le premier jour du mois et le nombre de jours dans le mois
-        const firstDay = new Date(2024, index, 1).getDay();
-        const daysInMonth = new Date(2024, index + 1, 0).getDate();
-  
-        // Crée les cellules pour chaque jour du mois
-        let dayCounter = 1;
-        for (let i = 0; i < 5; i++) {
-          const row = newWindow.document.createElement('tr');
-          for (let j = 0; j < 7; j++) {
-            const cell = newWindow.document.createElement('td');
-            const dayOfMonth = i * 7 + j - firstDay + 1;
-  
-            if (i === 0 && dayOfMonth <= 0) {
-              // Les jours du mois précédent
-              cell.textContent = '';
-            } else if (dayCounter <= daysInMonth) {
-              // Les jours du mois en cours
-              cell.textContent = dayCounter;
-              dayCounter++;
-            } else {
-              // Les jours du mois suivant
-              cell.textContent = '';
-            }
-            row.appendChild(cell);
-          }
-          newWindow.document.querySelector('table').appendChild(row);
-        }
-  
-        // Ferme la balise body et html
-        newWindow.document.write('</table></body></html>');
-      });
+        // Construit l'URL de la nouvelle page avec le mois sélectionné
+        const url = 'calendrier.html?mois=' + m; // Remplacez 'calendrier.html' par le chemin de votre nouvelle page
+        
+        // Redirige vers la nouvelle page
+        window.location.href = url;
+    });
 
       monthNameRow.appendChild(monthNameCell);
       table.appendChild(monthNameRow);
