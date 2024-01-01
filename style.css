@@ -6,7 +6,7 @@ body {
   height: 100vh;
   margin: 0;
   /*background-color: #FFD9E6; /* Rose pâle */
-  background-color: #5da09c; 
+  background-color: #AEDFF7; 
 }
 
 
@@ -34,7 +34,8 @@ h1, h2 {
   overflow: hidden;
   margin-bottom: 3px;
   /*background-color: #FFB6C1; /* Rose clair */
-  background-color: #5da09c; 
+  background-color: #E0E0E0;
+  color: #333333; 
 }
 
 table {
@@ -53,8 +54,8 @@ th, td {
 /* Couleur marron foncé pour les noms des mois */
 th[colspan="7"] {
   /*background-color: #FF69B4; /* Rose plus foncé */
-  background-color: #5da09c; 
-  color: #3E2723;
+  background-color: #FFD3E0; 
+  color: #333333;
   padding: 3px;
   font-size: 14px;
 }

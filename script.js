@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", function() {
                   cell.textContent = '';
               }
               row.appendChild(cell);
+              
           }
           table.appendChild(row);
       }

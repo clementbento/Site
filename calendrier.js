@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     cell.textContent = '';
                 } else if (dayCounter <= daysInMonth) {
                     cell.textContent = dayCounter;
+                    
 
                     // Ajoute un gestionnaire d'événements de clic à la cellule
                     cell.addEventListener('click', function() {
@@ -56,4 +57,8 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
         window.location.href = 'erreur.html'; // Remplacez 'erreur.html' par le chemin de votre page d'erreur
     }
+    
 });
+function goBack() {
+    window.history.back();
+}

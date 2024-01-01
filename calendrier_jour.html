@@ -10,12 +10,13 @@
 
 <div id="leftSection">
     <h2 id="dateTitle"></h2>
-
+    <button id="backButton" onclick="goBack()">Retour</button>
     <!-- Formulaire pour la liste de tâches -->
     <form id="taskForm">
         <label for="taskInput">Liste de tâches :</label>
         <textarea id="taskInput" rows="4" cols="30"></textarea>
         <button type="button" onclick="addTask()">Ajouter Tâche</button>
+        <button type="button" id="clearButton" onclick="clearTasks()">Clear</button>
 
         <!-- Liste des tâches ajoutées -->
         <div id="taskList"></div>
@@ -24,7 +25,7 @@
 
 <div id="rightSection">
     <h3>Bloc-notes</h3>
-    <textarea id="noteInput" rows="35" cols="40"></textarea>
+    <textarea id="noteInput" rows="8" cols="40"></textarea>
 </div>
 
 <script src="calendrier_jour.js"></script>
