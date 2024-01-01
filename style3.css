@@ -1,0 +1,23 @@
+body {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: #5da09c; 
+}
+
+#leftSection, #rightSection {
+    width: 48%;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #5da09c;
+}
+
+#rightSection {
+    background-color: #5da09c;
+}
+
+textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #979797; 
+}

@@ -18,6 +18,13 @@ document.addEventListener("DOMContentLoaded", function() {
         if (savedNotes) {
             document.getElementById('noteInput').value = savedNotes;
         }
+
+        // Affichage des tâches ajoutées précédemment
+        const taskList = document.getElementById('taskList');
+        const savedTaskList = localStorage.getItem(`taskList_${selectedMonth}_${selectedDay}`);
+        if (savedTaskList) {
+            taskList.innerHTML = savedTaskList;
+        }
     } else {
         window.location.href = 'erreur.html'; // Remplacez 'erreur.html' par le chemin de votre page d'erreur
     }
@@ -28,22 +35,26 @@ function addTask() {
     const taskInput = document.getElementById('taskInput');
     const tasks = taskInput.value.trim();
 
-    // Sauvegarde des tâches dans le stockage local
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedMonth = urlParams.get('mois');
-    const selectedDay = urlParams.get('jour');
-    localStorage.setItem(`tasks_${selectedMonth}_${selectedDay}`, tasks);
-    alert('Tâche ajoutée avec succès!');
+    if (tasks !== '') {
+        // Ajout de la tâche à la liste sous la zone d'écriture
+        const taskList = document.getElementById('taskList');
+        const newTaskItem = document.createElement('div');
+        newTaskItem.textContent = tasks;
+        taskList.appendChild(newTaskItem);
+
+        // Effacement de la zone d'écriture
+        taskInput.value = '';
+
+        // Sauvegarde des tâches dans le stockage local
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedMonth = urlParams.get('mois');
+        const selectedDay = urlParams.get('jour');
+        localStorage.setItem(`tasks_${selectedMonth}_${selectedDay}`, tasks);
+
+        // Sauvegarde de la liste des tâches
+        const taskListHTML = taskList.innerHTML;
+        localStorage.setItem(`taskList_${selectedMonth}_${selectedDay}`, taskListHTML);
+
+        alert('Tâche ajoutée avec succès!');
+    }
 }
-
-// Fonction pour sauvegarder les notes
-document.getElementById('noteInput').addEventListener('input', function() {
-    const noteInput = document.getElementById('noteInput');
-    const notes = noteInput.value.trim();
-
-    // Sauvegarde des notes dans le stockage local
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedMonth = urlParams.get('mois');
-    const selectedDay = urlParams.get('jour');
-    localStorage.setItem(`notes_${selectedMonth}_${selectedDay}`, notes);
-});

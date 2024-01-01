@@ -25,6 +25,11 @@
         textarea {
             width: 100%;
             box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        #taskList {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -38,12 +43,15 @@
         <label for="taskInput">Liste de tâches :</label>
         <textarea id="taskInput" rows="4" cols="30"></textarea>
         <button type="button" onclick="addTask()">Ajouter Tâche</button>
+
+        <!-- Liste des tâches ajoutées -->
+        <div id="taskList"></div>
     </form>
 </div>
 
 <div id="rightSection">
     <h3>Bloc-notes</h3>
-    <textarea id="noteInput" rows="30" cols="40"></textarea>
+    <textarea id="noteInput" rows="35" cols="40"></textarea>
 </div>
 
 <script src="calendrier_jour.js"></script>
