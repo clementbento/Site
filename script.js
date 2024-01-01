@@ -1,71 +1,62 @@
-function daysInMonth(month, year) {
-  return new Date(year, month + 1, 0).getDate();
-}
+document.addEventListener("DOMContentLoaded", function() {
+  // Crée un tableau avec le nom de chaque mois
+  const mois = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
-function generateCalendarGrid(year) {
-  var calendarGrid = document.getElementById('calendar-grid');
-  calendarGrid.innerHTML = ''; // Clear the existing calendar content
+  // Récupère l'élément qui contient les cellules du calendrier
+  const calendarContainer = document.querySelector('.calendar-container');
 
-  var months = [
-    "Janvier", "Février", "Mars", "Avril",
-    "Mai", "Juin", "Juillet", "Août",
-    "Septembre", "Octobre", "Novembre", "Décembre"
-  ];
+  // Parcours chaque mois
+  mois.forEach(function(m) {
+      // Crée un div pour le mois avec un ID unique
+      const monthDiv = document.createElement('div');
+      monthDiv.className = 'calendar-cell';
+      monthDiv.id = 'CalendarCell' + m;
 
-  for (var i = 0; i < 3; i++) {
-    var rowDiv = document.createElement('div');
-    rowDiv.classList.add('calendar-row');
+      // Ajoute le div du mois au container
+      calendarContainer.appendChild(monthDiv);
+  });
 
-    for (var j = 0; j < 4; j++) {
-      var monthIndex = i * 4 + j;
-      var monthContainer = document.createElement('div');
-      monthContainer.classList.add('month-container');
+  // Parcours à nouveau chaque mois pour remplir le calendrier
+  mois.forEach(function(m) {
+      // Récupère l'élément avec l'ID correspondant au mois
+      const monthDiv = document.getElementById('CalendarCell' + m);
 
-      var monthHeader = document.createElement('div');
-      monthHeader.classList.add('month-header');
-      monthHeader.textContent = months[monthIndex] + ' ' + year;
+      // Crée une table pour le calendrier
+      const table = document.createElement('table');
 
-      var calendarTable = document.createElement('table');
-      calendarTable.classList.add('calendar-table');
+      // Crée une ligne pour les jours de la semaine
+      const dayRow = document.createElement('tr');
+      ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].forEach(function(jour) {
+          const dayCell = document.createElement('th');
+          dayCell.textContent = jour;
+          dayRow.appendChild(dayCell);
+      });
+      table.appendChild(dayRow);
 
-      var daysRow = calendarTable.insertRow();
+      // Récupère le premier jour du mois et le nombre de jours dans le mois
+      const firstDay = new Date(2024, mois.indexOf(m), 1).getDay();
+      const daysInMonth = new Date(2024, mois.indexOf(m) + 1, 0).getDate();
 
-      for (var day = 0; day < 7; day++) {
-        var daysCell = daysRow.insertCell();
-        daysCell.textContent = ['L', 'M', 'M', 'J', 'V', 'S', 'D'][day];
-      }
-
-      var dayCount = 1;
-
-      for (var k = 0; k < 6; k++) {
-        var newRow = calendarTable.insertRow();
-
-        for (var l = 0; l < 7; l++) {
-          var newCell = newRow.insertCell();
-
-          var totalDays = daysInMonth(monthIndex, year);
-          var firstDay = new Date(year, monthIndex, 1).getDay();
-
-          if (k === 0 && l < firstDay) {
-            newCell.innerHTML = '';
-          } else if (dayCount <= totalDays) {
-            newCell.innerHTML = dayCount;
-            dayCount++;
-          } else {
-            newCell.innerHTML = '';
+      // Crée les cellules pour chaque jour du mois
+      let dayCounter = 1;
+      for (let i = 0; i < 6; i++) {
+          const row = document.createElement('tr');
+          for (let j = 0; j < 7; j++) {
+              const cell = document.createElement('td');
+              if (i === 0 && j < firstDay) {
+                  // Les jours du mois précédent
+                  cell.textContent = '';
+              } else if (dayCounter <= daysInMonth) {
+                  // Les jours du mois en cours
+                  cell.textContent = dayCounter;
+                  dayCounter++;
+              }
+              row.appendChild(cell);
           }
-        }
+          table.appendChild(row);
       }
 
-      monthContainer.appendChild(monthHeader);
-      monthContainer.appendChild(calendarTable);
-      rowDiv.appendChild(monthContainer);
-    }
-
-    calendarGrid.appendChild(rowDiv);
-  }
-}
-
-// Initial display for the current year
-var currentYear = new Date().getFullYear();
-generateCalendarGrid(currentYear);
+      // Ajoute la table au div du mois
+      monthDiv.appendChild(table);
+  });
+});
