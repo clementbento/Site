@@ -1,7 +1,0 @@
-Choses à faire 
-- Masquer les url
-- Ajouter un bouton paramètres sans la partie personnage
-    > modifier username
-    > reset à 0
-- Travailler l'esthétique des pages (ajouter des vrais images ?)
-
