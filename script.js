@@ -1,43 +1,71 @@
-// Fonction pour obtenir le nombre de jours dans un mois
 function daysInMonth(month, year) {
-    return new Date(year, month + 1, 0).getDate();
-  }
-  
-  // Obtenez le premier jour de janvier 2024 (0 pour dimanche, 1 pour lundi, etc.)
-  var firstDay = (new Date(2024, 0, 1).getDay() + 6) % 7; // Ajout de 6 et modulo 7 pour ajuster le jour de la semaine
+  return new Date(year, month + 1, 0).getDate();
+}
 
-  
-  // Obtenez le nombre total de jours dans janvier 2024
-  var totalDays = daysInMonth(0, 2024);
-  
-  // Sélectionnez la balise tbody pour y ajouter les jours
-  var tbody = document.getElementById('calendar-body');
-  
-  // Variable pour compter les jours
-  var dayCount = 1;
-  
-  // Boucle pour créer les lignes du calendrier
-  for (var i = 0; i < 6; i++) {
-    // Créez une nouvelle ligne dans le tableau
-    var row = tbody.insertRow();
-  
-    // Boucle pour créer les cellules de la ligne
-    for (var j = 0; j < 7; j++) {
-      // Créez une nouvelle cellule dans la ligne
-      var cell = row.insertCell();
-  
-      // Ajoutez le jour dans la cellule s'il est dans le mois, sinon laissez la cellule vide
-      if (i === 0 && j < firstDay) {
-        // Laissez la cellule vide pour les jours avant le premier jour du mois
-        cell.innerHTML = '';
-      } else if (dayCount <= totalDays) {
-        // Ajoutez le jour dans la cellule
-        cell.innerHTML = dayCount;
-        dayCount++;
-      } else {
-        // Laissez la cellule vide pour les jours après le dernier jour du mois
-        cell.innerHTML = '';
+function generateCalendarGrid(year) {
+  var calendarGrid = document.getElementById('calendar-grid');
+  calendarGrid.innerHTML = ''; // Clear the existing calendar content
+
+  var months = [
+    "Janvier", "Février", "Mars", "Avril",
+    "Mai", "Juin", "Juillet", "Août",
+    "Septembre", "Octobre", "Novembre", "Décembre"
+  ];
+
+  for (var i = 0; i < 3; i++) {
+    var rowDiv = document.createElement('div');
+    rowDiv.classList.add('calendar-row');
+
+    for (var j = 0; j < 4; j++) {
+      var monthIndex = i * 4 + j;
+      var monthContainer = document.createElement('div');
+      monthContainer.classList.add('month-container');
+
+      var monthHeader = document.createElement('div');
+      monthHeader.classList.add('month-header');
+      monthHeader.textContent = months[monthIndex] + ' ' + year;
+
+      var calendarTable = document.createElement('table');
+      calendarTable.classList.add('calendar-table');
+
+      var daysRow = calendarTable.insertRow();
+
+      for (var day = 0; day < 7; day++) {
+        var daysCell = daysRow.insertCell();
+        daysCell.textContent = ['L', 'M', 'M', 'J', 'V', 'S', 'D'][day];
       }
+
+      var dayCount = 1;
+
+      for (var k = 0; k < 6; k++) {
+        var newRow = calendarTable.insertRow();
+
+        for (var l = 0; l < 7; l++) {
+          var newCell = newRow.insertCell();
+
+          var totalDays = daysInMonth(monthIndex, year);
+          var firstDay = new Date(year, monthIndex, 1).getDay();
+
+          if (k === 0 && l < firstDay) {
+            newCell.innerHTML = '';
+          } else if (dayCount <= totalDays) {
+            newCell.innerHTML = dayCount;
+            dayCount++;
+          } else {
+            newCell.innerHTML = '';
+          }
+        }
+      }
+
+      monthContainer.appendChild(monthHeader);
+      monthContainer.appendChild(calendarTable);
+      rowDiv.appendChild(monthContainer);
     }
+
+    calendarGrid.appendChild(rowDiv);
   }
-  
+}
+
+// Initial display for the current year
+var currentYear = new Date().getFullYear();
+generateCalendarGrid(currentYear);

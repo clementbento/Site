@@ -13,41 +13,57 @@ body {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  text-align: center;
 }
 
 h1 {
   color: #333;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
+#calendar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
 }
 
-th, td {
+.month-container {
+  width: 200px; /* Ajustez la largeur selon votre préférence */
+  border: 1px solid #3498db;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px;
+}
+
+.month-header {
+  background-color: #3498db;
+  color: #fff;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.calendar-table th, .calendar-table td {
   padding: 10px;
   text-align: center;
   border: 1px solid #3498db;
 }
 
-th {
+.calendar-table th {
   background-color: #3498db;
   color: #fff;
 }
 
-td {
+.calendar-table td {
   background-color: #ecf0f1;
 }
 
-/* Style pour les jours vides */
-td:empty {
-  background-color: transparent;
-  border: none;
-}
-
 /* Style pour les jours du mois */
-td:not(:empty) {
+.calendar-table td:not(:empty) {
   font-weight: bold;
   color: #333;
 }
