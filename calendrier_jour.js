@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
 function goBack() {
     window.history.back();
 }
+
 // Fonction pour ajouter une tâche
 function addTask() {
     const taskInput = document.getElementById('taskInput');
@@ -74,9 +75,6 @@ function addTask() {
         taskInput.value = '';
 
         // Sauvegarde des tâches dans le stockage local
-        const urlParams = new URLSearchParams(window.location.search);
-        const selectedMonth = urlParams.get('mois');
-        const selectedDay = urlParams.get('jour');
         localStorage.setItem(`tasks_${selectedMonth}_${selectedDay}`, tasks);
 
         // Sauvegarde de la liste des tâches
@@ -92,9 +90,6 @@ function clearTasks() {
     taskList.innerHTML = '';
 
     // Effacement des tâches dans le stockage local
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedMonth = urlParams.get('mois');
-    const selectedDay = urlParams.get('jour');
     localStorage.removeItem(`tasks_${selectedMonth}_${selectedDay}`);
     localStorage.removeItem(`taskList_${selectedMonth}_${selectedDay}`);
 }
@@ -108,4 +103,3 @@ function toggleTaskCompletion(checkbox) {
         taskText.style.textDecoration = 'none'; // Débarre le texte si la case est décochée
     }
 }
-

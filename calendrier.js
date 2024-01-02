@@ -1,6 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
     const mois = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
+    // Récupération des jours avec des tâches depuis le stockage local
+    const savedTaskDays = localStorage.getItem('taskDays');
+    const daysWithTasks = savedTaskDays ? JSON.parse(savedTaskDays) : [];
+
+    // Fonction pour vérifier si un jour a des tâches associées
+    function hasTasksForDay(day) {
+        return daysWithTasks.includes(day);
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const selectedMonth = urlParams.get('mois');
 
@@ -33,13 +42,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     cell.textContent = '';
                 } else if (dayCounter <= daysInMonth) {
                     cell.textContent = dayCounter;
-                    
+
+                    // Ajout de la classe has-tasks si le jour a des tâches
+                    if (hasTasksForDay(dayOfMonth)) {
+                        cell.classList.add('has-tasks');
+                    }
 
                     // Ajoute un gestionnaire d'événements de clic à la cellule
                     cell.addEventListener('click', function() {
                         // Construit l'URL de la nouvelle page avec le mois et le jour sélectionnés
                         const url = 'calendrier_jour.html?mois=' + selectedMonth + '&jour=' + dayOfMonth;
-                        
+
                         // Redirige vers la nouvelle page
                         window.location.href = url;
                     });

@@ -31,3 +31,6 @@ th {
 td {
     background-color: #fff;
 }
+td.has-tasks {
+    color: red; /* Changez la couleur selon vos préférences */
+}
