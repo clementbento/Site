@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Window</title>
+    <link rel="stylesheet" href="newWindow.css">
+</head>
+<body>
+    <h1 id="newWindowTitle">Données du Jour</h1>
+    <div id="newWindowContent">
+        <p id="dayData" data-day=""></p>
+        <p id="monthData" data-month=""></p>
+        <p id="valueData"></p>
+
+        <label for="dataInput">Ajouter/Modifier la donnée :</label>
+        <textarea id="dataInput" rows="4" cols="50"></textarea>
+
+        <button onclick="updateDatabase()">Enregistrer</button>
+    </div>
+
+    <!-- Include Firebase legacy scripts before your newWindowScript.js -->
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-firestore.js"></script>
+
+    <!-- Your newWindowScript.js -->
+    <script src="newWindow.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+#newWindowTitle {
+    color: #333;
+}
+
+#newWindowContent {
+    margin-top: 20px;
+}
+
+p {
+    margin: 10px 0;
+    font-size: 16px;
+}
