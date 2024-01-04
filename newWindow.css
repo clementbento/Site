@@ -12,43 +12,42 @@ body {
 
 #container {
     display: flex;
-    justify-content: space-between;
-    width: 80%; /* Ajustez la largeur du conteneur principal selon vos besoins */
-    margin: 0 auto; /* Centrer le conteneur principal */
+    flex-direction: column; /* Afficher les éléments en colonne */
+    align-items: center;
+    width: 80%;
+    margin: 0 auto;
 }
 
-
-
 #newWindowTitle {
+    text-align: center;
+}
+
+#contentContainer {
+    display: flex;
+    justify-content: space-between; /* Répartir l'espace entre le contenu et le bloc-note */
+    width: 100%;
     margin-top: 20px;
 }
 
 #newWindowContent {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-#contentContainer {
-    flex: 1;
-    margin-bottom: 10px; /* Ajout de la marge en bas */
+    width: 60%; /* Ajustez la largeur selon vos besoins */
 }
 
 #notePad {
-    background-color: #FFE4E1; /* Rose pâle */
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 35%; /* Ajustez la largeur selon vos besoins */
+    border: 2px solid #FFE4E1; /* Bordure rose pâle */
+    background-color: #FFE4E1; /* Fond rose pâle */
+    padding: 10px; /* Marge intérieure */
+    box-sizing: border-box; /* Ajuster la largeur pour inclure le padding */
 }
 
 
 
 #notePad h2 {
-    margin-bottom: 10px;
+    text-align: center; /* Centrer le titre du bloc-note */
 }
 
 #notePadInput {
     width: 100%;
+    box-sizing: border-box; /* Ajuster la largeur pour inclure le padding */
 }

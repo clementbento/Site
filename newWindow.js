@@ -119,6 +119,7 @@ function updateDatabase() {
 
       // Mettre à jour la liste des valeurs
       updateDatabaseValuesList(day, month);
+      dataInput.value = '';
     })
     .catch((error) => {
       console.error("Error writing document: ", error);
@@ -127,6 +128,8 @@ function updateDatabase() {
     alert("Veuillez entrer une valeur valide.");
   }
 }
+
+// ...
 
 function updateDatabaseValuesList(day, month) {
   const db = firebase.firestore();
@@ -147,6 +150,16 @@ function updateDatabaseValuesList(day, month) {
         values.forEach((item) => {
           const listItem = document.createElement('li');
 
+          // Ajout d'un bouton de suppression à côté de chaque valeur
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = '❌';
+          deleteButton.addEventListener('click', function () {
+            // Supprimer la valeur de la base de données
+            deleteValue(day, month, item.value);
+          });
+
+          listItem.appendChild(deleteButton);
+
           // Ajout d'une case à cocher à côté de chaque valeur
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
@@ -157,7 +170,7 @@ function updateDatabaseValuesList(day, month) {
           });
 
           listItem.appendChild(checkbox);
-          
+
           // Ajout de la valeur à côté de la case à cocher
           const valueSpan = document.createElement('span');
           valueSpan.textContent = item.value;
@@ -171,6 +184,39 @@ function updateDatabaseValuesList(day, month) {
       console.error("Error getting document: ", error);
     });
 }
+
+function deleteValue(day, month, value) {
+  const db = firebase.firestore();
+  const docRef = db.collection('calendarData').doc(`${month}-${day}`);
+
+  docRef.get()
+    .then((doc) => {
+      if (doc.exists) {
+        const values = doc.data().values || [];
+
+        // Supprimer la valeur spécifique de la liste
+        const updatedValues = values.filter((item) => item.value !== value);
+
+        // Mettre à jour le document avec les nouvelles valeurs
+        docRef.update({
+          values: updatedValues
+        })
+        .then(() => {
+          console.log("Value deleted: ", value);
+
+          // Mettre à jour la liste des valeurs
+          updateDatabaseValuesList(day, month);
+        })
+        .catch((error) => {
+          console.error("Error updating document: ", error);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("Error getting document: ", error);
+    });
+}
+
 
 function updateCheckedState(day, month, value, checked) {
   const db = firebase.firestore();
