@@ -1,17 +1,54 @@
 body {
+    background-color: #AEDFF7;
     font-family: Arial, sans-serif;
-    margin: 20px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
 }
+
+#container {
+    display: flex;
+    justify-content: space-between;
+    width: 80%; /* Ajustez la largeur du conteneur principal selon vos besoins */
+    margin: 0 auto; /* Centrer le conteneur principal */
+}
+
+
 
 #newWindowTitle {
-    color: #333;
-}
-
-#newWindowContent {
     margin-top: 20px;
 }
 
-p {
-    margin: 10px 0;
-    font-size: 16px;
+#newWindowContent {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#contentContainer {
+    flex: 1;
+    margin-bottom: 10px; /* Ajout de la marge en bas */
+}
+
+#notePad {
+    background-color: #FFE4E1; /* Rose pâle */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+
+#notePad h2 {
+    margin-bottom: 10px;
+}
+
+#notePadInput {
+    width: 100%;
 }
