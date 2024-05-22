@@ -3,13 +3,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const increaseButton = document.getElementById("increase");
     const decreaseButton = document.getElementById("decrease");
     const validateButton = document.getElementById("validate");
-    const historyButton = document.getElementById("history");
     const historyModal = document.getElementById("history-modal");
     const closeModal = document.getElementById("close-modal");
     const historyList = document.getElementById("history-list");
 
     let count = 0;
-    let history = [];
+    let history = JSON.parse(localStorage.getItem('insulinHistory')) || [];
 
     increaseButton.addEventListener("click", () => {
         count++;
@@ -30,17 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         history.push(record);
         localStorage.setItem('insulinHistory', JSON.stringify(history));
-        alert("Dose enregistrée !");
-    });
-
-    historyButton.addEventListener("click", () => {
-        historyList.innerHTML = '';
-        history = JSON.parse(localStorage.getItem('insulinHistory')) || [];
-        history.forEach(record => {
-            const listItem = document.createElement('li');
-            listItem.textContent = `${record.date} à ${record.time} - Dose: ${record.dose}`;
-            historyList.appendChild(listItem);
-        });
+        updateHistoryList();
         historyModal.style.display = "block";
     });
 
@@ -53,4 +42,31 @@ document.addEventListener("DOMContentLoaded", () => {
             historyModal.style.display = "none";
         }
     });
+
+    function updateHistoryList() {
+        historyList.innerHTML = '';
+        history.forEach((record, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'history-item';
+
+            const itemText = document.createElement('span');
+            itemText.textContent = `${record.date} à ${record.time} - Dose: ${record.dose}`;
+            
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-button';
+            deleteButton.textContent = '✖';
+            deleteButton.addEventListener('click', () => {
+                history.splice(index, 1);
+                localStorage.setItem('insulinHistory', JSON.stringify(history));
+                updateHistoryList();
+            });
+
+            listItem.appendChild(itemText);
+            listItem.appendChild(deleteButton);
+            historyList.appendChild(listItem);
+        });
+    }
+
+    // Initial call to update the history list on page load
+    updateHistoryList();
 });

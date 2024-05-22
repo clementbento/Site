@@ -88,3 +88,21 @@ button:active {
     list-style-type: none;
     padding: 0;
 }
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.history-item span {
+    flex-grow: 1;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    color: red;
+    font-size: 16px;
+    cursor: pointer;
+}
