@@ -70,3 +70,4 @@ app.get('/search-movie', async (req, res) => {
 app.listen(port, () => {
     console.log(`Serverul a pornit la http://localhost:${port}`);
 });
+
