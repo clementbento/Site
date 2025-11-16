@@ -12,7 +12,6 @@
             transition: background-color 0.4s;
         }
 
-        /* Animation vibration page */
         @keyframes shake {
             0% { transform: translate(0, 0); }
             25% { transform: translate(5px, -5px); }
@@ -25,14 +24,11 @@
             animation: shake 0.4s ease;
         }
 
-        h1 {
-            color: #a86d3b;
-        }
+        h1 { color: #a86d3b; }
         .counter {
             font-size: 80px;
             margin: 20px;
             color: #4e342e;
-            transition: 0.2s;
         }
 
         button {
@@ -57,8 +53,9 @@
     <button class="minus" onclick="decrement()">−1</button>
     <button class="reset" onclick="resetCount()">Réinitialiser</button>
 
+    <!-- Son local encodé en Base64 -->
     <audio id="ding">
-        <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm.ogg" type="audio/ogg">
+        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQcAAAAA/////wAAAP///w==" type="audio/wav">
     </audio>
 
     <script>
@@ -71,24 +68,22 @@
             counterDisplay.textContent = count;
             localStorage.setItem("compteurCrochet", count);
 
-            // Remettre le fond normal et enlever shake
             body.classList.remove("shake");
             body.style.backgroundColor = "#f3efe9";
 
-            // Si multiple de 8 → signal complet
             if (count > 0 && count % 8 === 0) {
 
-                // Son
+                // Son local
                 ding.currentTime = 0;
                 ding.play().catch(() => {});
 
                 // Vibration mobile
                 if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
 
-                // Animation de vibration de la page
+                // Animation
                 body.classList.add("shake");
 
-                // Changer la couleur de fond brièvement
+                // Changement couleur temporaire
                 body.style.backgroundColor = "#ffcdd2";
                 setTimeout(() => {
                     body.style.backgroundColor = "#f3efe9";
@@ -111,7 +106,6 @@
             update();
         }
 
-        // Charger la valeur sauvegardée
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
             if (saved !== null) count = Number(saved);
