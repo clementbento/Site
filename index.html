@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>CompteurCrochet</title>
+    <title>Compteur Crochet</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,6 +12,7 @@
             transition: background-color 0.4s;
         }
 
+        /* Animation vibration page */
         @keyframes shake {
             0% { transform: translate(0, 0); }
             25% { transform: translate(5px, -5px); }
@@ -24,11 +25,14 @@
             animation: shake 0.4s ease;
         }
 
-        h1 { color: #a86d3b; }
+        h1 {
+            color: #a86d3b;
+        }
         .counter {
             font-size: 80px;
             margin: 20px;
             color: #4e342e;
+            transition: 0.2s;
         }
 
         button {
@@ -53,9 +57,8 @@
     <button class="minus" onclick="decrement()">−1</button>
     <button class="reset" onclick="resetCount()">Réinitialiser</button>
 
-    <!-- Son local encodé en Base64 -->
     <audio id="ding">
-        <source src="data:audio/wav;base64,UklGRsy6BgBXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0Yai6BgAAAGcAAABsAAAAcAAAAGwAAABnAAAAaAAAAG0AAABnAAAAawAAAGsAAABqAAAAbAAAAGgAAABqAAAAbAAAAGYAAABpAAAAYwAAAGcAAABiAAAAYwAAAGUAAABiAAAAZAAAAGIAAABjAAAAZQAAAGIAAABjAAAAYwAAAGUAAABhAAAAZAAAAGEAAABiAAAAZAAAAGEAAABiAAAAYQAAAGIAAABiAAAAZAAAAGIAAABkAAAAZAAAAGUAAABkAAAAZQAAAGQAAABlAAAAZAAAAGQAAABlAAAAYwAAAGUAAABiAAAAZQAAAGIAAABiAAAAYgAAAGQAAABiAAAAZAAAAGIAAABkAAAAZAAAAGQAAABkAAAAYwAAAGQAAABiAAAAZAAAAGIAAABiAAAAYgAAAGIAAABkAAAAZAAAAGIAAABiAAAAZAAAAGQAAABkAAAAZAAAAGIAAABiAAAAZAAAAGQAAABkAAAAZAAAAGQAAABkAAAAYwAAAGUAAABkAAAAZQAAAGQAAABkAAAAZAAAAGQAAABkAAAAZAAAAGQAAABkAAAAZAAAAGQAAABkAAAAZQAAAGUAAABlAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZAAAAGQAAABkAAAAZAAAAGUAAABkAAAAZAAAAGQAAABkAAAAZQAAAGUAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABkAAAAZAAAAGQAAABkAAAAZAAAAGQAAABkAAAAZAAAAGQAAABjAAAAZAAAAGIAAABkAAAAZAAAAGIAAABkAAAAZAAAAGIAAABiAAAAZAAAAGIAAABjAAAAZAAAAGIAAABjAAAAZAAAAGIAAABiAAAAZAAAAGIAAABiAAAAZAAAAGIAAABiAAAAZQAAAGIAAABiAAAAZQAAAGIAAABiAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGIAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABjAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGQAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGUAAABkAAAAZQAAAGVkSWQkyMz0SK8IYUgLR+2HSEcbxqjGL8WwxSzEo8QWw4ZDMoJcgcSBa0CRgDf/Xn7" type="audio/wav">
+        <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm.ogg" type="audio/ogg">
     </audio>
 
     <script>
@@ -68,22 +71,24 @@
             counterDisplay.textContent = count;
             localStorage.setItem("compteurCrochet", count);
 
+            // Remettre le fond normal et enlever shake
             body.classList.remove("shake");
             body.style.backgroundColor = "#f3efe9";
 
+            // Si multiple de 8 → signal complet
             if (count > 0 && count % 8 === 0) {
 
-                // Son local
+                // Son
                 ding.currentTime = 0;
                 ding.play().catch(() => {});
 
                 // Vibration mobile
                 if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
 
-                // Animation
+                // Animation de vibration de la page
                 body.classList.add("shake");
 
-                // Changement couleur temporaire
+                // Changer la couleur de fond brièvement
                 body.style.backgroundColor = "#ffcdd2";
                 setTimeout(() => {
                     body.style.backgroundColor = "#f3efe9";
@@ -106,6 +111,7 @@
             update();
         }
 
+        // Charger la valeur sauvegardée
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
             if (saved !== null) count = Number(saved);
