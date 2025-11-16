@@ -12,7 +12,6 @@
             transition: background-color 0.4s;
         }
 
-        /* Animation vibration page */
         @keyframes shake {
             0% { transform: translate(0, 0); }
             25% { transform: translate(5px, -5px); }
@@ -46,6 +45,7 @@
         .add { background: #8bc34a; }
         .minus { background: #e57373; }
         .reset { background: #bdbdbd; }
+        .custom { background: #64b5f6; }
     </style>
 </head>
 <body>
@@ -55,6 +55,7 @@
 
     <button class="add" onclick="increment()">+1 rang</button>
     <button class="minus" onclick="decrement()">−1</button>
+    <button class="custom" onclick="addCustomValue()">+ valeur précise</button>
     <button class="reset" onclick="resetCount()">Réinitialiser</button>
 
     <audio id="ding">
@@ -71,28 +72,17 @@
             counterDisplay.textContent = count;
             localStorage.setItem("compteurCrochet", count);
 
-            // Remettre le fond normal et enlever shake
             body.classList.remove("shake");
             body.style.backgroundColor = "#f3efe9";
 
-            // Si multiple de 7 → signal complet
-            if (count > 0 && count % 7 === 0) {
-
-                // Son
+            if (count > 0 && count % 8 === 0) {
                 ding.currentTime = 0;
                 ding.play().catch(() => {});
-
-                // Vibration mobile
                 if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
 
-                // Animation de vibration de la page
                 body.classList.add("shake");
-
-                // Changer la couleur de fond brièvement
                 body.style.backgroundColor = "#ffcdd2";
-                setTimeout(() => {
-                    body.style.backgroundColor = "#f3efe9";
-                }, 600);
+                setTimeout(() => { body.style.backgroundColor = "#f3efe9"; }, 600);
             }
         }
 
@@ -111,7 +101,25 @@
             update();
         }
 
-        // Charger la valeur sauvegardée
+        // 🆕 Fonction pour ajouter une valeur personnalisée
+        function addCustomValue() {
+            let value = prompt("Entrez la valeur à ajouter au compteur :");
+
+            if (value === null) return; // Annulé
+
+            value = Number(value);
+
+            if (isNaN(value)) {
+                alert("Veuillez entrer un nombre valide !");
+                return;
+            }
+
+            count += value;
+            if (count < 0) count = 0;
+
+            update();
+        }
+
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
             if (saved !== null) count = Number(saved);
