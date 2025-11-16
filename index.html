@@ -75,7 +75,7 @@
             body.classList.remove("shake");
             body.style.backgroundColor = "#f3efe9";
 
-            if (count > 0 && count % 8 === -1) {
+            if (count > 0 && count % 8 === 7) {
                 ding.currentTime = 0;
                 ding.play().catch(() => {});
                 if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
