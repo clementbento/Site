@@ -94,7 +94,11 @@
         setInterval(refreshLastUpdate, 1000);
 
         function update() {
-            counterDisplay.textContent = count;
+            if (count % 100 === 69) {
+            counterDisplay.textContent = count + " 😈";
+            } else {
+                counterDisplay.textContent = count;
+            }
             localStorage.setItem("compteurCrochet", count);
 
             lastUpdateTime = Date.now();
