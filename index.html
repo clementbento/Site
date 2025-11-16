@@ -2,26 +2,101 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compteur d'insuline</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Compteur Crochet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3efe9;
+            text-align: center;
+            padding: 40px;
+        }
+        h1 {
+            color: #a86d3b;
+        }
+        .counter {
+            font-size: 80px;
+            margin: 20px;
+            color: #4e342e;
+            transition: 0.2s;
+        }
+        .flash {
+            color: #d84315;
+            text-shadow: 0 0 15px #ffab91;
+        }
+        button {
+            font-size: 20px;
+            padding: 15px 25px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .add { background: #8bc34a; }
+        .minus { background: #e57373; }
+        .reset { background: #bdbdbd; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <button id="decrease">-</button>
-        <span id="counter">0</span>
-        <button id="increase">+</button>
-    </div>
-    <div class="actions">
-        <button id="validate">Valider</button>
-    </div>
-    <div id="history-modal" class="modal">
-        <div class="modal-content">
-            <span id="close-modal">&times;</span>
-            <h2>Historique des doses</h2>
-            <ul id="history-list"></ul>
-        </div>
-    </div>
-    <script src="script.js"></script>
+
+    <h1>Compteur de Crochet 🧶</h1>
+    <div class="counter" id="counter">0</div>
+
+    <button class="add" onclick="increment()">+1 rang</button>
+    <button class="minus" onclick="decrement()">−1</button>
+    <button class="reset" onclick="resetCount()">Réinitialiser</button>
+
+    <audio id="ding">
+        <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm.ogg" type="audio/ogg">
+    </audio>
+
+    <script>
+        let count = 0;
+        const counterDisplay = document.getElementById("counter");
+        const ding = document.getElementById("ding");
+
+        function update() {
+            counterDisplay.textContent = count;
+            localStorage.setItem("compteurCrochet", count);
+
+            // Enlever l'effet visuel
+            counterDisplay.classList.remove("flash");
+
+            // Si multiple de 8 → signal
+            if (count > 0 && count % 8 === 0) {
+                // Son
+                ding.currentTime = 0;
+                ding.play().catch(() => {});
+
+                // Vibration (si mobile compatible)
+                if (navigator.vibrate) navigator.vibrate(150);
+
+                // Flash visuel
+                counterDisplay.classList.add("flash");
+            }
+        }
+
+        function increment() {
+            count++;
+            update();
+        }
+
+        function decrement() {
+            if (count > 0) count--;
+            update();
+        }
+
+        function resetCount() {
+            count = 0;
+            update();
+        }
+
+        // Charger la valeur sauvegardée
+        window.onload = () => {
+            const saved = localStorage.getItem("compteurCrochet");
+            if (saved !== null) count = Number(saved);
+            update();
+        };
+    </script>
+
 </body>
 </html>
