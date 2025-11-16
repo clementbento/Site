@@ -9,7 +9,22 @@
             background: #f3efe9;
             text-align: center;
             padding: 40px;
+            transition: background-color 0.4s;
         }
+
+        /* Animation vibration page */
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(5px, -5px); }
+            50% { transform: translate(-5px, 5px); }
+            75% { transform: translate(5px, 5px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease;
+        }
+
         h1 {
             color: #a86d3b;
         }
@@ -19,10 +34,7 @@
             color: #4e342e;
             transition: 0.2s;
         }
-        .flash {
-            color: #d84315;
-            text-shadow: 0 0 15px #ffab91;
-        }
+
         button {
             font-size: 20px;
             padding: 15px 25px;
@@ -53,25 +65,34 @@
         let count = 0;
         const counterDisplay = document.getElementById("counter");
         const ding = document.getElementById("ding");
+        const body = document.body;
 
         function update() {
             counterDisplay.textContent = count;
             localStorage.setItem("compteurCrochet", count);
 
-            // Enlever l'effet visuel
-            counterDisplay.classList.remove("flash");
+            // Remettre le fond normal et enlever shake
+            body.classList.remove("shake");
+            body.style.backgroundColor = "#f3efe9";
 
-            // Si multiple de 8 → signal
+            // Si multiple de 8 → signal complet
             if (count > 0 && count % 8 === 0) {
+
                 // Son
                 ding.currentTime = 0;
                 ding.play().catch(() => {});
 
-                // Vibration (si mobile compatible)
-                if (navigator.vibrate) navigator.vibrate(150);
+                // Vibration mobile
+                if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
 
-                // Flash visuel
-                counterDisplay.classList.add("flash");
+                // Animation de vibration de la page
+                body.classList.add("shake");
+
+                // Changer la couleur de fond brièvement
+                body.style.backgroundColor = "#ffcdd2";
+                setTimeout(() => {
+                    body.style.backgroundColor = "#f3efe9";
+                }, 600);
             }
         }
 
