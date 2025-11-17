@@ -57,7 +57,7 @@
             cursor: pointer;
             background: #d7b89c;
             color: white;
-            margin-top: 10px;
+            margin: 10px auto;
             transition: 0.25s;
             font-weight: 600;
         }
@@ -72,20 +72,27 @@
             display: grid;
             gap: 1px;
             margin-top: 20px;
-            justify-content: center;
+            margin-left: auto;
+            margin-right: auto;
+            width: 300px;   /* largeur fixe */
+            height: 300px;  /* hauteur fixe */
+            border: 2px solid #c9b8a6;
+            background: #eee3d7;
         }
 
         .cell {
-            width: 28px;
-            height: 28px;
             background-color: white;
             border: 1px solid #e1d3c4;
-            transition: background 0.2s, transform 0.1s;
+            transition: background 0.2s;
         }
 
         .cell:hover {
-            transform: scale(1.05);
             border-color: #b89376;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         a {
@@ -101,10 +108,6 @@
             text-decoration: underline;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
 </head>
 <body>
@@ -126,6 +129,7 @@
 
     <div style="text-align:center;">
         <button onclick="createGrid()">Créer la grille</button>
+        <button onclick="clearGrid()">Tout effacer</button>
     </div>
 
     <div style="text-align:center; margin-top:20px;">
@@ -144,17 +148,36 @@ function createGrid() {
     const rows = parseInt(document.getElementById("rows").value);
     const grid = document.getElementById("grid");
 
-    grid.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
+    // Taille totale fixe : 300px
+    const totalSize = 300;
+    const cellWidth = totalSize / cols;
+    const cellHeight = totalSize / rows;
+
+    grid.style.gridTemplateColumns = `repeat(${cols}, ${cellWidth}px)`;
+    grid.style.gridTemplateRows = `repeat(${rows}, ${cellHeight}px)`;
+
     grid.innerHTML = "";
 
     for (let i = 0; i < cols * rows; i++) {
         const cell = document.createElement("div");
         cell.classList.add("cell");
+
+        cell.style.width = cellWidth + "px";
+        cell.style.height = cellHeight + "px";
+
         cell.addEventListener("click", () => {
             cell.style.backgroundColor = document.getElementById("colorPicker").value;
         });
+
         grid.appendChild(cell);
     }
+}
+
+// Efface toutes les cases sans changer la grille
+function clearGrid() {
+    document.querySelectorAll(".cell").forEach(cell => {
+        cell.style.backgroundColor = "white";
+    });
 }
 </script>
 
