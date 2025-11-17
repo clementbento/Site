@@ -3,266 +3,397 @@
 <head>
     <meta charset="UTF-8">
     <title>Dessin en cubes</title>
+
     <style>
         body {
-            font-family: "Segoe UI", Arial, sans-serif;
+            font-family: "Segoe UI", sans-serif;
             background: linear-gradient(135deg, #f3efe9, #e3d5c3);
             margin: 0;
-            padding: 40px;
+            padding: 30px;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
         }
 
         .container {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            background: #fff;
+            padding: 25px;
+            border-radius: 18px;
             width: 95%;
-            max-width: 550px;
-            animation: fadeIn 0.5s ease;
+            max-width: 620px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         }
 
         h1 {
-            text-align: center;
             color: #7b4b27;
+            text-align: center;
             margin-top: 0;
         }
 
-        label {
-            font-weight: 600;
-            color: #5c4a3f;
-        }
-
-        input[type="number"],
-        input[type="color"] {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: 1px solid #c9b8a6;
-            margin: 5px;
-        }
-
-        input[type="number"] {
-            width: 80px;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-size: 17px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            background: #d7b89c;
-            color: white;
-            margin: 10px auto;
-            transition: 0.25s;
-            font-weight: 600;
-        }
-
-        button:hover {
-            background: #b89376;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
-        }
-
-        #canvasWrapper {
+        /* Outils */
+        .tools {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .tools button {
+            padding: 10px 14px;
+            background: #d7b89c;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.15s;
+            font-weight: 600;
+        }
+
+        .tools button:hover {
+            background: #b89376;
+            transform: translateY(-3px);
+        }
+
+        .tools button.active {
+            background: #8d674d;
+        }
+
+        input[type="color"] {
+            border: none;
+            border-radius: 8px;
+            padding: 5px;
+            height: 40px;
         }
 
         #gridCanvas {
             border: 2px solid #c9b8a6;
-            background: #ffffff;
+            background: white;
+            margin-top: 15px;
+            cursor: crosshair;
         }
 
         a {
             display: block;
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: center;
-            font-size: 16px;
-            color: #6b5c50;
             text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+            color: #6b5c50;
         }
     </style>
 </head>
+
 <body>
 
 <div class="container">
     <h1>🎨 Dessin en cubes</h1>
 
-    <p style="text-align:center; color:#6b5c50;">
-        Crée ta grille puis clique pour colorier les cases !
-    </p>
-
+    <!--  Grille  -->
     <div style="text-align:center;">
         <label>Colonnes :</label>
         <input type="number" id="cols" min="1" max="300" value="20">
-
         <label>Lignes :</label>
         <input type="number" id="rows" min="1" max="300" value="20">
+        <button id="createGrid">Créer</button>
     </div>
 
-    <div style="text-align:center;">
-        <button id="createBtn">Créer la grille</button>
-        <button id="clearBtn">Tout effacer</button>
-    </div>
-
-    <div style="text-align:center; margin-top:20px;">
-        <label>Couleur du stylo :</label>
+    <!-- Outils -->
+    <div class="tools">
+        <button id="paint" class="active">🎨 Peindre</button>
+        <button id="erase">🧽 Gomme</button>
+        <button id="pipette">🎯 Pipette</button>
         <input type="color" id="colorPicker" value="#000000">
+
+        <button id="zoomIn">🔍 +</button>
+        <button id="zoomOut">🔍 -</button>
+
+        <button id="saveA">💾 Slot A</button>
+        <button id="loadA">📥 A</button>
+        <button id="clearA">🗑️ A</button>
+
+        <button id="saveB">💾 Slot B</button>
+        <button id="loadB">📥 B</button>
+        <button id="clearB">🗑️ B</button>
+
+        <button id="saveC">💾 Slot C</button>
+        <button id="loadC">📥 C</button>
+        <button id="clearC">🗑️ C</button>
+
+        <button id="download">🖼 PNG</button>
+        <button id="clearGrid">Tout effacer</button>
     </div>
 
-    <div id="canvasWrapper">
-        <canvas id="gridCanvas" width="600" height="600"></canvas>
-    </div>
+    <canvas id="gridCanvas" width="600" height="600"></canvas>
 
     <a href="index.html">⬅ Retour à l'accueil</a>
 </div>
 
+
 <script>
-    const canvas = document.getElementById("gridCanvas");
-    const ctx = canvas.getContext("2d");
+/* ───────────────────────────────────────────── */
+/*                  VARIABLES                     */
+/* ───────────────────────────────────────────── */
+const canvas = document.getElementById("gridCanvas");
+const ctx = canvas.getContext("2d");
 
-    const colsInput = document.getElementById("cols");
-    const rowsInput = document.getElementById("rows");
-    const colorPicker = document.getElementById("colorPicker");
+let cols = 20;
+let rows = 20;
+let grid = [];
+let zoom = 1;
+let offsetX = 0;
+let offsetY = 0;
 
-    const createBtn = document.getElementById("createBtn");
-    const clearBtn = document.getElementById("clearBtn");
+let tool = "paint"; // paint | erase | pipette
 
-    let cols = 20;
-    let rows = 20;
-    let grid = [];
+const CANVAS_SIZE = 600;
 
-    const CANVAS_SIZE = 600;
+/* Inputs */
+const colsI = document.getElementById("cols");
+const rowsI = document.getElementById("rows");
+const createBtn = document.getElementById("createGrid");
+const colorPicker = document.getElementById("colorPicker");
 
-    // ───────────────────────────────────────────────
-    //                SAUVEGARDE LOCALSTORAGE
-    // ───────────────────────────────────────────────
-    function saveState() {
-        localStorage.setItem("gridData", JSON.stringify({
-            cols,
-            rows,
-            grid
-        }));
-    }
+/* Tools */
+const paintBtn = document.getElementById("paint");
+const eraseBtn = document.getElementById("erase");
+const pipetteBtn = document.getElementById("pipette");
+const clearBtn = document.getElementById("clearGrid");
 
-    function loadState() {
-        const data = localStorage.getItem("gridData");
-        if (!data) return false;
+const zoomIn = document.getElementById("zoomIn");
+const zoomOut = document.getElementById("zoomOut");
+const downloadBtn = document.getElementById("download");
 
-        try {
-            const parsed = JSON.parse(data);
-            cols = parsed.cols;
-            rows = parsed.rows;
-            grid = parsed.grid;
+/* Slots */
+const slots = {
+    A: { save: saveA, load: loadA, clear: clearA },
+    B: { save: saveB, load: loadB, clear: clearB },
+    C: { save: saveC, load: loadC, clear: clearC },
+};
 
-            colsInput.value = cols;
-            rowsInput.value = rows;
+/* ───────────────────────────────────────────── */
+/*                  GRILLE / DESSIN               */
+/* ───────────────────────────────────────────── */
+function emptyGrid(c, r) {
+    return Array.from({ length: r }, () => Array(c).fill(null));
+}
 
-            return true;
-        } catch (err) {
-            console.error("Erreur chargement :", err);
-            return false;
-        }
-    }
+function draw() {
+    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    // ─────────────────────────────────────────
-    //               GESTION GRILLE
-    // ─────────────────────────────────────────
-    function createEmptyGrid(c, r) {
-        return Array.from({ length: r }, () => Array(c).fill(null));
-    }
+    const cellW = (CANVAS_SIZE / cols) * zoom;
+    const cellH = (CANVAS_SIZE / rows) * zoom;
 
-    function draw() {
-        const cellW = CANVAS_SIZE / cols;
-        const cellH = CANVAS_SIZE / rows;
-
-        ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-        // Couleurs
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                if (grid[y][x]) {
-                    ctx.fillStyle = grid[y][x];
-                    ctx.fillRect(x * cellW, y * cellH, cellW, cellH);
-                }
+    // Dessin couleurs
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            if (grid[y][x]) {
+                ctx.fillStyle = grid[y][x];
+                ctx.fillRect(
+                    offsetX + x * cellW,
+                    offsetY + y * cellH,
+                    cellW,
+                    cellH
+                );
             }
         }
-
-        // Quadrillage
-        ctx.strokeStyle = "#d8c7b6";
-        ctx.lineWidth = 1;
-
-        for (let x = 0; x <= cols; x++) {
-            ctx.beginPath();
-            ctx.moveTo(x * cellW, 0);
-            ctx.lineTo(x * cellW, CANVAS_SIZE);
-            ctx.stroke();
-        }
-
-        for (let y = 0; y <= rows; y++) {
-            ctx.beginPath();
-            ctx.moveTo(0, y * cellH);
-            ctx.lineTo(CANVAS_SIZE, y * cellH);
-            ctx.stroke();
-        }
     }
 
-    canvas.addEventListener("click", (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const cellW = CANVAS_SIZE / cols;
-        const cellH = CANVAS_SIZE / rows;
+    // Grille
+    ctx.strokeStyle = "#d8c7b6";
+    ctx.lineWidth = 1;
 
-        const x = Math.floor((e.clientX - rect.left) / cellW);
-        const y = Math.floor((e.clientY - rect.top) / cellH);
-
-        if (x >= 0 && x < cols && y >= 0 && y < rows) {
-            grid[y][x] = colorPicker.value;
-            saveState();
-            draw();
-        }
-    });
-
-    // ────────────────────────────────
-    //             BOUTONS
-    // ────────────────────────────────
-    createBtn.addEventListener("click", () => {
-        cols = parseInt(colsInput.value);
-        rows = parseInt(rowsInput.value);
-
-        grid = createEmptyGrid(cols, rows);
-        saveState();
-        draw();
-    });
-
-    clearBtn.addEventListener("click", () => {
-        grid = createEmptyGrid(cols, rows);
-        localStorage.removeItem("gridData");
-        saveState();
-        draw();
-    });
-
-    // ───────────────────────────────────────────────
-    //             CHARGEMENT PAGE (restauration)
-    // ───────────────────────────────────────────────
-    if (!loadState()) {
-        grid = createEmptyGrid(cols, rows);
+    for (let x = 0; x <= cols; x++) {
+        ctx.beginPath();
+        ctx.moveTo(offsetX + x * cellW, offsetY);
+        ctx.lineTo(offsetX + x * cellW, offsetY + rows * cellH);
+        ctx.stroke();
     }
+
+    for (let y = 0; y <= rows; y++) {
+        ctx.beginPath();
+        ctx.moveTo(offsetX, offsetY + y * cellH);
+        ctx.lineTo(offsetX + cols * cellW, offsetY + y * cellH);
+        ctx.stroke();
+    }
+}
+
+function saveDefault() {
+    localStorage.setItem("gridDefault", JSON.stringify({ cols, rows, grid }));
+}
+
+function loadDefault() {
+    const data = localStorage.getItem("gridDefault");
+    if (!data) return false;
+
+    const parsed = JSON.parse(data);
+    cols = parsed.cols;
+    rows = parsed.rows;
+    grid = parsed.grid;
+
+    colsI.value = cols;
+    rowsI.value = rows;
+
+    return true;
+}
+
+/* ───────────────────────────────────────────── */
+/*                ACTION : CLIC                   */
+/* ───────────────────────────────────────────── */
+canvas.addEventListener("click", e => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left - offsetX) / (CANVAS_SIZE / cols / zoom);
+    const y = (e.clientY - rect.top - offsetY) / (CANVAS_SIZE / rows / zoom);
+
+    const cx = Math.floor(x);
+    const cy = Math.floor(y);
+
+    if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) return;
+
+    if (tool === "paint") {
+        grid[cy][cx] = colorPicker.value;
+    }
+    else if (tool === "erase") {
+        grid[cy][cx] = null;
+    }
+    else if (tool === "pipette") {
+        if (grid[cy][cx]) {
+            colorPicker.value = grid[cy][cx];
+        }
+        tool = "paint";
+        updateToolButtons();
+    }
+
+    saveDefault();
     draw();
+});
+
+/* ───────────────────────────────────────────── */
+/*                  ZOOM                          */
+/* ───────────────────────────────────────────── */
+canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    zoom *= e.deltaY < 0 ? 1.1 : 0.9;
+    draw();
+});
+
+zoomIn.onclick = () => { zoom *= 1.1; draw(); };
+zoomOut.onclick = () => { zoom *= 0.9; draw(); };
+
+/* ───────────────────────────────────────────── */
+/*            DÉPLACEMENT (PAN)                   */
+/* ───────────────────────────────────────────── */
+let dragging = false;
+let lastX, lastY;
+
+canvas.addEventListener("mousedown", e => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+
+window.addEventListener("mouseup", () => dragging = false);
+
+window.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    offsetX += (e.clientX - lastX);
+    offsetY += (e.clientY - lastY);
+    lastX = e.clientX;
+    lastY = e.clientY;
+    draw();
+});
+
+/* ───────────────────────────────────────────── */
+/*                OUTILS                          */
+/* ───────────────────────────────────────────── */
+function updateToolButtons() {
+    paintBtn.classList.remove("active");
+    eraseBtn.classList.remove("active");
+    pipetteBtn.classList.remove("active");
+
+    if (tool === "paint") paintBtn.classList.add("active");
+    if (tool === "erase") eraseBtn.classList.add("active");
+    if (tool === "pipette") pipetteBtn.classList.add("active");
+}
+
+paintBtn.onclick = () => { tool = "paint"; updateToolButtons(); };
+eraseBtn.onclick = () => { tool = "erase"; updateToolButtons(); };
+pipetteBtn.onclick = () => { tool = "pipette"; updateToolButtons(); };
+
+/* ───────────────────────────────────────────── */
+/*               CRÉATION GRILLE                  */
+/* ───────────────────────────────────────────── */
+createBtn.onclick = () => {
+    cols = parseInt(colsI.value);
+    rows = parseInt(rowsI.value);
+    grid = emptyGrid(cols, rows);
+    saveDefault();
+    draw();
+};
+
+/* ───────────────────────────────────────────── */
+/*           TOUT EFFACER                         */
+/* ───────────────────────────────────────────── */
+clearBtn.onclick = () => {
+    grid = emptyGrid(cols, rows);
+    saveDefault();
+    draw();
+};
+
+/* ───────────────────────────────────────────── */
+/*                 EXPORT PNG                     */
+/* ───────────────────────────────────────────── */
+downloadBtn.onclick = () => {
+    const link = document.createElement("a");
+    link.download = "dessin.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+};
+
+/* ───────────────────────────────────────────── */
+/*                 SLOTS SAUVEGARDE               */
+/* ───────────────────────────────────────────── */
+function saveSlot(slot) {
+    localStorage.setItem("gridSlot"+slot, JSON.stringify({cols, rows, grid}));
+}
+
+function loadSlot(slot) {
+    const data = localStorage.getItem("gridSlot"+slot);
+    if (!data) return alert("Slot vide !");
+    const parsed = JSON.parse(data);
+    cols = parsed.cols;
+    rows = parsed.rows;
+    grid = parsed.grid;
+    colsI.value = cols;
+    rowsI.value = rows;
+    draw();
+}
+
+function clearSlot(slot) {
+    localStorage.removeItem("gridSlot"+slot);
+    alert("Slot " + slot + " vidé.");
+}
+
+/* Slots boutons */
+saveA.onclick = () => saveSlot("A");
+loadA.onclick = () => loadSlot("A");
+clearA.onclick = () => clearSlot("A");
+
+saveB.onclick = () => saveSlot("B");
+loadB.onclick = () => loadSlot("B");
+clearB.onclick = () => clearSlot("B");
+
+saveC.onclick = () => saveSlot("C");
+loadC.onclick = () => loadSlot("C");
+clearC.onclick = () => clearSlot("C");
+
+/* ───────────────────────────────────────────── */
+/*             CHARGEMENT AUTOMATIQUE             */
+/* ───────────────────────────────────────────── */
+if (!loadDefault()) {
+    grid = emptyGrid(cols, rows);
+}
+draw();
+
 </script>
 
 </body>
