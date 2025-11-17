@@ -107,18 +107,6 @@
         <button id="zoomIn">🔍 +</button>
         <button id="zoomOut">🔍 -</button>
 
-        <button id="saveA">💾 Slot A</button>
-        <button id="loadA">📥 A</button>
-        <button id="clearA">🗑️ A</button>
-
-        <button id="saveB">💾 Slot B</button>
-        <button id="loadB">📥 B</button>
-        <button id="clearB">🗑️ B</button>
-
-        <button id="saveC">💾 Slot C</button>
-        <button id="loadC">📥 C</button>
-        <button id="clearC">🗑️ C</button>
-
         <button id="download">🖼 PNG</button>
         <button id="clearGrid">Tout effacer</button>
     </div>
@@ -162,13 +150,6 @@ const clearBtn = document.getElementById("clearGrid");
 const zoomIn = document.getElementById("zoomIn");
 const zoomOut = document.getElementById("zoomOut");
 const downloadBtn = document.getElementById("download");
-
-/* Slots */
-const slots = {
-    A: { save: saveA, load: loadA, clear: clearA },
-    B: { save: saveB, load: loadB, clear: clearB },
-    C: { save: saveC, load: loadC, clear: clearC },
-};
 
 /* ───────────────────────────────────────────── */
 /*                  GRILLE / DESSIN               */
@@ -217,6 +198,9 @@ function draw() {
     }
 }
 
+/* ───────────────────────────────────────────── */
+/*                  SAUVEGARDE                    */
+/* ───────────────────────────────────────────── */
 function saveDefault() {
     localStorage.setItem("gridDefault", JSON.stringify({ cols, rows, grid }));
 }
@@ -249,19 +233,12 @@ canvas.addEventListener("click", e => {
 
     if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) return;
 
-    if (tool === "paint") {
-        grid[cy][cx] = colorPicker.value;
-    }
-    else if (tool === "erase") {
-        grid[cy][cx] = null;
-    }
-    else if (tool === "pipette") {
-        if (grid[cy][cx]) {
-            colorPicker.value = grid[cy][cx];
-        }
-        tool = "paint";
-        updateToolButtons();
-    }
+    if (tool === "paint") grid[cy][cx] = colorPicker.value;
+    else if (tool === "erase") grid[cy][cx] = null;
+    else if (tool === "pipette" && grid[cy][cx]) colorPicker.value = grid[cy][cx];
+
+    if(tool === "pipette") tool = "paint";
+    updateToolButtons();
 
     saveDefault();
     draw();
@@ -348,43 +325,6 @@ downloadBtn.onclick = () => {
     link.href = canvas.toDataURL("image/png");
     link.click();
 };
-
-/* ───────────────────────────────────────────── */
-/*                 SLOTS SAUVEGARDE               */
-/* ───────────────────────────────────────────── */
-function saveSlot(slot) {
-    localStorage.setItem("gridSlot"+slot, JSON.stringify({cols, rows, grid}));
-}
-
-function loadSlot(slot) {
-    const data = localStorage.getItem("gridSlot"+slot);
-    if (!data) return alert("Slot vide !");
-    const parsed = JSON.parse(data);
-    cols = parsed.cols;
-    rows = parsed.rows;
-    grid = parsed.grid;
-    colsI.value = cols;
-    rowsI.value = rows;
-    draw();
-}
-
-function clearSlot(slot) {
-    localStorage.removeItem("gridSlot"+slot);
-    alert("Slot " + slot + " vidé.");
-}
-
-/* Slots boutons */
-saveA.onclick = () => saveSlot("A");
-loadA.onclick = () => loadSlot("A");
-clearA.onclick = () => clearSlot("A");
-
-saveB.onclick = () => saveSlot("B");
-loadB.onclick = () => loadSlot("B");
-clearB.onclick = () => clearSlot("B");
-
-saveC.onclick = () => saveSlot("C");
-loadC.onclick = () => loadSlot("C");
-clearC.onclick = () => clearSlot("C");
 
 /* ───────────────────────────────────────────── */
 /*             CHARGEMENT AUTOMATIQUE             */
