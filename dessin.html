@@ -4,40 +4,139 @@
     <meta charset="UTF-8">
     <title>Dessin en cubes</title>
     <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #f3efe9, #e3d5c3);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 95%;
+            max-width: 550px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        h1 {
+            text-align: center;
+            color: #7b4b27;
+            margin-top: 0;
+        }
+
+        label {
+            font-weight: 600;
+            color: #5c4a3f;
+        }
+
+        input[type="number"],
+        input[type="color"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #c9b8a6;
+            margin: 5px;
+        }
+
+        input[type="number"] {
+            width: 80px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 17px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: #d7b89c;
+            color: white;
+            margin-top: 10px;
+            transition: 0.25s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #b89376;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+        }
+
         #grid {
             display: grid;
             gap: 1px;
             margin-top: 20px;
+            justify-content: center;
         }
+
         .cell {
-            width: 25px;
-            height: 25px;
+            width: 28px;
+            height: 28px;
             background-color: white;
-            border: 1px solid #ccc;
+            border: 1px solid #e1d3c4;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            border-color: #b89376;
+        }
+
+        a {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            color: #6b5c50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-<h1>Dessin en cubes</h1>
+<div class="container">
+    <h1>🎨 Dessin en cubes</h1>
 
-<label>Colonnes :</label>
-<input type="number" id="cols" value="10">
+    <p style="text-align:center; color:#6b5c50;">
+        Crée ta grille puis clique pour colorier les cases !
+    </p>
 
-<label>Lignes :</label>
-<input type="number" id="rows" value="10">
+    <div style="text-align:center; margin-bottom:10px;">
+        <label>Colonnes :</label>
+        <input type="number" id="cols" value="10" min="1">
 
-<button onclick="createGrid()">Créer la grille</button>
+        <label>Lignes :</label>
+        <input type="number" id="rows" value="10" min="1">
+    </div>
 
-<br><br>
+    <div style="text-align:center;">
+        <button onclick="createGrid()">Créer la grille</button>
+    </div>
 
-<label>Couleur du stylo :</label>
-<input type="color" id="colorPicker" value="#000000">
+    <div style="text-align:center; margin-top:20px;">
+        <label>Couleur du stylo :</label>
+        <input type="color" id="colorPicker" value="#000000">
+    </div>
 
-<div id="grid"></div>
+    <div id="grid"></div>
 
-<br>
-<a href="index.html">Retour</a>
+    <a href="index.html">⬅ Retour à l'accueil</a>
+</div>
 
 <script>
 function createGrid() {
@@ -45,7 +144,7 @@ function createGrid() {
     const rows = parseInt(document.getElementById("rows").value);
     const grid = document.getElementById("grid");
 
-    grid.style.gridTemplateColumns = `repeat(${cols}, 25px)`;
+    grid.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
     grid.innerHTML = "";
 
     for (let i = 0; i < cols * rows; i++) {
