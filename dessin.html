@@ -1,184 +1,384 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Dessin en cubes</title>
-    <style>
-        body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #f3efe9, #e3d5c3);
-            margin: 0;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
+<meta charset="utf-8" />
+<title>Dessin en cubes (Canvas) 🎨</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg1: #f3efe9;
+    --bg2: #e3d5c3;
+    --card: #ffffff;
+    --accent: #d7b89c;
+    --muted: #6b5c50;
+  }
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            width: 95%;
-            max-width: 550px;
-            animation: fadeIn 0.5s ease;
-        }
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px;
+  }
 
-        h1 {
-            text-align: center;
-            color: #7b4b27;
-            margin-top: 0;
-        }
+  .container{
+    width:95%;
+    max-width:720px;
+    background:var(--card);
+    border-radius:16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding:18px;
+  }
 
-        label {
-            font-weight: 600;
-            color: #5c4a3f;
-        }
+  h1{ margin:6px 0 12px 0; color:#7b4b27; text-align:center }
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:12px;
+  }
 
-        input[type="number"],
-        input[type="color"] {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: 1px solid #c9b8a6;
-            margin: 5px;
-        }
+  label{ font-weight:600; color:var(--muted); font-size:14px }
+  input[type="number"]{
+    width:86px;
+    padding:8px;
+    border-radius:8px;
+    border:1px solid #c9b8a6;
+    font-size:14px;
+  }
+  input[type="color"]{
+    width:46px;
+    height:36px;
+    padding:0;
+    border-radius:8px;
+    border:1px solid #c9b8a6;
+    background:white;
+  }
 
-        input[type="number"] {
-            width: 80px;
-        }
+  .btn{
+    background:var(--accent);
+    color:white;
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:14px;
+  }
+  .btn.secondary{ background:#bdbdbd; }
+  .btn.warn{ background:#e57373; }
+  .btn:active{ transform:translateY(1px) }
 
-        button {
-            padding: 12px 20px;
-            font-size: 17px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            background: #d7b89c;
-            color: white;
-            margin: 10px auto;
-            transition: 0.25s;
-            font-weight: 600;
-        }
+  .canvas-wrap{
+    display:flex;
+    justify-content:center;
+    margin-top:8px;
+  }
 
-        button:hover {
-            background: #b89376;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
-        }
+  canvas{
+    background:#fff;
+    border:2px solid #c9b8a6;
+    border-radius:6px;
+    image-rendering: pixelated; /* net pour petits carrés */
+    touch-action: none; /* pour éviter le scroll pendant dessin tactile */
+  }
 
-        #grid {
-            display: grid;
-            gap: 1px;
-            margin-top: 20px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 300px;   /* largeur fixe */
-            height: 300px;  /* hauteur fixe */
-            border: 2px solid #c9b8a6;
-            background: #eee3d7;
-        }
-
-        .cell {
-            background-color: white;
-            border: 1px solid #e1d3c4;
-            transition: background 0.2s;
-        }
-
-        .cell:hover {
-            border-color: #b89376;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        a {
-            display: block;
-            margin-top: 20px;
-            text-align: center;
-            font-size: 16px;
-            color: #6b5c50;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-    </style>
+  .footer{
+    margin-top:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .note{ color: #666; font-size:13px }
+  a{ text-decoration:none; color:var(--muted); font-weight:600 }
+  @media (max-width:520px){
+    .container{ padding:12px }
+    input[type="number"]{ width:68px }
+  }
+</style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🎨 Dessin en cubes</h1>
+  <h1>🎨 Dessin en cubes</h1>
 
-    <p style="text-align:center; color:#6b5c50;">
-        Crée ta grille puis clique pour colorier les cases !
-    </p>
+  <div class="controls">
+    <label>Colonnes: <input id="cols" type="number" min="1" max="300" value="30"></label>
+    <label>Lignes: <input id="rows" type="number" min="1" max="300" value="30"></label>
 
-    <div style="text-align:center; margin-bottom:10px;">
-        <label>Colonnes :</label>
-        <input type="number" id="cols" value="10" min="1">
+    <button class="btn" id="createBtn">Créer la grille</button>
+    <button class="btn secondary" id="clearBtn">Tout effacer</button>
 
-        <label>Lignes :</label>
-        <input type="number" id="rows" value="10" min="1">
+    <label style="display:flex;align-items:center;gap:8px">
+      <span style="font-weight:600;color:var(--muted)">Couleur:</span>
+      <input id="colorPicker" type="color" value="#000000">
+    </label>
+
+    <label style="display:flex;align-items:center;gap:6px">
+      <input id="showGrid" type="checkbox" checked>
+      <span style="font-size:13px;color:var(--muted)">Afficher la grille</span>
+    </label>
+  </div>
+
+  <div class="canvas-wrap">
+    <!-- taille fixe du canvas : 300x300 (tu peux ajuster) -->
+    <canvas id="drawingCanvas" width="300" height="300"></canvas>
+  </div>
+
+  <div class="footer">
+    <div class="note">
+      Astuce : faire glisser la souris / le doigt pour peindre. Max 300×300 (90k cases) supporté, mais peut être lent.
     </div>
-
-    <div style="text-align:center;">
-        <button onclick="createGrid()">Créer la grille</button>
-        <button onclick="clearGrid()">Tout effacer</button>
-    </div>
-
-    <div style="text-align:center; margin-top:20px;">
-        <label>Couleur du stylo :</label>
-        <input type="color" id="colorPicker" value="#000000">
-    </div>
-
-    <div id="grid"></div>
-
-    <a href="index.html">⬅ Retour à l'accueil</a>
+    <a href="index.html">⬅ Retour</a>
+  </div>
 </div>
 
 <script>
-function createGrid() {
-    const cols = parseInt(document.getElementById("cols").value);
-    const rows = parseInt(document.getElementById("rows").value);
-    const grid = document.getElementById("grid");
+  (function(){
+    // éléments
+    const canvas = document.getElementById('drawingCanvas');
+    const ctx = canvas.getContext('2d', {alpha:false});
+    const createBtn = document.getElementById('createBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const colsInput = document.getElementById('cols');
+    const rowsInput = document.getElementById('rows');
+    const colorPicker = document.getElementById('colorPicker');
+    const showGridCheckbox = document.getElementById('showGrid');
 
-    // Taille totale fixe : 300px
-    const totalSize = 300;
-    const cellWidth = totalSize / cols;
-    const cellHeight = totalSize / rows;
+    // paramètres
+    const CANVAS_SIZE = 300; // px (largeur et hauteur du canevas)
+    canvas.width = CANVAS_SIZE;
+    canvas.height = CANVAS_SIZE;
 
-    grid.style.gridTemplateColumns = `repeat(${cols}, ${cellWidth}px)`;
-    grid.style.gridTemplateRows = `repeat(${rows}, ${cellHeight}px)`;
+    let cols = parseInt(colsInput.value,10) || 30;
+    let rows = parseInt(rowsInput.value,10) || 30;
+    const MAX_CELLS = 300; // limite par dimension
 
-    grid.innerHTML = "";
+    // grille logique (stocke couleur hex ou null pour blanc)
+    let grid = createEmptyGrid(cols, rows);
 
-    for (let i = 0; i < cols * rows; i++) {
-        const cell = document.createElement("div");
-        cell.classList.add("cell");
+    // état pour peinture glissée
+    let painting = false;
+    let lastPaintX = -1, lastPaintY = -1;
 
-        cell.style.width = cellWidth + "px";
-        cell.style.height = cellHeight + "px";
+    // initialise l'affichage
+    draw();
 
-        cell.addEventListener("click", () => {
-            cell.style.backgroundColor = document.getElementById("colorPicker").value;
-        });
+    // écouteurs
+    createBtn.addEventListener('click', () => {
+      const c = clampNumber(parseInt(colsInput.value,10), 1, MAX_CELLS);
+      const r = clampNumber(parseInt(rowsInput.value,10), 1, MAX_CELLS);
 
-        grid.appendChild(cell);
-    }
-}
+      // avertissement simple si l'utilisateur demande beaucoup de cases
+      if (c * r > 20000) {
+        if (!confirm(`Tu crées ${c}×${r} = ${c*r} cases. Cela peut être lent sur certains appareils. Continuer ?`)) return;
+      }
 
-// Efface toutes les cases sans changer la grille
-function clearGrid() {
-    document.querySelectorAll(".cell").forEach(cell => {
-        cell.style.backgroundColor = "white";
+      cols = c; rows = r;
+      grid = createEmptyGrid(cols, rows);
+      draw();
     });
-}
+
+    clearBtn.addEventListener('click', () => {
+      // remet toutes les cases à blanc sans recréer la grille
+      for (let y=0;y<rows;y++){
+        for (let x=0;x<cols;x++){
+          grid[y][x] = null;
+        }
+      }
+      draw();
+    });
+
+    // souris
+    canvas.addEventListener('mousedown', (e) => {
+      painting = true;
+      const pos = getCanvasCellFromEvent(e);
+      paintCell(pos.x, pos.y);
+    });
+    window.addEventListener('mouseup', ()=> { painting = false; lastPaintX=-1; lastPaintY=-1; });
+    canvas.addEventListener('mousemove', (e) => {
+      if (!painting) return;
+      const pos = getCanvasCellFromEvent(e);
+      // évite repeindre la même cellule plusieurs fois par move
+      if (pos.x !== lastPaintX || pos.y !== lastPaintY) {
+        paintCell(pos.x, pos.y);
+        lastPaintX = pos.x; lastPaintY = pos.y;
+      }
+    });
+
+    // tactile (mobile)
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      painting = true;
+      const pos = getCanvasCellFromTouch(e.touches[0]);
+      paintCell(pos.x, pos.y);
+    }, {passive:false});
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!painting) return;
+      const pos = getCanvasCellFromTouch(e.touches[0]);
+      if (pos.x !== lastPaintX || pos.y !== lastPaintY) {
+        paintCell(pos.x, pos.y);
+        lastPaintX = pos.x; lastPaintY = pos.y;
+      }
+    }, {passive:false});
+    window.addEventListener('touchend', ()=> { painting = false; lastPaintX=-1; lastPaintY=-1; });
+
+    // helper : limiter number
+    function clampNumber(v,min,max){
+      if (isNaN(v)) return min;
+      return Math.max(min, Math.min(max, v));
+    }
+
+    // crée une grille vide (rows x cols), remplie de null
+    function createEmptyGrid(c, r){
+      const g = new Array(r);
+      for (let y=0;y<r;y++){
+        g[y] = new Array(c).fill(null);
+      }
+      return g;
+    }
+
+    // calcule la taille d'une cellule en px (flottant)
+    function cellSize(){
+      return { w: CANVAS_SIZE / cols, h: CANVAS_SIZE / rows };
+    }
+
+    // peint une cellule dans la grille et redessine la zone minimale
+    function paintCell(cellX, cellY){
+      if (cellX < 0 || cellY < 0 || cellX >= cols || cellY >= rows) return;
+      const color = colorPicker.value;
+      grid[cellY][cellX] = color;
+      drawCell(cellX, cellY);
+      if (showGridCheckbox.checked) drawGridLinesPartial(cellX, cellY);
+    }
+
+    // obtient la cellule (x,y) à partir d'un event souris
+    function getCanvasCellFromEvent(e){
+      const rect = canvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const size = cellSize();
+      const x = Math.floor(cx / size.w);
+      const y = Math.floor(cy / size.h);
+      return { x, y };
+    }
+
+    function getCanvasCellFromTouch(touch){
+      const rect = canvas.getBoundingClientRect();
+      const cx = touch.clientX - rect.left;
+      const cy = touch.clientY - rect.top;
+      const size = cellSize();
+      const x = Math.floor(cx / size.w);
+      const y = Math.floor(cy / size.h);
+      return { x, y };
+    }
+
+    // dessine toute la grille entière
+    function draw(){
+      // fond blanc
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0, CANVAS_SIZE, CANVAS_SIZE);
+
+      const size = cellSize();
+      // dessine chaque cellule
+      for (let y=0;y<rows;y++){
+        for (let x=0;x<cols;x++){
+          const col = grid[y][x];
+          if (col) {
+            ctx.fillStyle = col;
+            // on dessine légèrement sans bord pour éviter lignes superposées
+            ctx.fillRect(Math.round(x*size.w), Math.round(y*size.h), Math.ceil(size.w), Math.ceil(size.h));
+          }
+        }
+      }
+
+      if (showGridCheckbox.checked) drawGridLines();
+    }
+
+    // dessine une cellule seulement (pour performance)
+    function drawCell(x, y){
+      const size = cellSize();
+      const sx = Math.round(x*size.w);
+      const sy = Math.round(y*size.h);
+      const sw = Math.ceil(size.w);
+      const sh = Math.ceil(size.h);
+
+      // fond blanc (efface ancien)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(sx, sy, sw, sh);
+
+      // couleur si présente
+      const col = grid[y][x];
+      if (col) {
+        ctx.fillStyle = col;
+        ctx.fillRect(sx, sy, sw, sh);
+      }
+
+      // si grille visible, redessine la bordure de cette cellule
+      if (showGridCheckbox.checked) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx+0.5, sy+0.5, sw-1, sh-1);
+      }
+    }
+
+    // dessine toutes les lignes de la grille (overlay)
+    function drawGridLines(){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+      ctx.lineWidth = 1;
+      const size = cellSize();
+      // verticale
+      for (let x=1;x<cols;x++){
+        const px = x*size.w + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(px,0);
+        ctx.lineTo(px, CANVAS_SIZE);
+        ctx.stroke();
+      }
+      // horizontale
+      for (let y=1;y<rows;y++){
+        const py = y*size.h + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0,py);
+        ctx.lineTo(CANVAS_SIZE, py);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // redessine bordure d'une cellule seulement (optionnel)
+    function drawGridLinesPartial(cellX, cellY){
+      // (déjà géré dans drawCell en strokeRect)
+      // on pourrait optimiser ici si besoin
+    }
+
+    // toggle redessin quand on change la checkbox
+    showGridCheckbox.addEventListener('change', ()=> draw());
+
+    // au chargement, dessiner une grille initiale
+    draw();
+
+    // bonus : double-clic pour effacer une cellule (utile)
+    canvas.addEventListener('dblclick', (e) => {
+      const p = getCanvasCellFromEvent(e);
+      if (p.x>=0 && p.y>=0 && p.x<cols && p.y<rows){
+        grid[p.y][p.x] = null;
+        drawCell(p.x, p.y);
+      }
+    });
+
+    // empêcher le menu contextuel long-press sur mobile sur le canvas
+    canvas.addEventListener('contextmenu', (e)=> e.preventDefault());
+  })();
 </script>
 
 </body>
