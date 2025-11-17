@@ -2,14 +2,81 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mon Site</title>
+    <title>Accueil</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f3efe9, #e3d5c3);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #7b4b27;
+        }
+
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            background: #d7b89c;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 12px;
+            transition: 0.25s;
+            font-weight: 600;
+        }
+
+        .menu-btn:hover {
+            background: #b89376;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
-    <h1>Bienvenue</h1>
-    <ul>
-        <li><a href="compteur.html">Compteur</a></li>
-        <li><a href="dessin.html">Dessin en cubes</a></li>
-        <li><a href="vide.html">Page vide</a></li>
-    </ul>
+
+    <div class="container">
+        <h1>Bienvenue 👋</h1>
+        <p style="color:#6b5c50; font-size:15px; margin-top:-10px;">
+            Choisissez une section :
+        </p>
+
+        <a class="menu-btn" href="compteur.html">🧶 Compteur de crochet</a>
+        <a class="menu-btn" href="dessin.html">🎨 Dessin en cubes</a>
+        <a class="menu-btn" href="vide.html">📄 Page vide</a>
+
+        <footer>Mon petit site fait maison ✨</footer>
+    </div>
+
 </body>
 </html>
