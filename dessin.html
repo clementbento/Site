@@ -1,384 +1,268 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8" />
-<title>Dessin en cubes (Canvas) 🎨</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  :root{
-    --bg1: #f3efe9;
-    --bg2: #e3d5c3;
-    --card: #ffffff;
-    --accent: #d7b89c;
-    --muted: #6b5c50;
-  }
+    <meta charset="UTF-8">
+    <title>Dessin en cubes</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #f3efe9, #e3d5c3);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
 
-  body{
-    margin:0;
-    min-height:100vh;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(135deg,var(--bg1),var(--bg2));
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    padding:28px;
-  }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 95%;
+            max-width: 550px;
+            animation: fadeIn 0.5s ease;
+        }
 
-  .container{
-    width:95%;
-    max-width:720px;
-    background:var(--card);
-    border-radius:16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    padding:18px;
-  }
+        h1 {
+            text-align: center;
+            color: #7b4b27;
+            margin-top: 0;
+        }
 
-  h1{ margin:6px 0 12px 0; color:#7b4b27; text-align:center }
-  .controls{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    justify-content:center;
-    align-items:center;
-    margin-bottom:12px;
-  }
+        label {
+            font-weight: 600;
+            color: #5c4a3f;
+        }
 
-  label{ font-weight:600; color:var(--muted); font-size:14px }
-  input[type="number"]{
-    width:86px;
-    padding:8px;
-    border-radius:8px;
-    border:1px solid #c9b8a6;
-    font-size:14px;
-  }
-  input[type="color"]{
-    width:46px;
-    height:36px;
-    padding:0;
-    border-radius:8px;
-    border:1px solid #c9b8a6;
-    background:white;
-  }
+        input[type="number"],
+        input[type="color"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #c9b8a6;
+            margin: 5px;
+        }
 
-  .btn{
-    background:var(--accent);
-    color:white;
-    border:none;
-    padding:10px 14px;
-    border-radius:10px;
-    cursor:pointer;
-    font-weight:700;
-    font-size:14px;
-  }
-  .btn.secondary{ background:#bdbdbd; }
-  .btn.warn{ background:#e57373; }
-  .btn:active{ transform:translateY(1px) }
+        input[type="number"] {
+            width: 80px;
+        }
 
-  .canvas-wrap{
-    display:flex;
-    justify-content:center;
-    margin-top:8px;
-  }
+        button {
+            padding: 12px 20px;
+            font-size: 17px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: #d7b89c;
+            color: white;
+            margin: 10px auto;
+            transition: 0.25s;
+            font-weight: 600;
+        }
 
-  canvas{
-    background:#fff;
-    border:2px solid #c9b8a6;
-    border-radius:6px;
-    image-rendering: pixelated; /* net pour petits carrés */
-    touch-action: none; /* pour éviter le scroll pendant dessin tactile */
-  }
+        button:hover {
+            background: #b89376;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+        }
 
-  .footer{
-    margin-top:12px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-  .note{ color: #666; font-size:13px }
-  a{ text-decoration:none; color:var(--muted); font-weight:600 }
-  @media (max-width:520px){
-    .container{ padding:12px }
-    input[type="number"]{ width:68px }
-  }
-</style>
+        #canvasWrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #gridCanvas {
+            border: 2px solid #c9b8a6;
+            background: #ffffff;
+        }
+
+        a {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            color: #6b5c50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>🎨 Dessin en cubes</h1>
+    <h1>🎨 Dessin en cubes</h1>
 
-  <div class="controls">
-    <label>Colonnes: <input id="cols" type="number" min="1" max="300" value="30"></label>
-    <label>Lignes: <input id="rows" type="number" min="1" max="300" value="30"></label>
+    <p style="text-align:center; color:#6b5c50;">
+        Crée ta grille puis clique pour colorier les cases !
+    </p>
 
-    <button class="btn" id="createBtn">Créer la grille</button>
-    <button class="btn secondary" id="clearBtn">Tout effacer</button>
+    <div style="text-align:center;">
+        <label>Colonnes :</label>
+        <input type="number" id="cols" min="1" max="300" value="20">
 
-    <label style="display:flex;align-items:center;gap:8px">
-      <span style="font-weight:600;color:var(--muted)">Couleur:</span>
-      <input id="colorPicker" type="color" value="#000000">
-    </label>
-
-    <label style="display:flex;align-items:center;gap:6px">
-      <input id="showGrid" type="checkbox" checked>
-      <span style="font-size:13px;color:var(--muted)">Afficher la grille</span>
-    </label>
-  </div>
-
-  <div class="canvas-wrap">
-    <!-- taille fixe du canvas : 300x300 (tu peux ajuster) -->
-    <canvas id="drawingCanvas" width="300" height="300"></canvas>
-  </div>
-
-  <div class="footer">
-    <div class="note">
-      Astuce : faire glisser la souris / le doigt pour peindre. Max 300×300 (90k cases) supporté, mais peut être lent.
+        <label>Lignes :</label>
+        <input type="number" id="rows" min="1" max="300" value="20">
     </div>
-    <a href="index.html">⬅ Retour</a>
-  </div>
+
+    <div style="text-align:center;">
+        <button id="createBtn">Créer la grille</button>
+        <button id="clearBtn">Tout effacer</button>
+    </div>
+
+    <div style="text-align:center; margin-top:20px;">
+        <label>Couleur du stylo :</label>
+        <input type="color" id="colorPicker" value="#000000">
+    </div>
+
+    <div id="canvasWrapper">
+        <canvas id="gridCanvas" width="600" height="600"></canvas>
+    </div>
+
+    <a href="index.html">⬅ Retour à l'accueil</a>
 </div>
 
 <script>
-  (function(){
-    // éléments
-    const canvas = document.getElementById('drawingCanvas');
-    const ctx = canvas.getContext('2d', {alpha:false});
-    const createBtn = document.getElementById('createBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const colsInput = document.getElementById('cols');
-    const rowsInput = document.getElementById('rows');
-    const colorPicker = document.getElementById('colorPicker');
-    const showGridCheckbox = document.getElementById('showGrid');
+    const canvas = document.getElementById("gridCanvas");
+    const ctx = canvas.getContext("2d");
 
-    // paramètres
-    const CANVAS_SIZE = 300; // px (largeur et hauteur du canevas)
-    canvas.width = CANVAS_SIZE;
-    canvas.height = CANVAS_SIZE;
+    const colsInput = document.getElementById("cols");
+    const rowsInput = document.getElementById("rows");
+    const colorPicker = document.getElementById("colorPicker");
 
-    let cols = parseInt(colsInput.value,10) || 30;
-    let rows = parseInt(rowsInput.value,10) || 30;
-    const MAX_CELLS = 300; // limite par dimension
+    const createBtn = document.getElementById("createBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
-    // grille logique (stocke couleur hex ou null pour blanc)
-    let grid = createEmptyGrid(cols, rows);
+    let cols = 20;
+    let rows = 20;
+    let grid = [];
 
-    // état pour peinture glissée
-    let painting = false;
-    let lastPaintX = -1, lastPaintY = -1;
+    const CANVAS_SIZE = 600;
 
-    // initialise l'affichage
-    draw();
+    // ───────────────────────────────────────────────
+    //                SAUVEGARDE LOCALSTORAGE
+    // ───────────────────────────────────────────────
+    function saveState() {
+        localStorage.setItem("gridData", JSON.stringify({
+            cols,
+            rows,
+            grid
+        }));
+    }
 
-    // écouteurs
-    createBtn.addEventListener('click', () => {
-      const c = clampNumber(parseInt(colsInput.value,10), 1, MAX_CELLS);
-      const r = clampNumber(parseInt(rowsInput.value,10), 1, MAX_CELLS);
+    function loadState() {
+        const data = localStorage.getItem("gridData");
+        if (!data) return false;
 
-      // avertissement simple si l'utilisateur demande beaucoup de cases
-      if (c * r > 20000) {
-        if (!confirm(`Tu crées ${c}×${r} = ${c*r} cases. Cela peut être lent sur certains appareils. Continuer ?`)) return;
-      }
+        try {
+            const parsed = JSON.parse(data);
+            cols = parsed.cols;
+            rows = parsed.rows;
+            grid = parsed.grid;
 
-      cols = c; rows = r;
-      grid = createEmptyGrid(cols, rows);
-      draw();
-    });
+            colsInput.value = cols;
+            rowsInput.value = rows;
 
-    clearBtn.addEventListener('click', () => {
-      // remet toutes les cases à blanc sans recréer la grille
-      for (let y=0;y<rows;y++){
-        for (let x=0;x<cols;x++){
-          grid[y][x] = null;
+            return true;
+        } catch (err) {
+            console.error("Erreur chargement :", err);
+            return false;
         }
-      }
-      draw();
-    });
-
-    // souris
-    canvas.addEventListener('mousedown', (e) => {
-      painting = true;
-      const pos = getCanvasCellFromEvent(e);
-      paintCell(pos.x, pos.y);
-    });
-    window.addEventListener('mouseup', ()=> { painting = false; lastPaintX=-1; lastPaintY=-1; });
-    canvas.addEventListener('mousemove', (e) => {
-      if (!painting) return;
-      const pos = getCanvasCellFromEvent(e);
-      // évite repeindre la même cellule plusieurs fois par move
-      if (pos.x !== lastPaintX || pos.y !== lastPaintY) {
-        paintCell(pos.x, pos.y);
-        lastPaintX = pos.x; lastPaintY = pos.y;
-      }
-    });
-
-    // tactile (mobile)
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      painting = true;
-      const pos = getCanvasCellFromTouch(e.touches[0]);
-      paintCell(pos.x, pos.y);
-    }, {passive:false});
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (!painting) return;
-      const pos = getCanvasCellFromTouch(e.touches[0]);
-      if (pos.x !== lastPaintX || pos.y !== lastPaintY) {
-        paintCell(pos.x, pos.y);
-        lastPaintX = pos.x; lastPaintY = pos.y;
-      }
-    }, {passive:false});
-    window.addEventListener('touchend', ()=> { painting = false; lastPaintX=-1; lastPaintY=-1; });
-
-    // helper : limiter number
-    function clampNumber(v,min,max){
-      if (isNaN(v)) return min;
-      return Math.max(min, Math.min(max, v));
     }
 
-    // crée une grille vide (rows x cols), remplie de null
-    function createEmptyGrid(c, r){
-      const g = new Array(r);
-      for (let y=0;y<r;y++){
-        g[y] = new Array(c).fill(null);
-      }
-      return g;
+    // ─────────────────────────────────────────
+    //               GESTION GRILLE
+    // ─────────────────────────────────────────
+    function createEmptyGrid(c, r) {
+        return Array.from({ length: r }, () => Array(c).fill(null));
     }
 
-    // calcule la taille d'une cellule en px (flottant)
-    function cellSize(){
-      return { w: CANVAS_SIZE / cols, h: CANVAS_SIZE / rows };
-    }
+    function draw() {
+        const cellW = CANVAS_SIZE / cols;
+        const cellH = CANVAS_SIZE / rows;
 
-    // peint une cellule dans la grille et redessine la zone minimale
-    function paintCell(cellX, cellY){
-      if (cellX < 0 || cellY < 0 || cellX >= cols || cellY >= rows) return;
-      const color = colorPicker.value;
-      grid[cellY][cellX] = color;
-      drawCell(cellX, cellY);
-      if (showGridCheckbox.checked) drawGridLinesPartial(cellX, cellY);
-    }
+        ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    // obtient la cellule (x,y) à partir d'un event souris
-    function getCanvasCellFromEvent(e){
-      const rect = canvas.getBoundingClientRect();
-      const cx = e.clientX - rect.left;
-      const cy = e.clientY - rect.top;
-      const size = cellSize();
-      const x = Math.floor(cx / size.w);
-      const y = Math.floor(cy / size.h);
-      return { x, y };
-    }
-
-    function getCanvasCellFromTouch(touch){
-      const rect = canvas.getBoundingClientRect();
-      const cx = touch.clientX - rect.left;
-      const cy = touch.clientY - rect.top;
-      const size = cellSize();
-      const x = Math.floor(cx / size.w);
-      const y = Math.floor(cy / size.h);
-      return { x, y };
-    }
-
-    // dessine toute la grille entière
-    function draw(){
-      // fond blanc
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0,0, CANVAS_SIZE, CANVAS_SIZE);
-
-      const size = cellSize();
-      // dessine chaque cellule
-      for (let y=0;y<rows;y++){
-        for (let x=0;x<cols;x++){
-          const col = grid[y][x];
-          if (col) {
-            ctx.fillStyle = col;
-            // on dessine légèrement sans bord pour éviter lignes superposées
-            ctx.fillRect(Math.round(x*size.w), Math.round(y*size.h), Math.ceil(size.w), Math.ceil(size.h));
-          }
+        // Couleurs
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (grid[y][x]) {
+                    ctx.fillStyle = grid[y][x];
+                    ctx.fillRect(x * cellW, y * cellH, cellW, cellH);
+                }
+            }
         }
-      }
 
-      if (showGridCheckbox.checked) drawGridLines();
-    }
-
-    // dessine une cellule seulement (pour performance)
-    function drawCell(x, y){
-      const size = cellSize();
-      const sx = Math.round(x*size.w);
-      const sy = Math.round(y*size.h);
-      const sw = Math.ceil(size.w);
-      const sh = Math.ceil(size.h);
-
-      // fond blanc (efface ancien)
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(sx, sy, sw, sh);
-
-      // couleur si présente
-      const col = grid[y][x];
-      if (col) {
-        ctx.fillStyle = col;
-        ctx.fillRect(sx, sy, sw, sh);
-      }
-
-      // si grille visible, redessine la bordure de cette cellule
-      if (showGridCheckbox.checked) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        // Quadrillage
+        ctx.strokeStyle = "#d8c7b6";
         ctx.lineWidth = 1;
-        ctx.strokeRect(sx+0.5, sy+0.5, sw-1, sh-1);
-      }
+
+        for (let x = 0; x <= cols; x++) {
+            ctx.beginPath();
+            ctx.moveTo(x * cellW, 0);
+            ctx.lineTo(x * cellW, CANVAS_SIZE);
+            ctx.stroke();
+        }
+
+        for (let y = 0; y <= rows; y++) {
+            ctx.beginPath();
+            ctx.moveTo(0, y * cellH);
+            ctx.lineTo(CANVAS_SIZE, y * cellH);
+            ctx.stroke();
+        }
     }
 
-    // dessine toutes les lignes de la grille (overlay)
-    function drawGridLines(){
-      ctx.save();
-      ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-      ctx.lineWidth = 1;
-      const size = cellSize();
-      // verticale
-      for (let x=1;x<cols;x++){
-        const px = x*size.w + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(px,0);
-        ctx.lineTo(px, CANVAS_SIZE);
-        ctx.stroke();
-      }
-      // horizontale
-      for (let y=1;y<rows;y++){
-        const py = y*size.h + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(0,py);
-        ctx.lineTo(CANVAS_SIZE, py);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
+    canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const cellW = CANVAS_SIZE / cols;
+        const cellH = CANVAS_SIZE / rows;
 
-    // redessine bordure d'une cellule seulement (optionnel)
-    function drawGridLinesPartial(cellX, cellY){
-      // (déjà géré dans drawCell en strokeRect)
-      // on pourrait optimiser ici si besoin
-    }
+        const x = Math.floor((e.clientX - rect.left) / cellW);
+        const y = Math.floor((e.clientY - rect.top) / cellH);
 
-    // toggle redessin quand on change la checkbox
-    showGridCheckbox.addEventListener('change', ()=> draw());
-
-    // au chargement, dessiner une grille initiale
-    draw();
-
-    // bonus : double-clic pour effacer une cellule (utile)
-    canvas.addEventListener('dblclick', (e) => {
-      const p = getCanvasCellFromEvent(e);
-      if (p.x>=0 && p.y>=0 && p.x<cols && p.y<rows){
-        grid[p.y][p.x] = null;
-        drawCell(p.x, p.y);
-      }
+        if (x >= 0 && x < cols && y >= 0 && y < rows) {
+            grid[y][x] = colorPicker.value;
+            saveState();
+            draw();
+        }
     });
 
-    // empêcher le menu contextuel long-press sur mobile sur le canvas
-    canvas.addEventListener('contextmenu', (e)=> e.preventDefault());
-  })();
+    // ────────────────────────────────
+    //             BOUTONS
+    // ────────────────────────────────
+    createBtn.addEventListener("click", () => {
+        cols = parseInt(colsInput.value);
+        rows = parseInt(rowsInput.value);
+
+        grid = createEmptyGrid(cols, rows);
+        saveState();
+        draw();
+    });
+
+    clearBtn.addEventListener("click", () => {
+        grid = createEmptyGrid(cols, rows);
+        localStorage.removeItem("gridData");
+        saveState();
+        draw();
+    });
+
+    // ───────────────────────────────────────────────
+    //             CHARGEMENT PAGE (restauration)
+    // ───────────────────────────────────────────────
+    if (!loadState()) {
+        grid = createEmptyGrid(cols, rows);
+    }
+    draw();
 </script>
 
 </body>
