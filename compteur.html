@@ -2,66 +2,162 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Compteur</title>
+    <title>Compteur Crochet</title>
     <style>
-        body.red {
-            background-color: red;
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3efe9;
+            text-align: center;
+            padding: 40px;
+            transition: background-color 0.4s;
         }
-        #counter {
-            font-size: 40px;
+
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(5px, -5px); }
+            50% { transform: translate(-5px, 5px); }
+            75% { transform: translate(5px, 5px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease;
+        }
+
+        h1 {
+            color: #a86d3b;
+        }
+        .counter {
+            font-size: 80px;
             margin: 20px;
+            color: #4e342e;
+            transition: 0.2s;
         }
+
+        .last-update {
+            font-size: 12px;
+            color: #555;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
         button {
             font-size: 20px;
-            margin: 5px;
+            padding: 15px 25px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
         }
+        .add { background: #8bc34a; }
+        .minus { background: #e57373; }
+        .reset { background: #bdbdbd; }
+        .custom { background: #64b5f6; }
     </style>
 </head>
 <body>
 
-    <h1>Compteur</h1>
-    <div id="counter">0</div>
+    <h1>Compteur de Crochet 🧶</h1>
+    <div class="counter" id="counter">0</div>
+    <div class="last-update" id="lastUpdate">Dernière actualisation il y a 0 seconde</div>
 
-    <button onclick="change(-1)">-</button>
-    <button onclick="change(1)">+</button>
-    <button onclick="reset()">Réinitialiser</button>
-
-    <input type="number" id="setValue" placeholder="Valeur">
-    <button onclick="setCounter()">Mettre à cette valeur</button>
+    <button class="add" onclick="increment()">+1 rang</button>
+    <button class="minus" onclick="decrement()">−1</button>
+    <button class="custom" onclick="addCustomValue()">+ valeur précise</button>
+    <button class="reset" onclick="resetCount()">Réinitialiser</button>
 
     <br><br>
-    <a href="index.html">Retour</a>
+    <a href="index.html" style="font-size:18px;">⬅ Retour</a>
+
+    <audio id="ding">
+        <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm.ogg" type="audio/ogg">
+    </audio>
 
     <script>
         let count = 0;
+        let lastUpdateTime = Date.now();
 
-        function updateDisplay() {
-            document.getElementById("counter").innerText = count;
+        const counterDisplay = document.getElementById("counter");
+        const lastUpdateText = document.getElementById("lastUpdate");
+        const ding = document.getElementById("ding");
+        const body = document.body;
 
-            if ((count + 1) % 8 === 0) {
-                document.body.classList.add("red");
+        function refreshLastUpdate() {
+            let totalSeconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
+            let minutes = Math.floor(totalSeconds / 60);
+            let seconds = totalSeconds % 60;
+
+            let text = "Dernière actualisation il y a ";
+            if (minutes > 0) text += minutes + " min ";
+            text += seconds + " s";
+
+            lastUpdateText.textContent = text;
+        }
+
+        setInterval(refreshLastUpdate, 1000);
+
+        function update() {
+            if (count % 100 === 69) {
+                counterDisplay.textContent = count + " 😈";
             } else {
-                document.body.classList.remove("red");
+                counterDisplay.textContent = count;
+            }
+            localStorage.setItem("compteurCrochet", count);
+
+            lastUpdateTime = Date.now();
+            refreshLastUpdate();
+
+            body.classList.remove("shake");
+
+            if (count > 0 && count % 8 === 7) {
+                ding.currentTime = 0;
+                ding.play().catch(() => {});
+                if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
+
+                body.classList.add("shake");
+                body.style.backgroundColor = "#ffcdd2"; 
+            } else {
+                body.style.backgroundColor = "#f3efe9";
             }
         }
 
-        function change(val) {
-            count += val;
-            updateDisplay();
+        function increment() {
+            count++;
+            update();
         }
 
-        function reset() {
+        function decrement() {
+            if (count > 0) count--;
+            update();
+        }
+
+        function resetCount() {
             count = 0;
-            updateDisplay();
+            update();
         }
 
-        function setCounter() {
-            const val = document.getElementById("setValue").value;
-            if (!isNaN(val)) {
-                count = parseInt(val);
-                updateDisplay();
+        function addCustomValue() {
+            let value = prompt("Entrez la valeur à ajouter au compteur :");
+
+            if (value === null) return;
+
+            value = Number(value);
+            if (isNaN(value)) {
+                alert("Veuillez entrer un nombre valide !");
+                return;
             }
+
+            count += value;
+            if (count < 0) count = 0;
+
+            update();
         }
+
+        window.onload = () => {
+            const saved = localStorage.getItem("compteurCrochet");
+            if (saved !== null) count = Number(saved);
+            update();
+        };
     </script>
 
 </body>
