@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Compteur</title>
+    <style>
+        body.red {
+            background-color: red;
+        }
+        #counter {
+            font-size: 40px;
+            margin: 20px;
+        }
+        button {
+            font-size: 20px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Compteur</h1>
+    <div id="counter">0</div>
+
+    <button onclick="change(-1)">-</button>
+    <button onclick="change(1)">+</button>
+    <button onclick="reset()">Réinitialiser</button>
+
+    <input type="number" id="setValue" placeholder="Valeur">
+    <button onclick="setCounter()">Mettre à cette valeur</button>
+
+    <br><br>
+    <a href="index.html">Retour</a>
+
+    <script>
+        let count = 0;
+
+        function updateDisplay() {
+            document.getElementById("counter").innerText = count;
+
+            if ((count + 1) % 8 === 0) {
+                document.body.classList.add("red");
+            } else {
+                document.body.classList.remove("red");
+            }
+        }
+
+        function change(val) {
+            count += val;
+            updateDisplay();
+        }
+
+        function reset() {
+            count = 0;
+            updateDisplay();
+        }
+
+        function setCounter() {
+            const val = document.getElementById("setValue").value;
+            if (!isNaN(val)) {
+                count = parseInt(val);
+                updateDisplay();
+            }
+        }
+    </script>
+
+</body>
+</html>
