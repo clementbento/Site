@@ -24,9 +24,7 @@
             animation: shake 0.4s ease;
         }
 
-        h1 {
-            color: #a86d3b;
-        }
+        h1 { color: #a86d3b; }
         .counter {
             font-size: 80px;
             margin: 20px;
@@ -49,15 +47,20 @@
             border-radius: 10px;
             cursor: pointer;
         }
+
         .add { background: #8bc34a; }
         .minus { background: #e57373; }
         .reset { background: #bdbdbd; }
         .custom { background: #64b5f6; }
+
+        .save { background: #ffb74d; }
+        .load { background: #ce93d8; }
     </style>
 </head>
 <body>
 
     <h1>Compteur de Crochet 🧶</h1>
+
     <div class="counter" id="counter">0</div>
     <div class="last-update" id="lastUpdate">Dernière actualisation il y a 0 seconde</div>
 
@@ -67,6 +70,13 @@
     <button class="reset" onclick="resetCount()">Réinitialiser</button>
 
     <br><br>
+
+    <!-- Nouveaux boutons -->
+    <button class="save" onclick="saveProject()">💾 Sauvegarder</button>
+    <button class="load" onclick="loadProject()">📂 Charger</button>
+
+    <br><br>
+
     <a href="index.html" style="font-size:18px;">⬅ Retour</a>
 
     <audio id="ding">
@@ -81,6 +91,8 @@
         const lastUpdateText = document.getElementById("lastUpdate");
         const ding = document.getElementById("ding");
         const body = document.body;
+
+        /* ----------------------- MISE À JOUR ---------------------------- */
 
         function refreshLastUpdate() {
             let totalSeconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
@@ -97,15 +109,12 @@
         setInterval(refreshLastUpdate, 1000);
 
         function update() {
-            if (count % 100 === 69) {
-                counterDisplay.textContent = count + " 😈";
-            } else {
-                counterDisplay.textContent = count;
-            }
-            localStorage.setItem("compteurCrochet", count);
+            counterDisplay.textContent = (count % 100 === 69) ? count + " 😈" : count;
 
             lastUpdateTime = Date.now();
             refreshLastUpdate();
+
+            localStorage.setItem("compteurCrochet", count);
 
             body.classList.remove("shake");
 
@@ -121,24 +130,16 @@
             }
         }
 
-        function increment() {
-            count++;
-            update();
-        }
+        /* ----------------------- BOUTONS COMPTEUR ---------------------------- */
 
-        function decrement() {
-            if (count > 0) count--;
-            update();
-        }
+        function increment() { count++; update(); }
 
-        function resetCount() {
-            count = 0;
-            update();
-        }
+        function decrement() { if (count > 0) count--; update(); }
+
+        function resetCount() { count = 0; update(); }
 
         function addCustomValue() {
             let value = prompt("Entrez la valeur à ajouter au compteur :");
-
             if (value === null) return;
 
             value = Number(value);
@@ -149,9 +150,63 @@
 
             count += value;
             if (count < 0) count = 0;
-
             update();
         }
+
+        /* ----------------------- SAUVEGARDE PROJET ---------------------------- */
+
+        function saveProject() {
+            const name = prompt("Nom du projet :");
+            if (!name) return;
+
+            const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
+
+            const existing = projects.find(p => p.name === name);
+            if (existing && !confirm("Un projet porte déjà ce nom. Le remplacer ?")) return;
+
+            const projectData = {
+                name: name,
+                value: count,
+                date: new Date().toLocaleString()
+            };
+
+            const filtered = projects.filter(p => p.name !== name);
+            filtered.push(projectData);
+
+            localStorage.setItem("crochetProjects", JSON.stringify(filtered));
+
+            alert("Projet sauvegardé !");
+        }
+
+        /* ----------------------- CHARGER PROJET ---------------------------- */
+
+        function loadProject() {
+            const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
+
+            if (projects.length === 0) {
+                alert("Aucun projet sauvegardé !");
+                return;
+            }
+
+            const names = projects.map(p => p.name).join("\n");
+            const chosen = prompt("Quel projet charger ?\n\n" + names);
+
+            if (!chosen) return;
+
+            const project = projects.find(p => p.name === chosen);
+
+            if (!project) {
+                alert("Projet introuvable !");
+                return;
+            }
+
+            count = project.value;
+            update();
+
+            alert("Projet chargé : " + project.name);
+        }
+
+        /* ----------------------- RESTAURATION AUTO ---------------------------- */
 
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
