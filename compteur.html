@@ -73,6 +73,7 @@
 
     <h1>Compteur de Crochet 🧶</h1>
 
+    <!-- Affichage du projet -->
     <div id="projectName">Aucun projet chargé</div>
 
     <div class="counter" id="counter">0</div>
@@ -85,6 +86,7 @@
 
     <br><br>
 
+    <!-- Menu déroulant pour projets -->
     <select id="projectSelect">
         <option value="">-- Sélectionnez un projet --</option>
     </select>
@@ -113,7 +115,7 @@
         const ding = document.getElementById("ding");
         const body = document.body;
 
-        /* ------------ Mise à jour affichage ------------- */
+        /* ------------ MISE À JOUR ------------- */
 
         function refreshLastUpdate() {
             let totalSeconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
@@ -148,9 +150,12 @@
             } else {
                 body.style.backgroundColor = "#f3efe9";
             }
+
+            // Sauvegarde automatique
+            if (currentProject) autoSaveProject();
         }
 
-        /* ------------ Boutons compteur ------------- */
+        /* ------------ ACTIONS DU COMPTEUR ------------- */
 
         function increment() { count++; update(); }
         function decrement() { if (count > 0) count--; update(); }
@@ -166,7 +171,20 @@
             update();
         }
 
-        /* ------------ Sauvegarde projet ------------- */
+        /* ------------ SAUVEGARDE PROJET ------------- */
+
+        function autoSaveProject() {
+            const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
+
+            const updated = projects.filter(p => p.name !== currentProject);
+            updated.push({
+                name: currentProject,
+                value: count,
+                date: new Date().toLocaleString()
+            });
+
+            localStorage.setItem("crochetProjects", JSON.stringify(updated));
+        }
 
         function saveProject() {
             const name = prompt("Nom du projet :", currentProject || "");
@@ -175,19 +193,13 @@
             currentProject = name;
             projectNameDisplay.textContent = "Projet en cours : " + currentProject;
 
-            const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
-
-            const updated = projects.filter(p => p.name !== name);
-            updated.push({ name, value: count, date: new Date().toLocaleString() });
-
-            localStorage.setItem("crochetProjects", JSON.stringify(updated));
-
+            autoSaveProject();
             fillProjectMenu();
 
             alert("Projet sauvegardé !");
         }
 
-        /* ------------ Chargement projet ------------- */
+        /* ------------ CHARGER PROJET ------------- */
 
         function fillProjectMenu() {
             const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
@@ -219,7 +231,7 @@
             alert("Projet chargé !");
         }
 
-        /* ------------ Suppression projet ------------- */
+        /* ------------ SUPPRESSION PROJET ------------- */
 
         function deleteProject() {
             const name = projectSelect.value;
@@ -242,7 +254,7 @@
             alert("Projet supprimé !");
         }
 
-        /* ------------ Restauration auto ------------- */
+        /* ------------ RESTAURATION AUTO ------------- */
 
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
