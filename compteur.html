@@ -20,9 +20,7 @@
             100% { transform: translate(0, 0); }
         }
 
-        .shake {
-            animation: shake 0.4s ease;
-        }
+        .shake { animation: shake 0.4s ease; }
 
         h1 { color: #a86d3b; }
 
@@ -68,13 +66,13 @@
         .custom { background: #64b5f6; }
         .save { background: #ffb74d; }
         .load { background: #ce93d8; }
+        .delete { background: #ef5350; color: white; }
     </style>
 </head>
 <body>
 
     <h1>Compteur de Crochet 🧶</h1>
 
-    <!-- Nouveau : nom du projet -->
     <div id="projectName">Aucun projet chargé</div>
 
     <div class="counter" id="counter">0</div>
@@ -84,17 +82,19 @@
     <button class="minus" onclick="decrement()">−1</button>
     <button class="custom" onclick="addCustomValue()">+ valeur précise</button>
     <button class="reset" onclick="resetCount()">Réinitialiser</button>
+
     <br><br>
 
-    <!-- Menu déroulant pour choisir un projet -->
     <select id="projectSelect">
         <option value="">-- Sélectionnez un projet --</option>
     </select>
 
     <button class="load" onclick="loadSelectedProject()">📂 Charger</button>
     <button class="save" onclick="saveProject()">💾 Sauvegarder</button>
+    <button class="delete" onclick="deleteProject()">🗑 Supprimer</button>
 
     <br><br>
+
     <a href="index.html" style="font-size:18px;">⬅ Retour</a>
 
     <audio id="ding">
@@ -113,7 +113,7 @@
         const ding = document.getElementById("ding");
         const body = document.body;
 
-        /* ------------ MISE À JOUR ------------- */
+        /* ------------ Mise à jour affichage ------------- */
 
         function refreshLastUpdate() {
             let totalSeconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
@@ -150,7 +150,7 @@
             }
         }
 
-        /* ------------ BOUTONS ------------- */
+        /* ------------ Boutons compteur ------------- */
 
         function increment() { count++; update(); }
         function decrement() { if (count > 0) count--; update(); }
@@ -166,7 +166,7 @@
             update();
         }
 
-        /* ------------ SAUVEGARDE PROJET ------------- */
+        /* ------------ Sauvegarde projet ------------- */
 
         function saveProject() {
             const name = prompt("Nom du projet :", currentProject || "");
@@ -187,7 +187,7 @@
             alert("Projet sauvegardé !");
         }
 
-        /* ------------ CHARGER PROJET VIA MENU ------------- */
+        /* ------------ Chargement projet ------------- */
 
         function fillProjectMenu() {
             const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
@@ -219,7 +219,30 @@
             alert("Projet chargé !");
         }
 
-        /* ------------ AUTO RESTORE ------------- */
+        /* ------------ Suppression projet ------------- */
+
+        function deleteProject() {
+            const name = projectSelect.value;
+            if (!name) return alert("Veuillez sélectionner un projet à supprimer.");
+
+            if (!confirm("Voulez-vous vraiment supprimer le projet \"" + name + "\" ?")) return;
+
+            let projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
+            projects = projects.filter(p => p.name !== name);
+
+            localStorage.setItem("crochetProjects", JSON.stringify(projects));
+
+            fillProjectMenu();
+
+            if (currentProject === name) {
+                currentProject = null;
+                projectNameDisplay.textContent = "Aucun projet chargé";
+            }
+
+            alert("Projet supprimé !");
+        }
+
+        /* ------------ Restauration auto ------------- */
 
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
