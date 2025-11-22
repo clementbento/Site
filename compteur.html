@@ -25,6 +25,15 @@
         }
 
         h1 { color: #a86d3b; }
+
+        #projectName {
+            font-size: 22px;
+            margin-top: -10px;
+            margin-bottom: 20px;
+            color: #6d4c41;
+            font-weight: bold;
+        }
+
         .counter {
             font-size: 80px;
             margin: 20px;
@@ -39,20 +48,24 @@
             margin-bottom: 20px;
         }
 
-        button {
+        button, select {
             font-size: 20px;
-            padding: 15px 25px;
+            padding: 12px 20px;
             margin: 10px;
             border: none;
             border-radius: 10px;
             cursor: pointer;
         }
 
+        select {
+            background: #fff;
+            border: 2px solid #ce93d8;
+        }
+
         .add { background: #8bc34a; }
         .minus { background: #e57373; }
         .reset { background: #bdbdbd; }
         .custom { background: #64b5f6; }
-
         .save { background: #ffb74d; }
         .load { background: #ce93d8; }
     </style>
@@ -61,6 +74,9 @@
 
     <h1>Compteur de Crochet 🧶</h1>
 
+    <!-- Nouveau : nom du projet -->
+    <div id="projectName">Aucun projet chargé</div>
+
     <div class="counter" id="counter">0</div>
     <div class="last-update" id="lastUpdate">Dernière actualisation il y a 0 seconde</div>
 
@@ -68,15 +84,17 @@
     <button class="minus" onclick="decrement()">−1</button>
     <button class="custom" onclick="addCustomValue()">+ valeur précise</button>
     <button class="reset" onclick="resetCount()">Réinitialiser</button>
-
     <br><br>
 
-    <!-- Nouveaux boutons -->
+    <!-- Menu déroulant pour choisir un projet -->
+    <select id="projectSelect">
+        <option value="">-- Sélectionnez un projet --</option>
+    </select>
+
+    <button class="load" onclick="loadSelectedProject()">📂 Charger</button>
     <button class="save" onclick="saveProject()">💾 Sauvegarder</button>
-    <button class="load" onclick="loadProject()">📂 Charger</button>
 
     <br><br>
-
     <a href="index.html" style="font-size:18px;">⬅ Retour</a>
 
     <audio id="ding">
@@ -86,13 +104,16 @@
     <script>
         let count = 0;
         let lastUpdateTime = Date.now();
+        let currentProject = null;
 
         const counterDisplay = document.getElementById("counter");
         const lastUpdateText = document.getElementById("lastUpdate");
+        const projectNameDisplay = document.getElementById("projectName");
+        const projectSelect = document.getElementById("projectSelect");
         const ding = document.getElementById("ding");
         const body = document.body;
 
-        /* ----------------------- MISE À JOUR ---------------------------- */
+        /* ------------ MISE À JOUR ------------- */
 
         function refreshLastUpdate() {
             let totalSeconds = Math.floor((Date.now() - lastUpdateTime) / 1000);
@@ -122,7 +143,6 @@
                 ding.currentTime = 0;
                 ding.play().catch(() => {});
                 if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
-
                 body.classList.add("shake");
                 body.style.backgroundColor = "#ffcdd2"; 
             } else {
@@ -130,87 +150,82 @@
             }
         }
 
-        /* ----------------------- BOUTONS COMPTEUR ---------------------------- */
+        /* ------------ BOUTONS ------------- */
 
         function increment() { count++; update(); }
-
         function decrement() { if (count > 0) count--; update(); }
-
         function resetCount() { count = 0; update(); }
 
         function addCustomValue() {
             let value = prompt("Entrez la valeur à ajouter au compteur :");
             if (value === null) return;
-
             value = Number(value);
-            if (isNaN(value)) {
-                alert("Veuillez entrer un nombre valide !");
-                return;
-            }
-
+            if (isNaN(value)) return alert("Veuillez entrer un nombre valide !");
             count += value;
             if (count < 0) count = 0;
             update();
         }
 
-        /* ----------------------- SAUVEGARDE PROJET ---------------------------- */
+        /* ------------ SAUVEGARDE PROJET ------------- */
 
         function saveProject() {
-            const name = prompt("Nom du projet :");
+            const name = prompt("Nom du projet :", currentProject || "");
             if (!name) return;
+
+            currentProject = name;
+            projectNameDisplay.textContent = "Projet en cours : " + currentProject;
 
             const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
 
-            const existing = projects.find(p => p.name === name);
-            if (existing && !confirm("Un projet porte déjà ce nom. Le remplacer ?")) return;
+            const updated = projects.filter(p => p.name !== name);
+            updated.push({ name, value: count, date: new Date().toLocaleString() });
 
-            const projectData = {
-                name: name,
-                value: count,
-                date: new Date().toLocaleString()
-            };
+            localStorage.setItem("crochetProjects", JSON.stringify(updated));
 
-            const filtered = projects.filter(p => p.name !== name);
-            filtered.push(projectData);
-
-            localStorage.setItem("crochetProjects", JSON.stringify(filtered));
+            fillProjectMenu();
 
             alert("Projet sauvegardé !");
         }
 
-        /* ----------------------- CHARGER PROJET ---------------------------- */
+        /* ------------ CHARGER PROJET VIA MENU ------------- */
 
-        function loadProject() {
+        function fillProjectMenu() {
             const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
 
-            if (projects.length === 0) {
-                alert("Aucun projet sauvegardé !");
-                return;
+            projectSelect.innerHTML = `<option value="">-- Sélectionnez un projet --</option>`;
+
+            for (const p of projects) {
+                const opt = document.createElement("option");
+                opt.value = p.name;
+                opt.textContent = p.name + " (" + p.value + ")";
+                projectSelect.appendChild(opt);
             }
-
-            const names = projects.map(p => p.name).join("\n");
-            const chosen = prompt("Quel projet charger ?\n\n" + names);
-
-            if (!chosen) return;
-
-            const project = projects.find(p => p.name === chosen);
-
-            if (!project) {
-                alert("Projet introuvable !");
-                return;
-            }
-
-            count = project.value;
-            update();
-
-            alert("Projet chargé : " + project.name);
         }
 
-        /* ----------------------- RESTAURATION AUTO ---------------------------- */
+        function loadSelectedProject() {
+            const name = projectSelect.value;
+            if (!name) return alert("Veuillez sélectionner un projet.");
+
+            const projects = JSON.parse(localStorage.getItem("crochetProjects") || "[]");
+            const proj = projects.find(p => p.name === name);
+
+            if (!proj) return alert("Projet introuvable !");
+
+            count = proj.value;
+            currentProject = proj.name;
+            projectNameDisplay.textContent = "Projet en cours : " + currentProject;
+
+            update();
+            alert("Projet chargé !");
+        }
+
+        /* ------------ AUTO RESTORE ------------- */
 
         window.onload = () => {
             const saved = localStorage.getItem("compteurCrochet");
             if (saved !== null) count = Number(saved);
+
+            fillProjectMenu();
             update();
         };
     </script>
