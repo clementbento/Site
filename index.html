@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>🧠 Quiz du Bureau</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- ── Firebase ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#f1f5ff 0%,#fdf4ff 100%);min-height:100vh}
@@ -13,6 +18,9 @@
   #header{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:16px 20px;text-align:center;box-shadow:0 4px 20px #4f46e540}
   #header h1{font-size:1.4rem;font-weight:900;letter-spacing:-.5px}
   #header p{font-size:.75rem;color:#c7d2fe;margin-top:3px}
+  #conn-status{font-size:.65rem;font-weight:700;margin-top:4px;display:inline-block;padding:2px 8px;border-radius:10px}
+  #conn-status.on{background:#16a34a33;color:#bbf7d0}
+  #conn-status.off{background:#dc262633;color:#fecaca}
 
   /* ── tabs ── */
   #tabs{display:flex;background:white;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px #0000000d}
@@ -115,6 +123,7 @@
 <div id="header">
   <h1>🧠 Quiz du Bureau</h1>
   <p id="date-display"></p>
+  <span id="conn-status" class="off">⏳ Connexion…</span>
 </div>
 
 <div id="tabs">
@@ -170,6 +179,25 @@
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+// ⚠️ CONFIGURATION FIREBASE — À REMPLIR AVEC VOS PROPRES CLÉS
+// Créez un projet gratuit sur https://console.firebase.google.com
+// puis Firestore Database > Créer une base (mode "test" pour commencer)
+// puis Paramètres du projet > Vos applications > Ajouter une app Web
+// ═══════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCQ4LKonRUiEpmQV6Cjf8oisc1CEfX8IIA",
+  authDomain: "qui-est-le-moins-con.firebaseapp.com",
+  projectId: "qui-est-le-moins-con",
+  storageBucket: "qui-est-le-moins-con.firebasestorage.app",
+  messagingSenderId: "959905395052",
+  appId: "1:959905395052:web:05ab2635e65c9569954349"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const COLLECTION = "quizBureau";
+
 // ─── constants ───────────────────────────────────────────
 const N = 8;
 const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
@@ -189,6 +217,7 @@ let editCell = null;     // { type:'day'|'bonus'|'malus', date, idx }
 let chartInst = null;
 let currentTab = 0;
 let dataReady = false;
+let stateReady = false, validatedReady = false;
 
 // ─── date helpers ────────────────────────────────────────
 function toISO(d) {
@@ -217,34 +246,77 @@ const YEAR  = now.getFullYear();
 const MONTH = now.getMonth();
 const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
 
-// ─── persist (shared storage – all collègues voient les mêmes données) ────
+// ─── Firestore persistence (partagé entre tous les utilisateurs) ──
+function setConnStatus(ok) {
+  const el = document.getElementById("conn-status");
+  if (!el) return;
+  el.className = ok ? "on" : "off";
+  el.textContent = ok ? "🟢 Synchronisé" : "🔴 Hors ligne";
+}
+
 async function persist() {
   try {
-    const r = await window.storage.set('state', JSON.stringify({names, scores, bonus, malus}), true);
-    return !!r;
-  } catch(e) { console.error("Erreur de sauvegarde", e); return false; }
+    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus });
+    setConnStatus(true);
+    return true;
+  } catch (e) {
+    console.error("Erreur de sauvegarde (state)", e);
+    setConnStatus(false);
+    return false;
+  }
 }
 async function persistValidated() {
   try {
-    const r = await window.storage.set('validated_'+TODAY, JSON.stringify(validated), true);
-    return !!r;
-  } catch(e) { console.error("Erreur de sauvegarde", e); return false; }
+    await db.collection(COLLECTION).doc("validated_"+TODAY).set(validated);
+    setConnStatus(true);
+    return true;
+  } catch (e) {
+    console.error("Erreur de sauvegarde (validated)", e);
+    setConnStatus(false);
+    return false;
+  }
 }
-async function load() {
-  try {
-    const r = await window.storage.get('state', true);
-    if (r) {
-      const d = JSON.parse(r.value);
-      if(d.names) names=d.names;
-      if(d.scores) scores=d.scores;
-      if(d.bonus) bonus=d.bonus;
-      if(d.malus) malus=d.malus;
-    }
-  } catch(e) { /* pas encore de données */ }
-  try {
-    const r = await window.storage.get('validated_'+TODAY, true);
-    if (r) validated = JSON.parse(r.value);
-  } catch(e) { /* pas encore de données pour aujourd'hui */ }
+
+// Écoute en temps réel : dès qu'un collègue enregistre un score,
+// tous les autres onglets ouverts se mettent à jour automatiquement.
+function listenState() {
+  db.collection(COLLECTION).doc("state").onSnapshot(
+    (doc) => {
+      setConnStatus(true);
+      if (doc.exists) {
+        const d = doc.data();
+        if (d.names)  names  = d.names;
+        if (d.scores) scores = d.scores;
+        if (d.bonus)  bonus  = d.bonus;
+        if (d.malus)  malus  = d.malus;
+      }
+      if (!stateReady) { stateReady = true; maybeReady(); }
+      else if (dataReady) rerenderAll();
+    },
+    (err) => { console.error(err); setConnStatus(false); }
+  );
+}
+function listenValidated() {
+  db.collection(COLLECTION).doc("validated_"+TODAY).onSnapshot(
+    (doc) => {
+      setConnStatus(true);
+      validated = doc.exists ? doc.data() : {};
+      if (!validatedReady) { validatedReady = true; maybeReady(); }
+      else if (dataReady && currentTab===0) renderPanel1();
+    },
+    (err) => { console.error(err); setConnStatus(false); }
+  );
+}
+function maybeReady() {
+  if (stateReady && validatedReady && !dataReady) {
+    dataReady = true;
+    switchTab(currentTab);
+  }
+}
+function rerenderAll() {
+  if (currentTab===0) renderPanel1();
+  if (currentTab===1) renderPanel2();
+  if (currentTab===2) renderPanel3();
 }
 
 // ─── derived ─────────────────────────────────────────────
@@ -318,7 +390,6 @@ async function doValidate(i) {
   const btn = document.getElementById("btn-"+i);
   const v = parseInt(inp.value);
   if (isNaN(v)||v<0) return;
-  // état "enregistrement en cours" pour éviter de perdre le score si on actualise trop vite
   if(btn){ btn.disabled=true; btn.textContent="…"; }
   if(inp) inp.disabled=true;
   if (!scores[TODAY]) scores[TODAY]={};
@@ -327,10 +398,9 @@ async function doValidate(i) {
   const ok = await persist();
   const okV = await persistValidated();
   if(!ok || !okV){
-    // échec de sauvegarde : on annule pour ne pas afficher un état verrouillé qui n'est pas réellement enregistré
     delete scores[TODAY][i];
     delete validated[i];
-    alert("Erreur d'enregistrement, merci de réessayer avant d'actualiser la page.");
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
     renderPanel1();
     return;
   }
@@ -346,14 +416,13 @@ function renderPanel2() {
 
 function renderPodium() {
   const ranking = getRanking();
-  // Order: 2nd | 1st | 3rd
   const order = [ranking[1], ranking[0], ranking[2]];
   const heights = [80, 118, 58];
   const bgColors = ["#cbd5e1","#facc15","#d97706"];
   const wrap = document.getElementById("podium-wrap");
   wrap.innerHTML = "";
   order.forEach((r,pos) => {
-    const rank = pos===1?0:pos===0?1:2; // actual rank
+    const rank = pos===1?0:pos===0?1:2;
     const col = document.createElement("div");
     col.className = "podium-col";
     const crown = rank===0 ? `<div class="crown">👑</div>` : "";
@@ -443,8 +512,6 @@ function renderDbHead() {
 function renderDbBody() {
   const body = document.getElementById("db-body");
   body.innerHTML="";
-  const past = WORKING_DAYS.filter(d=>d<=TODAY);
-  // rows
   WORKING_DAYS.forEach((day,di)=>{
     const ds = scores[day]||{};
     const isFuture = day>TODAY, isToday=day===TODAY;
@@ -454,11 +521,9 @@ function renderDbBody() {
     if(isFuture) tr.className="future";
     else if(isToday) tr.className="today";
     else if(di%2===0) tr.className="alt";
-    // day cell
     const dayTd=document.createElement("td");
     dayTd.innerHTML=`<span style="color:#94a3b8;font-size:.68rem;margin-right:4px">${dayLabel(day)}</span>${dispDate(day)}`;
     tr.appendChild(dayTd);
-    // score cells
     for(let i=0;i<N;i++){
       const td=document.createElement("td");
       if(adminUnlocked&&!isFuture) td.className="editable";
@@ -479,7 +544,6 @@ function renderDbBody() {
       }
       tr.appendChild(td);
     }
-    // total cell
     const totTd=document.createElement("td");
     totTd.textContent=hasData?rowTotal:"—";
     totTd.style.color="#475569";
@@ -577,7 +641,7 @@ async function saveNames() {
   }
   const ok = await persist();
   if(btn){ btn.disabled=false; btn.textContent="Sauvegarder les noms"; }
-  if(!ok){ alert("Erreur d'enregistrement, merci de réessayer avant d'actualiser la page."); return; }
+  if(!ok){ alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer."); return; }
   renderPanel1(); renderPanel2(); renderPanel3();
 }
 
@@ -603,7 +667,6 @@ async function commitEdit() {
     if(!scores[date]) scores[date]={};
     if(isEmpty){
       delete scores[date][idx];
-      // si on efface le score du jour, on redéverrouille la case sur la page de saisie
       if(date===TODAY){
         delete validated[idx];
         needValidatedSave = true;
@@ -626,7 +689,7 @@ async function commitEdit() {
   editCell=null;
   committing = false;
   if(!ok || !okV){
-    alert("Erreur d'enregistrement, merci de réessayer avant d'actualiser la page.");
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
   }
   renderDbBody();
   renderPanel1();
@@ -648,12 +711,8 @@ function switchTab(i) {
 document.getElementById("date-display").textContent =
   now.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
-async function init() {
-  await load();
-  dataReady = true;
-  switchTab(currentTab);
-}
-init();
+listenState();
+listenValidated();
 </script>
 </body>
 </html>
