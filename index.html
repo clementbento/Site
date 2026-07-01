@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>🧠 Quiz du Bureau</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js"></script>
 
 <!-- ── Firebase ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -116,6 +117,15 @@
   tfoot tr.malus-row td:first-child{background:#fef2f2;color:#dc2626;position:sticky;left:0}
   tfoot tr.malus-row td.editable:hover{background:#fee2e2!important;cursor:pointer}
   #db-loading{text-align:center;padding:30px;color:#cbd5e1;font-size:.85rem}
+
+  /* ── panel 4 – pilori ── */
+  #tomato-wrap{position:relative;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#bfe3ff 0%,#e8f4ff 55%,#eef7ee 55%,#d7ecd0 100%);box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9;height:min(62vh,480px);touch-action:none}
+  #tomato-scene{position:absolute;inset:0;cursor:crosshair}
+  #tomato-hud{position:absolute;top:0;left:0;right:0;padding:12px;text-align:center;pointer-events:none;z-index:5}
+  #tomato-loser-tag{display:inline-block;background:#ffffffcc;backdrop-filter:blur(4px);border-radius:20px;padding:5px 14px;font-size:.78rem;font-weight:800;color:#334155;box-shadow:0 2px 8px #0000001a}
+  #tomato-count-tag{margin-top:5px;font-size:.7rem;font-weight:700;color:#7c2d12}
+  #tomato-hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:.68rem;color:#64748b;font-weight:600;pointer-events:none;z-index:5}
+  #tomato-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#94a3b8}
 </style>
 </head>
 <body>
@@ -130,6 +140,7 @@
   <button class="tab-btn active" onclick="switchTab(0)">📝 Scores du jour</button>
   <button class="tab-btn" onclick="switchTab(1)">🏆 Classement</button>
   <button class="tab-btn" onclick="switchTab(2)">🗂️ Base de données</button>
+  <button class="tab-btn" onclick="switchTab(3)">🍅 Pilori</button>
 </div>
 
 <div id="app">
@@ -173,6 +184,20 @@
         <tbody id="db-body"></tbody>
         <tfoot id="db-foot"></tfoot>
       </table>
+    </div>
+  </div>
+
+  <!-- PANEL 4 -->
+  <div class="panel" id="panel-3">
+    <p class="section-title">Le Pilori</p>
+    <div id="tomato-wrap">
+      <div id="tomato-loading">⏳ Chargement du pilori…</div>
+      <div id="tomato-hud">
+        <div id="tomato-loser-tag">—</div>
+        <div id="tomato-count-tag"></div>
+      </div>
+      <div id="tomato-scene"></div>
+      <p id="tomato-hint">👆 Touchez pour jeter une tomate</p>
     </div>
   </div>
 
@@ -317,6 +342,7 @@ function rerenderAll() {
   if (currentTab===0) renderPanel1();
   if (currentTab===1) renderPanel2();
   if (currentTab===2) renderPanel3();
+  if (currentTab===3) refreshTomatoLoser();
 }
 
 // ─── derived ─────────────────────────────────────────────
@@ -696,6 +722,232 @@ async function commitEdit() {
   if(currentTab===1) renderPanel2();
 }
 
+// ─── panel 4 : le Pilori (tomates en 3D) ───────────────────
+let tomatoScene, tomatoCamera, tomatoRenderer, tomatoCharacter, tomatoHead, tomatoInited=false;
+let tomatoList = [];
+let tomatoCurrentLoser = -1, tomatoCountUnsub = null;
+
+function initTomatoScene() {
+  const wrap = document.getElementById("tomato-wrap");
+  const container = document.getElementById("tomato-scene");
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+
+  tomatoScene = new THREE.Scene();
+  tomatoCamera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
+  tomatoCamera.position.set(0, 2.4, 7);
+  tomatoCamera.lookAt(0, 1.6, 0);
+
+  tomatoRenderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  tomatoRenderer.setSize(w,h);
+  tomatoRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  tomatoRenderer.shadowMap.enabled = true;
+  container.appendChild(tomatoRenderer.domElement);
+
+  tomatoScene.add(new THREE.AmbientLight(0xffffff, .7));
+  const dir = new THREE.DirectionalLight(0xffffff, .9);
+  dir.position.set(3,6,4);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(1024,1024);
+  tomatoScene.add(dir);
+
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(6,48),
+    new THREE.MeshStandardMaterial({ color:0xbfe3a0 })
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  tomatoScene.add(ground);
+
+  const pedestal = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.15,1.35,1,24),
+    new THREE.MeshStandardMaterial({ color:0x94a3b8, roughness:.8 })
+  );
+  pedestal.position.y = .5;
+  pedestal.castShadow = true; pedestal.receiveShadow = true;
+  tomatoScene.add(pedestal);
+
+  container.addEventListener("pointerdown", throwTomato);
+  addEventListener("resize", resizeTomatoScene);
+
+  tomatoInited = true;
+  document.getElementById("tomato-loading").style.display = "none";
+  animateTomato();
+}
+
+function resizeTomatoScene() {
+  if(!tomatoInited) return;
+  const wrap = document.getElementById("tomato-wrap");
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  tomatoCamera.aspect = w/h; tomatoCamera.updateProjectionMatrix();
+  tomatoRenderer.setSize(w,h);
+}
+
+function tomatoLetterTexture(letter, bg) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(64,64,64,0,7); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 70px -apple-system,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(letter, 64, 70);
+  return new THREE.CanvasTexture(c);
+}
+
+function buildTomatoCharacter(idx) {
+  if(tomatoCharacter) tomatoScene.remove(tomatoCharacter);
+  tomatoCharacter = new THREE.Group();
+  const color = new THREE.Color(COLORS[idx]);
+  const letter = (names[idx]||"?")[0]?.toUpperCase() || "?";
+
+  const body = new THREE.Mesh(
+    THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.42,.7,4,12) : new THREE.CylinderGeometry(.42,.5,1.1,16),
+    new THREE.MeshStandardMaterial({ color })
+  );
+  body.position.y = 1.5;
+  body.castShadow = true;
+  tomatoCharacter.add(body);
+
+  tomatoHead = new THREE.Mesh(
+    new THREE.SphereGeometry(.42, 32, 32),
+    new THREE.MeshStandardMaterial({ map: tomatoLetterTexture(letter, COLORS[idx]) })
+  );
+  tomatoHead.position.y = 2.25;
+  tomatoHead.castShadow = true;
+  tomatoCharacter.add(tomatoHead);
+
+  [-1,1].forEach(side=>{
+    const arm = new THREE.Mesh(
+      new THREE.CylinderGeometry(.08,.08,.55,8),
+      new THREE.MeshStandardMaterial({ color })
+    );
+    arm.position.set(side*.5, 1.65, 0);
+    arm.rotation.z = side*.5;
+    tomatoCharacter.add(arm);
+  });
+
+  tomatoCharacter.position.y = .5;
+  tomatoScene.add(tomatoCharacter);
+}
+
+function animateTomato() {
+  if(!tomatoInited) return;
+  requestAnimationFrame(animateTomato);
+  updateTomatoes();
+  if(tomatoCharacter) tomatoCharacter.rotation.y = Math.sin(Date.now()*.0006)*.15;
+  tomatoRenderer.render(tomatoScene, tomatoCamera);
+}
+
+function throwTomato() {
+  const geo = new THREE.SphereGeometry(.16, 12, 12);
+  const mat = new THREE.MeshStandardMaterial({ color:0xdc2626, roughness:.4 });
+  const mesh = new THREE.Mesh(geo, mat);
+  const startX = (Math.random()-.5)*1.2;
+  mesh.position.set(startX, .3, 6.5);
+  mesh.castShadow = true;
+  tomatoScene.add(mesh);
+
+  const targetX = (Math.random()-.5)*.5;
+  const target = new THREE.Vector3(targetX, 2.15, .15);
+  tomatoList.push({
+    mesh, t:0, dur: 55 + Math.random()*15,
+    start: mesh.position.clone(), end: target, hit:false
+  });
+  incrementTomatoCount();
+}
+
+function updateTomatoes() {
+  tomatoList = tomatoList.filter(tm=>{
+    tm.t++;
+    const p = Math.min(tm.t/tm.dur, 1);
+    tm.mesh.position.lerpVectors(tm.start, tm.end, p);
+    tm.mesh.position.y += Math.sin(p*Math.PI) * 2.4;
+    tm.mesh.rotation.x += .3; tm.mesh.rotation.y += .2;
+    if(p>=1 && !tm.hit){
+      tm.hit = true;
+      splatTomato(tm.mesh.position.clone());
+      tomatoScene.remove(tm.mesh);
+      shakeTomato();
+      return false;
+    }
+    return true;
+  });
+}
+
+function splatTomato(pos) {
+  for(let i=0;i<10;i++){
+    const s = new THREE.Mesh(
+      new THREE.SphereGeometry(.04+Math.random()*.05,6,6),
+      new THREE.MeshBasicMaterial({ color:0xb91c1c })
+    );
+    s.position.copy(pos);
+    const vel = new THREE.Vector3((Math.random()-.5)*.15,Math.random()*.18,(Math.random()-.5)*.15);
+    tomatoScene.add(s);
+    let life=0;
+    const tick=()=>{
+      life++;
+      s.position.add(vel); vel.y -= .008;
+      s.material.opacity = Math.max(0, 1-life/30);
+      s.material.transparent = true;
+      if(life<30) requestAnimationFrame(tick); else tomatoScene.remove(s);
+    };
+    tick();
+  }
+  const decal = new THREE.Mesh(
+    new THREE.CircleGeometry(.22+Math.random()*.1, 16),
+    new THREE.MeshBasicMaterial({ color:0x991b1b, transparent:true, opacity:.85 })
+  );
+  decal.position.copy(pos);
+  decal.lookAt(tomatoCamera.position);
+  tomatoScene.add(decal);
+  let life=0;
+  const fade=()=>{
+    life++;
+    if(life>90){ decal.material.opacity -= .02; }
+    if(decal.material.opacity>0) requestAnimationFrame(fade); else tomatoScene.remove(decal);
+  };
+  fade();
+}
+
+function shakeTomato() {
+  const el = document.getElementById("tomato-scene");
+  el.style.transform = "translate(3px,-2px)";
+  setTimeout(()=> el.style.transform = "translate(-2px,2px)", 40);
+  setTimeout(()=> el.style.transform = "translate(0,0)", 80);
+}
+
+function refreshTomatoLoser() {
+  const ranking = getRanking(); // trié décroissant : le dernier de la liste est le perdant
+  const l = ranking[N-1].idx;
+  const tag = document.getElementById("tomato-loser-tag");
+  if(tag) tag.textContent = `🎯 Cible : ${names[l]}`;
+  if(l !== tomatoCurrentLoser){
+    tomatoCurrentLoser = l;
+    if(tomatoInited) buildTomatoCharacter(l);
+    watchTomatoCount(l);
+  }
+}
+function watchTomatoCount(idx) {
+  if(tomatoCountUnsub) tomatoCountUnsub();
+  tomatoCountUnsub = db.collection(COLLECTION).doc("tomatoes_"+idx).onSnapshot(doc=>{
+    const c = doc.exists ? (doc.data().count||0) : 0;
+    const tag = document.getElementById("tomato-count-tag");
+    if(tag) tag.textContent = `🍅 ${c} tomate${c>1?'s':''} reçue${c>1?'s':''}`;
+  });
+}
+function incrementTomatoCount() {
+  if(tomatoCurrentLoser<0) return;
+  db.collection(COLLECTION).doc("tomatoes_"+tomatoCurrentLoser).set(
+    { count: firebase.firestore.FieldValue.increment(1) }, { merge:true }
+  ).catch(e=>console.error(e));
+}
+
+function renderPanel4() {
+  if(!tomatoInited) initTomatoScene();
+  else resizeTomatoScene();
+  refreshTomatoLoser();
+}
+
 // ─── tabs ─────────────────────────────────────────────────
 function switchTab(i) {
   currentTab=i;
@@ -705,6 +957,7 @@ function switchTab(i) {
   if(i===0) renderPanel1();
   if(i===1) renderPanel2();
   if(i===2) renderPanel3();
+  if(i===3) renderPanel4();
 }
 
 // ─── init ────────────────────────────────────────────────
