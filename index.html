@@ -98,9 +98,16 @@
   tr.today td{background:#f5f3ff}
   td.editable:hover{background:#eef2ff!important;cursor:pointer}
   .cell-edit{width:50px;border:2px solid #6366f1;border-radius:6px;padding:2px 4px;text-align:center;font-size:.72rem;font-weight:700;outline:none}
-  tfoot tr{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
-  tfoot td{padding:8px 6px;color:white;font-weight:900;border-top:2px solid #312e81}
-  tfoot td:first-child{background:#4f46e5;position:sticky;left:0}
+  tfoot tr.grand-total{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
+  tfoot tr.grand-total td{padding:8px 6px;color:white;font-weight:900;border-top:2px solid #312e81}
+  tfoot tr.grand-total td:first-child{background:#4f46e5;position:sticky;left:0}
+  tfoot tr.bonus-row td{background:#f0fdf4;color:#16a34a;font-weight:700;border-top:2px solid #bbf7d0}
+  tfoot tr.bonus-row td:first-child{background:#f0fdf4;color:#16a34a;position:sticky;left:0}
+  tfoot tr.bonus-row td.editable:hover{background:#dcfce7!important;cursor:pointer}
+  tfoot tr.malus-row td{background:#fef2f2;color:#dc2626;font-weight:700;border-top:1px solid #fecaca}
+  tfoot tr.malus-row td:first-child{background:#fef2f2;color:#dc2626;position:sticky;left:0}
+  tfoot tr.malus-row td.editable:hover{background:#fee2e2!important;cursor:pointer}
+  #db-loading{text-align:center;padding:30px;color:#cbd5e1;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -150,7 +157,7 @@
       <div class="names-grid" id="names-grid"></div>
       <button id="save-names-btn" onclick="saveNames()">Sauvegarder les noms</button>
     </div>
-    <p id="edit-hint">Cliquez sur une cellule pour modifier sa valeur</p>
+    <p id="edit-hint">Cliquez sur une cellule pour modifier sa valeur (scores, bonus, malus)</p>
     <div class="table-wrap">
       <table id="db-table">
         <thead id="db-head"></thead>
@@ -173,12 +180,15 @@ const FR_DAYS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 // ─── state ───────────────────────────────────────────────
 let names    = [...DEFAULT_NAMES];
 let scores   = {};       // { "2026-07-01": { 0:5, 1:3, … } }
+let bonus    = {};       // { 0: 5, 3: 2, … } – flat bonus points per player
+let malus    = {};       // { 0: 3, … } – flat malus points per player
 let validated = {};      // { 0: true } – locked today
 
 let adminUnlocked = false;
-let editCell = null;     // { date, idx }
+let editCell = null;     // { type:'day'|'bonus'|'malus', date, idx }
 let chartInst = null;
 let currentTab = 0;
+let dataReady = false;
 
 // ─── date helpers ────────────────────────────────────────
 function toISO(d) {
@@ -207,32 +217,47 @@ const YEAR  = now.getFullYear();
 const MONTH = now.getMonth();
 const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
 
-// ─── persist ─────────────────────────────────────────────
-function persist() {
-  localStorage.setItem("quiz_main", JSON.stringify({ names, scores }));
-}
-function persistValidated() {
-  localStorage.setItem("quiz_val_"+TODAY, JSON.stringify(validated));
-}
-function load() {
+// ─── persist (shared storage – all collègues voient les mêmes données) ────
+async function persist() {
   try {
-    const raw = localStorage.getItem("quiz_main");
-    if (raw) { const d=JSON.parse(raw); if(d.names) names=d.names; if(d.scores) scores=d.scores; }
-  } catch {}
+    await window.storage.set('state', JSON.stringify({names, scores, bonus, malus}), true);
+  } catch(e) { console.error("Erreur de sauvegarde", e); }
+}
+async function persistValidated() {
   try {
-    const raw = localStorage.getItem("quiz_val_"+TODAY);
-    if (raw) validated = JSON.parse(raw);
-  } catch {}
+    await window.storage.set('validated_'+TODAY, JSON.stringify(validated), true);
+  } catch(e) { console.error("Erreur de sauvegarde", e); }
+}
+async function load() {
+  try {
+    const r = await window.storage.get('state', true);
+    if (r) {
+      const d = JSON.parse(r.value);
+      if(d.names) names=d.names;
+      if(d.scores) scores=d.scores;
+      if(d.bonus) bonus=d.bonus;
+      if(d.malus) malus=d.malus;
+    }
+  } catch(e) { /* pas encore de données */ }
+  try {
+    const r = await window.storage.get('validated_'+TODAY, true);
+    if (r) validated = JSON.parse(r.value);
+  } catch(e) { /* pas encore de données pour aujourd'hui */ }
 }
 
 // ─── derived ─────────────────────────────────────────────
-function getTotals() {
+function computeDailyTotals() {
   const totals = Array(N).fill(0);
   const past = WORKING_DAYS.filter(d=>d<=TODAY);
   for (const d of past) {
     const ds = scores[d]||{};
     for (let i=0;i<N;i++) totals[i]+=(ds[i]??0);
   }
+  return totals;
+}
+function getTotals() {
+  const totals = computeDailyTotals();
+  for(let i=0;i<N;i++) totals[i] += (bonus[i]??0) - (malus[i]??0);
   return totals;
 }
 function getRanking() {
@@ -259,7 +284,7 @@ function renderPanel1() {
   const list = document.getElementById("players-list");
   list.innerHTML = "";
   for (let i=0;i<N;i++) {
-    const locked = validated[i]!==undefined || todayScores[i]!==undefined;
+    const locked = validated[i]!==undefined && todayScores[i]!==undefined;
     const score  = todayScores[i];
     const row = document.createElement("div");
     row.className = "player-row" + (locked?" locked":"");
@@ -401,12 +426,9 @@ function renderDbHead() {
 }
 
 function renderDbBody() {
-  const totals = Array(N).fill(0);
   const body = document.getElementById("db-body");
   body.innerHTML="";
   const past = WORKING_DAYS.filter(d=>d<=TODAY);
-  // accumulate totals
-  for (const d of past) { const ds=scores[d]||{}; for(let i=0;i<N;i++) totals[i]+=(ds[i]??0); }
   // rows
   WORKING_DAYS.forEach((day,di)=>{
     const ds = scores[day]||{};
@@ -426,7 +448,7 @@ function renderDbBody() {
       const td=document.createElement("td");
       if(adminUnlocked&&!isFuture) td.className="editable";
       const val=ds[i];
-      if(editCell&&editCell.date===day&&editCell.idx===i){
+      if(editCell&&editCell.type==="day"&&editCell.date===day&&editCell.idx===i){
         const inp=document.createElement("input");
         inp.className="cell-edit"; inp.type="number";
         inp.value=val!==undefined?val:"";
@@ -438,7 +460,7 @@ function renderDbBody() {
       } else {
         td.textContent=val!==undefined?val:"—";
         td.style.color=val!==undefined?COLORS[i]:"#cbd5e1";
-        if(adminUnlocked&&!isFuture) td.onclick=()=>startEdit(day,i);
+        if(adminUnlocked&&!isFuture) td.onclick=()=>startEdit("day",day,i);
       }
       tr.appendChild(td);
     }
@@ -449,13 +471,57 @@ function renderDbBody() {
     tr.appendChild(totTd);
     body.appendChild(tr);
   });
-  // footer totals
-  const foot=document.getElementById("db-foot");
-  foot.innerHTML=`<tr>
-    <td style="text-align:left">TOTAL</td>
-    ${totals.map(t=>`<td>${t}</td>`).join("")}
-    <td>${totals.reduce((a,b)=>a+b,0)}</td>
-  </tr>`;
+  renderDbFoot();
+}
+
+function renderAdjRow(type, label, obj) {
+  const tr=document.createElement("tr");
+  tr.className = type==="bonus" ? "bonus-row" : "malus-row";
+  const labelTd=document.createElement("td");
+  labelTd.style.textAlign="left";
+  labelTd.textContent=label;
+  tr.appendChild(labelTd);
+  let sum=0;
+  for(let i=0;i<N;i++){
+    const val = obj[i];
+    sum += (val??0);
+    const td=document.createElement("td");
+    if(editCell&&editCell.type===type&&editCell.idx===i){
+      const inp=document.createElement("input");
+      inp.className="cell-edit"; inp.type="number";
+      inp.value=val!==undefined?val:"";
+      inp.addEventListener("blur",()=>commitEdit());
+      inp.addEventListener("keydown",e=>{ if(e.key==="Enter") commitEdit(); });
+      setTimeout(()=>inp.focus(),10);
+      td.appendChild(inp);
+    } else {
+      td.textContent = val!==undefined?val:"—";
+      if(adminUnlocked){
+        td.className="editable";
+        td.onclick=()=>startEdit(type,null,i);
+      }
+    }
+    tr.appendChild(td);
+  }
+  const sumTd=document.createElement("td");
+  sumTd.textContent=sum;
+  tr.appendChild(sumTd);
+  return tr;
+}
+
+function renderDbFoot() {
+  const dailyTotals = computeDailyTotals();
+  const foot = document.getElementById("db-foot");
+  foot.innerHTML="";
+  foot.appendChild(renderAdjRow("bonus","Bonus",bonus));
+  foot.appendChild(renderAdjRow("malus","Malus",malus));
+  const grandTotals = dailyTotals.map((t,i)=> t + (bonus[i]??0) - (malus[i]??0));
+  const totalTr=document.createElement("tr");
+  totalTr.className="grand-total";
+  totalTr.innerHTML=`<td style="text-align:left">TOTAL</td>
+    ${grandTotals.map(t=>`<td>${t}</td>`).join("")}
+    <td>${grandTotals.reduce((a,b)=>a+b,0)}</td>`;
+  foot.appendChild(totalTr);
 }
 
 function renderNamesEditor() {
@@ -496,22 +562,46 @@ function saveNames() {
   renderPanel1(); renderPanel2(); renderPanel3();
 }
 
-function startEdit(date,idx) {
-  editCell={date,idx};
+function startEdit(type,date,idx) {
+  editCell={type,date,idx};
   renderDbBody();
 }
+
 function commitEdit() {
   if(!editCell) return;
-  const {date,idx}=editCell;
+  const {type,date,idx}=editCell;
   const inp=document.querySelector(".cell-edit");
   if(!inp){ editCell=null; return; }
-  const v=parseInt(inp.value);
-  if(!scores[date]) scores[date]={};
-  if(isNaN(v)||inp.value.trim()==="") delete scores[date][idx];
-  else scores[date][idx]=v;
+  const raw=inp.value.trim();
+  const v=parseInt(raw);
+  const isEmpty = raw==="" || isNaN(v);
+
+  if(type==="day"){
+    if(!scores[date]) scores[date]={};
+    if(isEmpty){
+      delete scores[date][idx];
+      // si on efface le score du jour, on redéverrouille la case sur la page de saisie
+      if(date===TODAY){
+        delete validated[idx];
+        persistValidated();
+      }
+    } else {
+      scores[date][idx]=v;
+      if(date===TODAY){
+        validated[idx]=true;
+        persistValidated();
+      }
+    }
+  } else if(type==="bonus"){
+    if(isEmpty) delete bonus[idx]; else bonus[idx]=v;
+  } else if(type==="malus"){
+    if(isEmpty) delete malus[idx]; else malus[idx]=v;
+  }
+
   editCell=null;
   persist();
   renderDbBody();
+  renderPanel1();
   if(currentTab===1) renderPanel2();
 }
 
@@ -520,6 +610,7 @@ function switchTab(i) {
   currentTab=i;
   document.querySelectorAll(".tab-btn").forEach((b,j)=>b.classList.toggle("active",i===j));
   document.querySelectorAll(".panel").forEach((p,j)=>p.classList.toggle("active",i===j));
+  if(!dataReady) return;
   if(i===0) renderPanel1();
   if(i===1) renderPanel2();
   if(i===2) renderPanel3();
@@ -529,8 +620,12 @@ function switchTab(i) {
 document.getElementById("date-display").textContent =
   now.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
-load();
-renderPanel1();
+async function init() {
+  await load();
+  dataReady = true;
+  switchTab(currentTab);
+}
+init();
 </script>
 </body>
 </html>
