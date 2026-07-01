@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🧠 Qui est le moins con ?</title>
+<title>🧠 Quiz du Bureau</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -113,7 +113,7 @@
 <body>
 
 <div id="header">
-  <h1>🧠 Qui est le moins con ?</h1>
+  <h1>🧠 Quiz du Bureau</h1>
   <p id="date-display"></p>
 </div>
 
@@ -220,13 +220,15 @@ const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
 // ─── persist (shared storage – all collègues voient les mêmes données) ────
 async function persist() {
   try {
-    await window.storage.set('state', JSON.stringify({names, scores, bonus, malus}), true);
-  } catch(e) { console.error("Erreur de sauvegarde", e); }
+    const r = await window.storage.set('state', JSON.stringify({names, scores, bonus, malus}), true);
+    return !!r;
+  } catch(e) { console.error("Erreur de sauvegarde", e); return false; }
 }
 async function persistValidated() {
   try {
-    await window.storage.set('validated_'+TODAY, JSON.stringify(validated), true);
-  } catch(e) { console.error("Erreur de sauvegarde", e); }
+    const r = await window.storage.set('validated_'+TODAY, JSON.stringify(validated), true);
+    return !!r;
+  } catch(e) { console.error("Erreur de sauvegarde", e); return false; }
 }
 async function load() {
   try {
@@ -311,14 +313,27 @@ function onInputChange(i) {
   btn.disabled = v==="";
   inp.style.borderColor = v ? COLORS[i] : "#e2e8f0";
 }
-function doValidate(i) {
+async function doValidate(i) {
   const inp = document.getElementById("inp-"+i);
+  const btn = document.getElementById("btn-"+i);
   const v = parseInt(inp.value);
   if (isNaN(v)||v<0) return;
+  // état "enregistrement en cours" pour éviter de perdre le score si on actualise trop vite
+  if(btn){ btn.disabled=true; btn.textContent="…"; }
+  if(inp) inp.disabled=true;
   if (!scores[TODAY]) scores[TODAY]={};
   scores[TODAY][i]=v;
   validated[i]=true;
-  persist(); persistValidated();
+  const ok = await persist();
+  const okV = await persistValidated();
+  if(!ok || !okV){
+    // échec de sauvegarde : on annule pour ne pas afficher un état verrouillé qui n'est pas réellement enregistré
+    delete scores[TODAY][i];
+    delete validated[i];
+    alert("Erreur d'enregistrement, merci de réessayer avant d'actualiser la page.");
+    renderPanel1();
+    return;
+  }
   renderPanel1();
 }
 
@@ -553,12 +568,16 @@ function checkCode(v) {
   renderDbBody();
 }
 
-function saveNames() {
+async function saveNames() {
+  const btn=document.getElementById("save-names-btn");
+  if(btn){ btn.disabled=true; btn.textContent="Enregistrement…"; }
   for(let i=0;i<N;i++){
     const inp=document.getElementById("ne-"+i);
     if(inp) names[i]=inp.value||names[i];
   }
-  persist();
+  const ok = await persist();
+  if(btn){ btn.disabled=false; btn.textContent="Sauvegarder les noms"; }
+  if(!ok){ alert("Erreur d'enregistrement, merci de réessayer avant d'actualiser la page."); return; }
   renderPanel1(); renderPanel2(); renderPanel3();
 }
 
@@ -567,15 +586,19 @@ function startEdit(type,date,idx) {
   renderDbBody();
 }
 
-function commitEdit() {
-  if(!editCell) return;
+let committing = false;
+async function commitEdit() {
+  if(!editCell || committing) return;
+  committing = true;
   const {type,date,idx}=editCell;
   const inp=document.querySelector(".cell-edit");
-  if(!inp){ editCell=null; return; }
+  if(!inp){ editCell=null; committing=false; return; }
+  inp.disabled = true;
   const raw=inp.value.trim();
   const v=parseInt(raw);
   const isEmpty = raw==="" || isNaN(v);
 
+  let needValidatedSave = false;
   if(type==="day"){
     if(!scores[date]) scores[date]={};
     if(isEmpty){
@@ -583,13 +606,13 @@ function commitEdit() {
       // si on efface le score du jour, on redéverrouille la case sur la page de saisie
       if(date===TODAY){
         delete validated[idx];
-        persistValidated();
+        needValidatedSave = true;
       }
     } else {
       scores[date][idx]=v;
       if(date===TODAY){
         validated[idx]=true;
-        persistValidated();
+        needValidatedSave = true;
       }
     }
   } else if(type==="bonus"){
@@ -598,8 +621,13 @@ function commitEdit() {
     if(isEmpty) delete malus[idx]; else malus[idx]=v;
   }
 
+  const ok = await persist();
+  const okV = needValidatedSave ? await persistValidated() : true;
   editCell=null;
-  persist();
+  committing = false;
+  if(!ok || !okV){
+    alert("Erreur d'enregistrement, merci de réessayer avant d'actualiser la page.");
+  }
   renderDbBody();
   renderPanel1();
   if(currentTab===1) renderPanel2();
