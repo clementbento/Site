@@ -899,6 +899,7 @@ function buildTomatoCharacter(idx) {
     new THREE.MeshStandardMaterial({ map: tomatoBodyTexture(letter, COLORS[idx]) })
   );
   body.position.y = 1.5;
+  body.rotation.y = Math.PI; // recentre la lettre (dessinée au milieu de la texture) face à la caméra
   body.castShadow = true;
   tomatoCharacter.add(body);
 
@@ -907,6 +908,7 @@ function buildTomatoCharacter(idx) {
     new THREE.MeshStandardMaterial({ map: tomatoFaceTexture("#fbcfa0") })
   );
   tomatoHead.position.y = 2.25;
+  tomatoHead.rotation.y = -Math.PI/2; // recentre le visage face à la caméra
   tomatoHead.castShadow = true;
   tomatoCharacter.add(tomatoHead);
 
