@@ -131,6 +131,7 @@
   .item-toast{position:absolute;top:44px;left:50%;transform:translate(-50%,-10px) scale(.85);opacity:0;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:8px 16px;border-radius:14px;font-size:.8rem;font-weight:900;box-shadow:0 6px 18px #00000030;z-index:10;pointer-events:none;transition:all .25s ease;white-space:nowrap}
   .item-toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
   .item-toast.legendary{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
+  .item-toast.mythic{background:linear-gradient(135deg,#0f172a,#334155)}
 </style>
 </head>
 <body>
@@ -236,11 +237,12 @@ const MEDAL  = ["🥇","🥈","🥉"];
 const FR_DAYS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
 // ─── projectiles du pilori (rareté) ───────────────────────
-// Plus l'objet est insolite, plus il est rare : parpaing 1/100, œuf 1/50, tomate = le reste.
+// Plus l'objet est insolite, plus il est rare : piano 1/300, parpaing 1/100, œuf 1/50, tomate = le reste.
 const ITEM_TYPES = [
+  { key:"piano",    label:"Piano",    emoji:"🎹", prob:1/300, color:0x1c1917, splatColor:0x0c0a09, size:.4,  rarity:"mythic" },
   { key:"parpaing", label:"Parpaing", emoji:"🧱", prob:1/100, color:0x9ca3af, splatColor:0x57534e, size:.34, rarity:"legendary" },
   { key:"oeuf",     label:"Œuf",      emoji:"🥚", prob:1/50,  color:0xfff7e6, splatColor:0xfacc15, size:.15, rarity:"rare" },
-  { key:"tomate",   label:"Tomate",   emoji:"🍅", prob:1 - (1/100 + 1/50), color:0xdc2626, splatColor:0xb91c1c, size:.16, rarity:"commun" }
+  { key:"tomate",   label:"Tomate",   emoji:"🍅", prob:1 - (1/300 + 1/100 + 1/50), color:0xdc2626, splatColor:0xb91c1c, size:.16, rarity:"commun" }
 ];
 function pickItem() {
   const r = Math.random();
@@ -255,7 +257,7 @@ function showItemToast(item) {
   if (item.rarity === "commun") return;
   const wrap = document.getElementById("tomato-wrap");
   const toast = document.createElement("div");
-  toast.className = "item-toast" + (item.rarity==="legendary" ? " legendary" : "");
+  toast.className = "item-toast" + (item.rarity==="mythic" ? " mythic" : item.rarity==="legendary" ? " legendary" : "");
   toast.textContent = `${item.emoji} ${item.label} ! (1 chance sur ${Math.round(1/item.prob)})`;
   wrap.appendChild(toast);
   requestAnimationFrame(()=>toast.classList.add("show"));
@@ -270,12 +272,22 @@ function buildItemMesh(item) {
     geo = new THREE.BoxGeometry(item.size*2, item.size*1.2, item.size*1.1);
   } else if (item.key === "oeuf") {
     geo = new THREE.SphereGeometry(item.size, 14, 14);
+  } else if (item.key === "piano") {
+    geo = new THREE.BoxGeometry(item.size*2.2, item.size*1.1, item.size*1.8);
   } else {
     geo = new THREE.SphereGeometry(item.size, 12, 12);
   }
-  const mat = new THREE.MeshStandardMaterial({ color:item.color, roughness: item.key==="parpaing"?.9:.4 });
+  const mat = new THREE.MeshStandardMaterial({ color:item.color, roughness: (item.key==="parpaing"||item.key==="piano") ? .9 : .4 });
   const mesh = new THREE.Mesh(geo, mat);
   if (item.key === "oeuf") mesh.scale.set(1, 1.3, 1);
+  if (item.key === "piano") {
+    const keys = new THREE.Mesh(
+      new THREE.BoxGeometry(item.size*1.8, item.size*.15, item.size*.4),
+      new THREE.MeshStandardMaterial({ color:0xffffff })
+    );
+    keys.position.set(0, item.size*.35, item.size*.65);
+    mesh.add(keys);
+  }
   return mesh;
 }
 
@@ -313,12 +325,25 @@ function getWorkingDays(year,month) {
   }
   return days;
 }
+function isWeekday(d) { const wd=d.getDay(); return wd>=1 && wd<=5; }
+
+// Le quiz du jour N reste ouvert à la saisie jusqu'à midi du jour N+1.
+// Avant midi, on considère qu'on saisit encore le score du dernier jour ouvré précédent ;
+// après midi, le quiz "actif" bascule sur le jour ouvré courant.
+function getActiveQuizDay() {
+  const n = new Date();
+  const ref = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  if (n.getHours() < 12) ref.setDate(ref.getDate()-1);
+  while (!isWeekday(ref)) ref.setDate(ref.getDate()-1);
+  return toISO(ref);
+}
 
 const now   = new Date();
-const TODAY = toISO(now);
 const YEAR  = now.getFullYear();
 const MONTH = now.getMonth();
 const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
+let TODAY = getActiveQuizDay();
+if (TODAY < WORKING_DAYS[0]) TODAY = toISO(now); // sécurité en cas de changement de mois
 
 // ─── Firestore persistence (partagé entre tous les utilisateurs) ──
 function setConnStatus(ok) {
@@ -831,15 +856,35 @@ function resizeTomatoScene() {
   tomatoRenderer.setSize(w,h);
 }
 
-function tomatoLetterTexture(letter, bg) {
+function tomatoBodyTexture(letter, bg) {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(64,64,64,0,7); ctx.fill();
+  ctx.fillStyle = bg; ctx.fillRect(0,0,128,128);
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 70px -apple-system,sans-serif";
+  ctx.font = "900 58px -apple-system,sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(letter, 64, 70);
+  ctx.fillText(letter, 64, 68);
+  return new THREE.CanvasTexture(c);
+}
+
+function tomatoFaceTexture(skin) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(64,64,64,0,7); ctx.fill();
+  ctx.fillStyle = "#1e293b";
+  ctx.beginPath(); ctx.arc(46,56,7,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(82,56,7,0,7); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.arc(48,53,2.2,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(84,53,2.2,0,7); ctx.fill();
+  ctx.strokeStyle = "#1e293b";
+  ctx.lineWidth = 5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(64,66,20,0.15*Math.PI,0.85*Math.PI);
+  ctx.stroke();
   return new THREE.CanvasTexture(c);
 }
 
@@ -851,7 +896,7 @@ function buildTomatoCharacter(idx) {
 
   const body = new THREE.Mesh(
     THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.42,.7,4,12) : new THREE.CylinderGeometry(.42,.5,1.1,16),
-    new THREE.MeshStandardMaterial({ color })
+    new THREE.MeshStandardMaterial({ map: tomatoBodyTexture(letter, COLORS[idx]) })
   );
   body.position.y = 1.5;
   body.castShadow = true;
@@ -859,7 +904,7 @@ function buildTomatoCharacter(idx) {
 
   tomatoHead = new THREE.Mesh(
     new THREE.SphereGeometry(.42, 32, 32),
-    new THREE.MeshStandardMaterial({ map: tomatoLetterTexture(letter, COLORS[idx]) })
+    new THREE.MeshStandardMaterial({ map: tomatoFaceTexture("#fbcfa0") })
   );
   tomatoHead.position.y = 2.25;
   tomatoHead.castShadow = true;
@@ -925,7 +970,7 @@ function updateTomatoes() {
 
 function splatTomato(pos, item) {
   const splatColor = item ? item.splatColor : 0xb91c1c;
-  const debris = item && item.key === "parpaing";
+  const debris = item && (item.key === "parpaing" || item.key === "piano");
   for(let i=0;i<(debris?14:10);i++){
     const s = new THREE.Mesh(
       debris
@@ -969,7 +1014,7 @@ function splatTomato(pos, item) {
 }
 
 function shakeTomato(item) {
-  const strong = item && item.key === "parpaing";
+  const strong = item && (item.key === "parpaing" || item.key === "piano");
   const el = document.getElementById("tomato-scene");
   el.style.transform = strong ? "translate(6px,-5px)" : "translate(3px,-2px)";
   setTimeout(()=> el.style.transform = strong ? "translate(-5px,4px)" : "translate(-2px,2px)", 40);
