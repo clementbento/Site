@@ -236,6 +236,12 @@ const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0e
 const MEDAL  = ["🥇","🥈","🥉"];
 const FR_DAYS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
+// Skin spécial "maillot" pour certains joueurs au pilori
+const JERSEY_PLAYERS = ["clément","grégoire"];
+function isJerseyPlayer(name) {
+  return JERSEY_PLAYERS.includes((name||"").toLowerCase());
+}
+
 // ─── projectiles du pilori (rareté) ───────────────────────
 // Plus l'objet est insolite, plus il est rare : piano 1/300, parpaing 1/100, œuf 1/50, tomate = le reste.
 const ITEM_TYPES = [
@@ -868,6 +874,42 @@ function tomatoBodyTexture(letter, bg) {
   return new THREE.CanvasTexture(c);
 }
 
+function tomatoJerseyTexture(letter) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  // fond bleu façon maillot
+  ctx.fillStyle = "#1d4ed8"; ctx.fillRect(0,0,128,128);
+  // fines rayures verticales bleu foncé
+  for (let x=-4; x<132; x+=12) {
+    ctx.fillStyle = "#1e3a8a";
+    ctx.fillRect(x,0,6,128);
+  }
+  // liserés rouge/blanc dans chaque rayure
+  for (let x=-4; x<132; x+=12) {
+    ctx.fillStyle = "#dc2626"; ctx.fillRect(x+6,0,1.4,128);
+    ctx.fillStyle = "#f8fafc"; ctx.fillRect(x+8,0,1.4,128);
+  }
+  // écusson simplifié
+  ctx.fillStyle = "#f8fafc";
+  ctx.beginPath(); ctx.arc(50,38,9,0,7); ctx.fill();
+  ctx.fillStyle = "#1d4ed8";
+  ctx.font = "900 10px -apple-system,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("FR", 50, 39);
+  // petit drapeau français
+  ctx.fillStyle = "#1e3a8a"; ctx.fillRect(44,52,7,10);
+  ctx.fillStyle = "#f8fafc"; ctx.fillRect(51,52,7,10);
+  ctx.fillStyle = "#dc2626"; ctx.fillRect(58,52,7,10);
+  ctx.strokeStyle = "#facc15"; ctx.lineWidth = 1; ctx.strokeRect(44,52,21,10);
+  // lettre du joueur façon numéro de maillot
+  ctx.fillStyle = "#f8fafc";
+  ctx.font = "900 42px -apple-system,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(letter, 64, 92);
+  return new THREE.CanvasTexture(c);
+}
+
 function tomatoFaceTexture(skin) {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
@@ -893,10 +935,11 @@ function buildTomatoCharacter(idx) {
   tomatoCharacter = new THREE.Group();
   const color = new THREE.Color(COLORS[idx]);
   const letter = (names[idx]||"?")[0]?.toUpperCase() || "?";
+  const jersey = isJerseyPlayer(names[idx]);
 
   const body = new THREE.Mesh(
     THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.42,.7,4,12) : new THREE.CylinderGeometry(.42,.5,1.1,16),
-    new THREE.MeshStandardMaterial({ map: tomatoBodyTexture(letter, COLORS[idx]) })
+    new THREE.MeshStandardMaterial({ map: jersey ? tomatoJerseyTexture(letter) : tomatoBodyTexture(letter, COLORS[idx]) })
   );
   body.position.y = 1.5;
   body.rotation.y = Math.PI; // recentre la lettre (dessinée au milieu de la texture) face à la caméra
@@ -915,7 +958,7 @@ function buildTomatoCharacter(idx) {
   [-1,1].forEach(side=>{
     const arm = new THREE.Mesh(
       new THREE.CylinderGeometry(.08,.08,.55,8),
-      new THREE.MeshStandardMaterial({ color })
+      new THREE.MeshStandardMaterial({ color: jersey ? 0x1d4ed8 : color })
     );
     arm.position.set(side*.5, 1.65, 0);
     arm.rotation.z = side*.5;
