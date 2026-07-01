@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>🍅 Le Pilori</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:linear-gradient(180deg,#bfe3ff 0%,#e8f4ff 60%,#eef7ee 60%,#d7ecd0 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  #scene{position:absolute;inset:0;touch-action:none;cursor:crosshair}
+  #hud{position:absolute;top:0;left:0;right:0;padding:14px 16px;text-align:center;pointer-events:none;z-index:10}
+  #hud h1{font-size:1.1rem;font-weight:900;color:#7c2d12;text-shadow:0 1px 2px #fff8}
+  #loser-tag{margin-top:4px;display:inline-block;background:#ffffffcc;backdrop-filter:blur(4px);border-radius:20px;padding:6px 16px;font-size:.85rem;font-weight:800;color:#334155;box-shadow:0 2px 8px #0000001a}
+  #count-tag{margin-top:6px;font-size:.75rem;font-weight:700;color:#7c2d12}
+  #hint{position:absolute;bottom:16px;left:0;right:0;text-align:center;font-size:.72rem;color:#64748b;font-weight:600;pointer-events:none;z-index:10}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#94a3b8;z-index:20;background:#eef7ee}
+</style>
+</head>
+<body>
+
+<div id="loading">⏳ Chargement du pilori…</div>
+<div id="hud">
+  <h1>🍅 Le Pilori</h1>
+  <div id="loser-tag">—</div>
+  <div id="count-tag"></div>
+</div>
+<div id="scene"></div>
+<p id="hint">👆 Touchez l'écran pour jeter une tomate</p>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG — même config que le site principal
+// ═══════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCQ4LKonRUiEpmQV6Cjf8oisc1CEfX8IIA",
+  authDomain: "qui-est-le-moins-con.firebaseapp.com",
+  projectId: "qui-est-le-moins-con",
+  storageBucket: "qui-est-le-moins-con.firebasestorage.app",
+  messagingSenderId: "959905395052",
+  appId: "1:959905395052:web:05ab2635e65c9569954349"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const COLLECTION = "quizBureau";
+
+// ─── mêmes constantes que le site principal ───────────────
+const N = 8;
+const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
+const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0ea5e9","#f97316"];
+
+let names = [...DEFAULT_NAMES];
+let scores = {}, bonus = {}, malus = {};
+
+function toISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${dd}`;}
+function getWorkingDays(year,month){const days=[],d=new Date(year,month,1);while(d.getMonth()===month){if(d.getDay()>=1&&d.getDay()<=5)days.push(toISO(d));d.setDate(d.getDate()+1);}return days;}
+const now=new Date(), TODAY=toISO(now), WORKING_DAYS=getWorkingDays(now.getFullYear(),now.getMonth());
+
+function getLoserIdx(){
+  const totals=Array(N).fill(0);
+  const past=WORKING_DAYS.filter(d=>d<=TODAY);
+  for(const d of past){const ds=scores[d]||{};for(let i=0;i<N;i++)totals[i]+=(ds[i]??0);}
+  for(let i=0;i<N;i++) totals[i]+= (bonus[i]??0)-(malus[i]??0);
+  let worst=0;
+  for(let i=1;i<N;i++) if(totals[i]<totals[worst]) worst=i;
+  return worst;
+}
+
+// ─── Three.js scene ────────────────────────────────────────
+let scene, camera, renderer, character, headMesh, pedestal;
+let W=innerWidth, H=innerHeight;
+
+function initScene(){
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 100);
+  camera.position.set(0, 2.4, 7);
+  camera.lookAt(0, 1.6, 0);
+
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setSize(W,H);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled = true;
+  document.getElementById("scene").appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, .7));
+  const dir = new THREE.DirectionalLight(0xffffff, .9);
+  dir.position.set(3,6,4);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(1024,1024);
+  scene.add(dir);
+
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(6,48),
+    new THREE.MeshStandardMaterial({ color:0xbfe3a0 })
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  pedestal = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.15,1.35,1,24),
+    new THREE.MeshStandardMaterial({ color:0x94a3b8, roughness:.8 })
+  );
+  pedestal.position.y = .5;
+  pedestal.castShadow = true; pedestal.receiveShadow = true;
+  scene.add(pedestal);
+
+  buildCharacter(0);
+  animate();
+}
+
+function letterTexture(letter, bg){
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(64,64,64,0,7); ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 70px -apple-system,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(letter, 64, 70);
+  return new THREE.CanvasTexture(c);
+}
+
+function buildCharacter(idx){
+  if(character) scene.remove(character);
+  character = new THREE.Group();
+  const color = new THREE.Color(COLORS[idx]);
+  const letter = (names[idx]||"?")[0]?.toUpperCase() || "?";
+
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.42,.7,4,12) : new THREE.CylinderGeometry(.42,.5,1.1,16),
+    new THREE.MeshStandardMaterial({ color })
+  );
+  body.position.y = 1.5;
+  body.castShadow = true;
+  character.add(body);
+
+  headMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(.42, 32, 32),
+    new THREE.MeshStandardMaterial({ map: letterTexture(letter, COLORS[idx]) })
+  );
+  headMesh.position.y = 2.25;
+  headMesh.castShadow = true;
+  character.add(headMesh);
+
+  // petits bras minimalistes
+  [-1,1].forEach(side=>{
+    const arm = new THREE.Mesh(
+      new THREE.CylinderGeometry(.08,.08,.55,8),
+      new THREE.MeshStandardMaterial({ color })
+    );
+    arm.position.set(side*.5, 1.65, 0);
+    arm.rotation.z = side*.5;
+    character.add(arm);
+  });
+
+  character.position.y = .5;
+  scene.add(character);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  updateTomatoes();
+  if(character) character.rotation.y = Math.sin(Date.now()*.0006)*.15;
+  renderer.render(scene, camera);
+}
+
+addEventListener("resize", ()=>{
+  W=innerWidth; H=innerHeight;
+  camera.aspect = W/H; camera.updateProjectionMatrix();
+  renderer.setSize(W,H);
+});
+
+// ─── tomates : lancer, trajectoire, splash ─────────────────
+let tomatoes = [];
+function throwTomato(){
+  const geo = new THREE.SphereGeometry(.16, 12, 12);
+  const mat = new THREE.MeshStandardMaterial({ color:0xdc2626, roughness:.4 });
+  const mesh = new THREE.Mesh(geo, mat);
+  const startX = (Math.random()-.5)*1.2;
+  mesh.position.set(startX, .3, 6.5);
+  mesh.castShadow = true;
+  scene.add(mesh);
+
+  const targetX = (Math.random()-.5)*.5;
+  const target = new THREE.Vector3(targetX, 2.15, .15);
+  tomatoes.push({
+    mesh, t:0, dur: 55 + Math.random()*15,
+    start: mesh.position.clone(), end: target, hit:false
+  });
+  incrementCount();
+}
+
+function updateTomatoes(){
+  tomatoes = tomatoes.filter(tm=>{
+    tm.t++;
+    const p = Math.min(tm.t/tm.dur, 1);
+    tm.mesh.position.lerpVectors(tm.start, tm.end, p);
+    tm.mesh.position.y += Math.sin(p*Math.PI) * 2.4;
+    tm.mesh.rotation.x += .3; tm.mesh.rotation.y += .2;
+    if(p>=1 && !tm.hit){
+      tm.hit = true;
+      splat(tm.mesh.position.clone());
+      scene.remove(tm.mesh);
+      shake();
+      return false;
+    }
+    return true;
+  });
+}
+
+function splat(pos){
+  for(let i=0;i<10;i++){
+    const s = new THREE.Mesh(
+      new THREE.SphereGeometry(.04+Math.random()*.05,6,6),
+      new THREE.MeshBasicMaterial({ color:0xb91c1c })
+    );
+    s.position.copy(pos);
+    const vel = new THREE.Vector3((Math.random()-.5)*.15,Math.random()*.18,(Math.random()-.5)*.15);
+    scene.add(s);
+    let life=0;
+    const tick=()=>{
+      life++;
+      s.position.add(vel); vel.y -= .008;
+      s.material.opacity = Math.max(0, 1-life/30);
+      s.material.transparent = true;
+      if(life<30) requestAnimationFrame(tick); else scene.remove(s);
+    };
+    tick();
+  }
+  const decal = new THREE.Mesh(
+    new THREE.CircleGeometry(.22+Math.random()*.1, 16),
+    new THREE.MeshBasicMaterial({ color:0x991b1b, transparent:true, opacity:.85 })
+  );
+  decal.position.copy(pos);
+  decal.lookAt(camera.position);
+  scene.add(decal);
+  let life=0;
+  const fade=()=>{
+    life++;
+    if(life>90){ decal.material.opacity -= .02; }
+    if(decal.material.opacity>0) requestAnimationFrame(fade); else scene.remove(decal);
+  };
+  fade();
+}
+
+function shake(){
+  const el = document.getElementById("scene");
+  el.style.transform = "translate(3px,-2px)";
+  setTimeout(()=> el.style.transform = "translate(-2px,2px)", 40);
+  setTimeout(()=> el.style.transform = "translate(0,0)", 80);
+}
+
+document.getElementById("scene").addEventListener("pointerdown", throwTomato);
+
+// ─── Firestore : classement live + compteur partagé ────────
+let currentLoser = -1;
+function refreshLoser(){
+  const l = getLoserIdx();
+  document.getElementById("loser-tag").textContent = `🎯 Cible : ${names[l]}`;
+  if(l !== currentLoser){
+    currentLoser = l;
+    buildCharacter(l);
+    watchCount(l);
+  }
+}
+
+let countUnsub = null;
+function watchCount(idx){
+  if(countUnsub) countUnsub();
+  countUnsub = db.collection(COLLECTION).doc("tomatoes_"+idx).onSnapshot(doc=>{
+    const c = doc.exists ? (doc.data().count||0) : 0;
+    document.getElementById("count-tag").textContent = `🍅 ${c} tomate${c>1?'s':''} reçue${c>1?'s':''}`;
+  });
+}
+function incrementCount(){
+  if(currentLoser<0) return;
+  db.collection(COLLECTION).doc("tomatoes_"+currentLoser).set(
+    { count: firebase.firestore.FieldValue.increment(1) }, { merge:true }
+  ).catch(e=>console.error(e));
+}
+
+db.collection(COLLECTION).doc("state").onSnapshot(doc=>{
+  if(doc.exists){
+    const d = doc.data();
+    if(d.names) names = d.names;
+    if(d.scores) scores = d.scores;
+    if(d.bonus) bonus = d.bonus;
+    if(d.malus) malus = d.malus;
+  }
+  document.getElementById("loading").style.display = "none";
+  if(!scene) initScene();
+  refreshLoser();
+});
+</script>
+</body>
+</html>
