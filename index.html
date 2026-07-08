@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🧠 Qui qui est le moins con ?</title>
+<title>🧠 Qui qui est le plus con ?</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
@@ -22,6 +22,20 @@
   #conn-status{font-size:.65rem;font-weight:700;margin-top:4px;display:inline-block;padding:2px 8px;border-radius:10px}
   #conn-status.on{background:#16a34a33;color:#bbf7d0}
   #conn-status.off{background:#dc262633;color:#fecaca}
+  #whoami-tag{font-size:.65rem;font-weight:700;margin-top:4px;margin-left:6px;display:none;padding:2px 8px;border-radius:10px;background:#ffffff26;color:#e0e7ff;cursor:pointer}
+  #whoami-tag:active{opacity:.7}
+
+  /* ── login overlay ── */
+  #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#4f46e5ee,#7c3aedee);backdrop-filter:blur(6px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  #login-card{position:relative;background:white;border-radius:24px;padding:28px 22px 22px;max-width:380px;width:100%;box-shadow:0 20px 60px #00000040;text-align:center}
+  #login-card h2{font-size:1.15rem;font-weight:900;color:#1e293b;margin-bottom:6px}
+  #login-card p{font-size:.78rem;color:#64748b;margin-bottom:18px}
+  #login-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .login-opt{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid #e2e8f0;border-radius:16px;padding:14px 8px;background:white;cursor:pointer;transition:all .15s;font-weight:700;color:#334155;font-size:.82rem}
+  .login-opt:hover{border-color:#c7d2fe;background:#f5f3ff}
+  .login-opt:active{transform:scale(.95)}
+  .login-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:1.05rem}
+  #login-close{display:none;position:absolute;top:12px;right:14px;border:none;background:#f1f5f9;color:#64748b;width:28px;height:28px;border-radius:50%;font-size:.85rem;font-weight:900;cursor:pointer}
 
   /* ── tabs ── */
   #tabs{display:flex;background:white;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px #0000000d;overflow-x:auto}
@@ -36,6 +50,8 @@
   /* ── panel 1 ── */
   .player-row{display:flex;align-items:center;gap:10px;border-radius:16px;padding:12px 14px;margin-bottom:8px;border:1px solid #e2e8f0;background:white;transition:all .2s;box-shadow:0 1px 4px #0000000a}
   .player-row.locked{background:#f0fdf4;border-color:#bbf7d0}
+  .player-row.is-me{box-shadow:0 0 0 2px #6366f1;border-color:#6366f1}
+  .me-badge{font-size:.62rem;font-weight:800;color:#6366f1;background:#eef2ff;border-radius:8px;padding:2px 6px;margin-left:4px}
   .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:.9rem;flex-shrink:0}
   .player-name{flex:1;font-weight:700;font-size:.88rem;color:#1e293b}
   .player-row.locked .player-name{color:#16a34a}
@@ -167,6 +183,16 @@
   <h1>🧠 Qui qui est le moins con ?</h1>
   <p id="date-display"></p>
   <span id="conn-status" class="off">⏳ Connexion…</span>
+  <span id="whoami-tag" onclick="openLoginOverlay(true)"></span>
+</div>
+
+<div id="login-overlay">
+  <div id="login-card">
+    <button id="login-close" onclick="closeLoginOverlay()">✕</button>
+    <h2>👋 Qui es-tu ?</h2>
+    <p>Choisis ton prénom, on s'en souviendra sur cet appareil.</p>
+    <div id="login-grid"></div>
+  </div>
 </div>
 
 <div id="tabs">
@@ -377,6 +403,79 @@ let currentTab = 0;
 let dataReady = false;
 let stateReady = false, validatedReady = false;
 
+// ─── connexion (identité liée à l'appareil) ────────────────
+// La première visite sur un appareil demande "qui es-tu" parmi les joueurs
+// existants ; le choix est ensuite mémorisé localement (localStorage) sur cet
+// appareil, donc chaque collègue n'a besoin de répondre qu'une seule fois par
+// appareil/navigateur qu'il utilise.
+const LOGIN_KEY = "quizMyPlayerIdx";
+let myPlayerIdx = null;   // index (0..N-1) du joueur connecté sur cet appareil
+let tdfAutoSelectDone = false;
+
+function loadMyIdentity() {
+  const stored = localStorage.getItem(LOGIN_KEY);
+  if (stored !== null && stored !== "" && !isNaN(parseInt(stored))) {
+    myPlayerIdx = parseInt(stored);
+  }
+}
+
+function renderLoginGrid() {
+  const grid = document.getElementById("login-grid");
+  if (!grid) return;
+  grid.innerHTML = names.map((n,i)=>`
+    <button class="login-opt" onclick="chooseIdentity(${i})">
+      <span class="login-avatar" style="background:${COLORS[i]}">${n[0]?.toUpperCase()||"?"}</span>
+      ${n}
+    </button>`).join("");
+}
+
+function openLoginOverlay(isChange) {
+  renderLoginGrid();
+  const overlay = document.getElementById("login-overlay");
+  const closeBtn = document.getElementById("login-close");
+  const title = document.querySelector("#login-card h2");
+  const sub = document.querySelector("#login-card p");
+  if (closeBtn) closeBtn.style.display = isChange ? "flex" : "none";
+  if (title) title.textContent = isChange ? "🔄 Changer d'identité" : "👋 Qui es-tu ?";
+  if (sub) sub.textContent = isChange
+    ? "Choisis ton prénom pour cet appareil."
+    : "Choisis ton prénom, on s'en souviendra sur cet appareil.";
+  if (overlay) overlay.style.display = "flex";
+}
+function closeLoginOverlay() {
+  if (myPlayerIdx===null) return; // on ne peut pas fermer sans avoir choisi la première fois
+  const overlay = document.getElementById("login-overlay");
+  if (overlay) overlay.style.display = "none";
+}
+function chooseIdentity(i) {
+  myPlayerIdx = i;
+  try { localStorage.setItem(LOGIN_KEY, String(i)); } catch(e) { console.error("localStorage indisponible", e); }
+  closeLoginOverlay();
+  renderWhoamiTag();
+  // pré-sélectionne automatiquement ce joueur comme coureur du Tour de France,
+  // uniquement si aucun coureur n'a encore été choisi manuellement
+  if ((tdfMyIdx===null || tdfMyIdx===undefined)) {
+    tdfMyIdx = i;
+    tdfAutoSelectDone = true;
+    if (dataReady && currentTab===4) {
+      renderTdfSelect();
+      if (tdfInited) { buildMyTdfRider(); refreshTdfOtherRiders(); }
+      renderTdfHud(); renderTdfRankList(); renderTdfCredits();
+    }
+  }
+  if (dataReady && currentTab===0) renderPanel1();
+}
+function renderWhoamiTag() {
+  const tag = document.getElementById("whoami-tag");
+  if (!tag) return;
+  if (myPlayerIdx!==null && names[myPlayerIdx]!==undefined) {
+    tag.style.display = "inline-block";
+    tag.textContent = `👤 ${names[myPlayerIdx]} · changer`;
+  } else {
+    tag.style.display = "none";
+  }
+}
+
 // ─── date helpers ────────────────────────────────────────
 function toISO(d) {
   const y = d.getFullYear();
@@ -481,7 +580,13 @@ function listenValidated() {
 function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
+    if (myPlayerIdx!==null && !tdfAutoSelectDone && (tdfMyIdx===null || tdfMyIdx===undefined)) {
+      tdfMyIdx = myPlayerIdx;
+      tdfAutoSelectDone = true;
+    }
     switchTab(currentTab);
+    renderWhoamiTag();
+    if (myPlayerIdx===null) openLoginOverlay(false);
   }
 }
 function rerenderAll() {
@@ -534,10 +639,10 @@ function renderPanel1() {
     const locked = validated[i]!==undefined && todayScores[i]!==undefined;
     const score  = todayScores[i];
     const row = document.createElement("div");
-    row.className = "player-row" + (locked?" locked":"");
+    row.className = "player-row" + (locked?" locked":"") + (i===myPlayerIdx?" is-me":"");
     row.innerHTML = `
       <div class="avatar" style="background:${COLORS[i]}">${names[i][0]?.toUpperCase()}</div>
-      <span class="player-name">${names[i]}</span>
+      <span class="player-name">${names[i]}${i===myPlayerIdx?'<span class="me-badge">toi</span>':''}</span>
       <div class="score-display" id="sd-${i}">
         ${locked
           ? `<span class="score-val" style="color:${COLORS[i]}">${score}</span>
@@ -815,6 +920,7 @@ async function saveNames() {
   const ok = await persist();
   if(btn){ btn.disabled=false; btn.textContent="Sauvegarder les noms"; }
   if(!ok){ alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer."); return; }
+  renderWhoamiTag();
   renderPanel1(); renderPanel2(); renderPanel3();
 }
 
@@ -1682,6 +1788,7 @@ function switchTab(i) {
 document.getElementById("date-display").textContent =
   now.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
+loadMyIdentity();
 listenState();
 listenValidated();
 listenTdf();
