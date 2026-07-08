@@ -151,6 +151,10 @@
   #tdf-pedal-btn:active:not(:disabled){transform:scale(.96)}
   #tdf-pedal-btn:disabled{background:#e2e8f0;color:#94a3b8;box-shadow:none;cursor:default}
 
+  #tdf-credits-tag{text-align:center;font-size:.72rem;font-weight:700;color:#7c2d12;margin-top:8px}
+  #tdf-credits-tag .bar-wrap{width:100%;height:6px;background:#fde68a;border-radius:4px;overflow:hidden;margin-top:4px}
+  #tdf-credits-tag .bar-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#dc2626);border-radius:4px;transition:width .3s}
+
   .tdf-overtake-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);opacity:0;background:linear-gradient(135deg,#16a34a,#15803d);color:white;padding:10px 18px;border-radius:14px;font-size:.85rem;font-weight:900;box-shadow:0 6px 18px #00000030;z-index:10;pointer-events:none;transition:all .3s ease;white-space:nowrap;text-align:center}
   .tdf-overtake-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
@@ -252,6 +256,10 @@
       <p id="tdf-hint">👆 Touche l'écran pour pédaler</p>
     </div>
     <button id="tdf-pedal-btn" onclick="pedalTdf()" disabled>🚴 PÉDALER !</button>
+    <div id="tdf-credits-tag" style="display:none">
+      <span id="tdf-credits-text">—</span>
+      <div class="bar-wrap"><div class="bar-fill" id="tdf-credits-bar" style="width:0%"></div></div>
+    </div>
 
     <p class="section-title" style="margin-top:18px">Classement de l'étape (mètres)</p>
     <div id="tdf-rank-list" class="rank-list"></div>
@@ -1233,13 +1241,13 @@ function selectTdfRider(v) {
   tdfLastSign = {};
   const btn = document.getElementById("tdf-pedal-btn");
   const hint = document.getElementById("tdf-hint");
-  if (btn) btn.disabled = (tdfMyIdx===null);
   if (hint) hint.textContent = (tdfMyIdx===null)
     ? "👆 Choisis ton coureur pour commencer à pédaler"
     : "👆 Touche l'écran ou le bouton pour pédaler";
   if (tdfInited) { buildMyTdfRider(); refreshTdfOtherRiders(); }
   renderTdfHud();
   renderTdfRankList();
+  renderTdfCredits();
 }
 
 function renderTdfHud() {
@@ -1277,6 +1285,74 @@ function renderTdfRankList() {
   });
 }
 
+// ── système de clics limités (20 clics/heure, cumulables) ──
+// Chaque coureur dispose d'une réserve de clics qui se recharge au rythme de
+// TDF_CLICK_RATE_PER_HOUR par heure, même quand personne ne joue. Les clics
+// non utilisés s'accumulent (jusqu'à TDF_CLICK_CAP, pour éviter une réserve
+// infinie si un joueur ne se connecte pas pendant plusieurs jours), un peu
+// comme une jauge d'énergie de jeu mobile. Cette réserve est indépendante de
+// la distance du jour, qui elle continue de repartir à zéro chaque jour à midi.
+const TDF_CLICK_RATE_PER_HOUR = 20;         // clics regagnés par heure
+const TDF_CLICK_CAP = TDF_CLICK_RATE_PER_HOUR * 5; // plafond d'accumulation (5h de réserve, ajustable)
+const TDF_MS_PER_CLICK = 3600000 / TDF_CLICK_RATE_PER_HOUR;
+
+let tdfCredits = {}; // { idx: { c: creditsRestants, t: dernierTimestampMs } } — synchronisé via Firestore
+
+function listenTdfCredits() {
+  db.collection(COLLECTION).doc("tdf_credits").onSnapshot(
+    (doc) => {
+      tdfCredits = doc.exists ? doc.data() : {};
+      if (currentTab===4 && dataReady) renderTdfCredits();
+    },
+    (err) => console.error("Erreur crédits Tour de France", err)
+  );
+}
+
+// Calcule le nombre de clics actuellement disponibles pour un coureur, en tenant
+// compte du temps écoulé depuis sa dernière recharge connue.
+function getAvailableTdfCredits(idx) {
+  const rec = tdfCredits[idx];
+  if (!rec) return TDF_CLICK_RATE_PER_HOUR; // nouveau coureur : 1h de réserve offerte au départ
+  const elapsedMs = Date.now() - rec.t;
+  const gained = elapsedMs / TDF_MS_PER_CLICK;
+  return Math.min(TDF_CLICK_CAP, rec.c + gained);
+}
+
+function renderTdfCredits() {
+  const wrap = document.getElementById("tdf-credits-tag");
+  const txt = document.getElementById("tdf-credits-text");
+  const bar = document.getElementById("tdf-credits-bar");
+  const btn = document.getElementById("tdf-pedal-btn");
+  if (!wrap) return;
+  if (tdfMyIdx===null || tdfMyIdx===undefined) {
+    wrap.style.display = "none";
+    if (btn) btn.disabled = true;
+    return;
+  }
+  wrap.style.display = "block";
+  const available = getAvailableTdfCredits(tdfMyIdx);
+  const full = Math.floor(available);
+  if (full >= 1) {
+    txt.textContent = `🔋 ${full} clic${full>1?'s':''} disponible${full>1?'s':''} (+${TDF_CLICK_RATE_PER_HOUR}/h, max ${TDF_CLICK_CAP})`;
+    if (btn) btn.disabled = false;
+  } else {
+    const missing = 1 - available;
+    const secs = Math.max(1, Math.ceil(missing * TDF_MS_PER_CLICK / 1000));
+    const mm = Math.floor(secs/60), ss = secs%60;
+    txt.textContent = `⏳ Plus de clics — prochain dans ${mm}:${String(ss).padStart(2,"0")}`;
+    if (btn) btn.disabled = true;
+  }
+  bar.style.width = Math.min(100, (available/TDF_CLICK_CAP)*100) + "%";
+}
+
+let tdfCreditsTickInterval = null;
+function startTdfCreditsTicker() {
+  if (tdfCreditsTickInterval) return;
+  tdfCreditsTickInterval = setInterval(()=>{
+    if (currentTab===4 && dataReady) renderTdfCredits();
+  }, 1000);
+}
+
 // ── pédaler ──
 async function pedalTdf() {
   if (tdfMyIdx===null || tdfMyIdx===undefined) {
@@ -1284,6 +1360,17 @@ async function pedalTdf() {
     if (hint) hint.textContent = "⚠️ Choisis d'abord ton coureur ci-dessus";
     return;
   }
+
+  const available = getAvailableTdfCredits(tdfMyIdx);
+  if (available < 1) {
+    renderTdfCredits();
+    return; // pas assez de clics en réserve, on attend la recharge
+  }
+  const newCredits = available - 1;
+  const now = Date.now();
+  tdfCredits[tdfMyIdx] = { c: newCredits, t: now }; // mise à jour optimiste locale
+  renderTdfCredits();
+
   let gain = Math.round(14 + Math.random()*22); // 14–36 m par coup de pédale
   let breakaway = false;
   if (Math.random() < 1/40) { gain = Math.round(90 + Math.random()*60); breakaway = true; } // échappée rare
@@ -1297,6 +1384,9 @@ async function pedalTdf() {
   try {
     await db.collection(COLLECTION).doc("tdf_"+TODAY).set(
       { [tdfMyIdx]: firebase.firestore.FieldValue.increment(gain) }, { merge:true }
+    );
+    await db.collection(COLLECTION).doc("tdf_credits").set(
+      { [tdfMyIdx]: { c: newCredits, t: now } }, { merge:true }
     );
   } catch(e) { console.error("Erreur d'enregistrement Tour de France", e); }
 }
@@ -1571,6 +1661,8 @@ function renderPanel5() {
   refreshTdfOtherRiders();
   renderTdfHud();
   renderTdfRankList();
+  renderTdfCredits();
+  startTdfCreditsTicker();
 }
 
 // ─── tabs ─────────────────────────────────────────────────
@@ -1593,6 +1685,7 @@ document.getElementById("date-display").textContent =
 listenState();
 listenValidated();
 listenTdf();
+listenTdfCredits();
 </script>
 </body>
 </html>
