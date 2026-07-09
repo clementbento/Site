@@ -1447,33 +1447,52 @@ async function pedalTdf() {
     return;
   }
 
-  const available = getAvailableTdfCredits(tdfMyIdx);
-  if (available < 1) {
+  // Vérif rapide côté client pour un retour immédiat (purement indicatif : la
+  // vraie limite est appliquée ci-dessous, de façon atomique, côté serveur).
+  if (getAvailableTdfCredits(tdfMyIdx) < 1) {
     renderTdfCredits();
-    return; // plus de clics disponibles aujourd'hui
+    return;
   }
-  const newCredits = available - 1;
-  tdfCredits[tdfMyIdx] = newCredits; // mise à jour optimiste locale
-  renderTdfCredits();
 
   let gain = Math.round(14 + Math.random()*22); // 14–36 m par coup de pédale
   let breakaway = false;
   if (Math.random() < 1/40) { gain = Math.round(90 + Math.random()*60); breakaway = true; } // échappée rare
 
-  tdfMeters[tdfMyIdx] = (tdfMeters[tdfMyIdx]||0) + gain;
+  const idx = tdfMyIdx;
+  const creditsRef = db.collection(COLLECTION).doc("tdf_credits_"+TODAY);
+  const metersRef  = db.collection(COLLECTION).doc("tdf_"+TODAY);
+
+  let newCredits;
+  try {
+    // Transaction atomique : lit le compteur réel du joueur (partagé par tous
+    // ses appareils), refuse si 0 restant, sinon décrémente et ajoute les mètres
+    // en une seule opération indivisible. Ça évite qu'un même joueur connecté
+    // sur plusieurs téléphones à la fois ne dépasse les 200 clics du jour.
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(creditsRef);
+      const data = snap.exists ? snap.data() : {};
+      const current = data[idx]!==undefined ? data[idx] : TDF_CLICKS_PER_DAY;
+      if (current < 1) throw new Error("TDF_NO_CREDITS");
+      newCredits = current - 1;
+      tx.set(creditsRef, { [idx]: newCredits }, { merge:true });
+      tx.set(metersRef, { [idx]: firebase.firestore.FieldValue.increment(gain) }, { merge:true });
+    });
+  } catch(e) {
+    if (e.message === "TDF_NO_CREDITS") {
+      renderTdfCredits(); // le serveur dit qu'il n'y a plus rien : on rafraîchit l'affichage
+    } else {
+      console.error("Erreur d'enregistrement Tour de France", e);
+    }
+    return;
+  }
+
+  tdfCredits[idx] = newCredits;
+  tdfMeters[idx] = (tdfMeters[idx]||0) + gain;
   renderTdfHud();
   renderTdfRankList();
+  renderTdfCredits();
   bumpTdfPedalBtn();
   if (breakaway) showTdfToast(`⚡ Échappée ! +${gain} m`);
-
-  try {
-    await db.collection(COLLECTION).doc("tdf_"+TODAY).set(
-      { [tdfMyIdx]: firebase.firestore.FieldValue.increment(gain) }, { merge:true }
-    );
-    await db.collection(COLLECTION).doc("tdf_credits_"+TODAY).set(
-      { [tdfMyIdx]: newCredits }, { merge:true }
-    );
-  } catch(e) { console.error("Erreur d'enregistrement Tour de France", e); }
 }
 
 function bumpTdfPedalBtn() {
