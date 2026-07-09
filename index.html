@@ -150,11 +150,6 @@
   .item-toast.mythic{background:linear-gradient(135deg,#0f172a,#334155)}
 
   /* ── panel 5 – Tour de France ── */
-  #tdf-select-bar{display:flex;align-items:center;gap:10px;background:white;border-radius:16px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 4px #0000000a;border:1px solid #f1f5f9}
-  #tdf-select-bar label{font-size:.75rem;font-weight:700;color:#64748b;white-space:nowrap}
-  #tdf-select{flex:1;border:2px solid #e2e8f0;border-radius:10px;padding:7px 8px;font-size:.82rem;font-weight:700;outline:none;background:white;color:#1e293b}
-  #tdf-select:focus{border-color:#6366f1}
-
   #tdf-wrap{position:relative;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#8ec9f0 0%,#bfe3ff 38%,#dff0e0 38%,#a9d68c 100%);box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9;height:min(56vh,440px);touch-action:none}
   #tdf-scene{position:absolute;inset:0;cursor:pointer}
   #tdf-hud{position:absolute;top:0;left:0;right:0;padding:12px;text-align:center;pointer-events:none;z-index:5;display:flex;flex-direction:column;align-items:center;gap:6px}
@@ -267,13 +262,6 @@
   <!-- PANEL 5 -->
   <div class="panel" id="panel-4">
     <p class="section-title">Le Tour de France</p>
-
-    <div id="tdf-select-bar">
-      <label for="tdf-select">🚴 Ton coureur :</label>
-      <select id="tdf-select" onchange="selectTdfRider(this.value)">
-        <option value="">— choisir —</option>
-      </select>
-    </div>
 
     <div id="tdf-wrap">
       <div id="tdf-loading">⏳ Chargement de l'étape…</div>
@@ -414,7 +402,6 @@ let stateReady = false, validatedReady = false;
 // appareil/navigateur qu'il utilise.
 const LOGIN_KEY = "quizMyPlayerIdx";
 let myPlayerIdx = null;   // index (0..N-1) du joueur connecté sur cet appareil
-let tdfAutoSelectDone = false;
 
 function loadMyIdentity() {
   const stored = localStorage.getItem(LOGIN_KEY);
@@ -456,16 +443,12 @@ function chooseIdentity(i) {
   try { localStorage.setItem(LOGIN_KEY, String(i)); } catch(e) { console.error("localStorage indisponible", e); }
   closeLoginOverlay();
   renderWhoamiTag();
-  // pré-sélectionne automatiquement ce joueur comme coureur du Tour de France,
-  // uniquement si aucun coureur n'a encore été choisi manuellement
-  if ((tdfMyIdx===null || tdfMyIdx===undefined)) {
-    tdfMyIdx = i;
-    tdfAutoSelectDone = true;
-    if (dataReady && currentTab===4) {
-      renderTdfSelect();
-      if (tdfInited) { buildMyTdfRider(); refreshTdfOtherRiders(); }
-      renderTdfHud(); renderTdfRankList(); renderTdfCredits();
-    }
+  // le coureur du Tour de France est toujours le personnage connecté
+  tdfMyIdx = i;
+  tdfLastSign = {};
+  if (dataReady && currentTab===4) {
+    if (tdfInited) { buildMyTdfRider(); refreshTdfOtherRiders(); }
+    renderTdfHud(); renderTdfRankList(); renderTdfCredits();
   }
   if (dataReady && currentTab===0) renderPanel1();
   if (dataReady && currentTab===4) renderTdfResetBtn();
@@ -585,10 +568,7 @@ function listenValidated() {
 function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
-    if (myPlayerIdx!==null && !tdfAutoSelectDone && (tdfMyIdx===null || tdfMyIdx===undefined)) {
-      tdfMyIdx = myPlayerIdx;
-      tdfAutoSelectDone = true;
-    }
+    if (myPlayerIdx!==null) tdfMyIdx = myPlayerIdx;
     switchTab(currentTab);
     renderWhoamiTag();
     if (myPlayerIdx===null) openLoginOverlay(false);
@@ -1338,29 +1318,7 @@ function listenTdf() {
   );
 }
 
-// ── UI : sélection du coureur, HUD, classement du jour ──
-function renderTdfSelect() {
-  const sel = document.getElementById("tdf-select");
-  if (!sel) return;
-  sel.innerHTML = `<option value="">— choisir —</option>` +
-    names.map((n,i)=>`<option value="${i}">${n}</option>`).join("");
-  sel.value = (tdfMyIdx!==null && tdfMyIdx!==undefined) ? String(tdfMyIdx) : "";
-}
-
-function selectTdfRider(v) {
-  tdfMyIdx = v==="" ? null : parseInt(v);
-  tdfLastSign = {};
-  const btn = document.getElementById("tdf-pedal-btn");
-  const hint = document.getElementById("tdf-hint");
-  if (hint) hint.textContent = (tdfMyIdx===null)
-    ? "👆 Choisis ton coureur pour commencer à pédaler"
-    : "👆 Touche l'écran ou le bouton pour pédaler";
-  if (tdfInited) { buildMyTdfRider(); refreshTdfOtherRiders(); }
-  renderTdfHud();
-  renderTdfRankList();
-  renderTdfCredits();
-}
-
+// ── UI : HUD, classement du jour ──
 function renderTdfHud() {
   tdfJerseyAssignments = computeTdfJerseys();
   const tag = document.getElementById("tdf-jersey-tag");
@@ -1800,7 +1758,6 @@ function animateTdf() {
 }
 
 function renderPanel5() {
-  renderTdfSelect();
   tdfJerseyAssignments = computeTdfJerseys();
   if (!tdfInited) initTdfScene();
   else resizeTdfScene();
