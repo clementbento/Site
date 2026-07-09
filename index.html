@@ -1378,7 +1378,7 @@ async function resetTdfAll() {
 
   try {
     await db.collection(COLLECTION).doc("tdf_"+TODAY).set({});
-    await db.collection(COLLECTION).doc("tdf_credits").set({});
+    await db.collection(COLLECTION).doc("tdf_credits_"+TODAY).set({});
   } catch(e) {
     console.error("Erreur de réinitialisation Tour de France", e);
     alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
@@ -1390,21 +1390,18 @@ async function resetTdfAll() {
   renderTdfCredits();
 }
 
-// ── système de clics limités (20 clics/heure, cumulables) ──
-// Chaque coureur dispose d'une réserve de clics qui se recharge au rythme de
-// TDF_CLICK_RATE_PER_HOUR par heure, même quand personne ne joue. Les clics
-// non utilisés s'accumulent (jusqu'à TDF_CLICK_CAP, pour éviter une réserve
-// infinie si un joueur ne se connecte pas pendant plusieurs jours), un peu
-// comme une jauge d'énergie de jeu mobile. Cette réserve est indépendante de
-// la distance du jour, qui elle continue de repartir à zéro chaque jour à midi.
-const TDF_CLICK_RATE_PER_HOUR = 20;         // clics regagnés par heure
-const TDF_CLICK_CAP = TDF_CLICK_RATE_PER_HOUR * 5; // plafond d'accumulation (5h de réserve, ajustable)
-const TDF_MS_PER_CLICK = 3600000 / TDF_CLICK_RATE_PER_HOUR;
+// ── système de clics limités (200 clics par jour) ──
+// Chaque coureur dispose d'une réserve de 200 clics par jour. Cette réserve est
+// remise à zéro (donc repart à 200) automatiquement au moment de la mise à jour
+// de midi, puisqu'elle est stockée dans un document daté "tdf_credits_"+TODAY,
+// exactement comme les mètres du jour ("tdf_"+TODAY) : dès que TODAY change,
+// c'est un tout nouveau document, vide, donc une réserve neuve.
+const TDF_CLICKS_PER_DAY = 200;
 
-let tdfCredits = {}; // { idx: { c: creditsRestants, t: dernierTimestampMs } } — synchronisé via Firestore
+let tdfCredits = {}; // { idx: clicsRestantsAujourdhui } — synchronisé via Firestore
 
 function listenTdfCredits() {
-  db.collection(COLLECTION).doc("tdf_credits").onSnapshot(
+  db.collection(COLLECTION).doc("tdf_credits_"+TODAY).onSnapshot(
     (doc) => {
       tdfCredits = doc.exists ? doc.data() : {};
       if (currentTab===4 && dataReady) renderTdfCredits();
@@ -1413,14 +1410,10 @@ function listenTdfCredits() {
   );
 }
 
-// Calcule le nombre de clics actuellement disponibles pour un coureur, en tenant
-// compte du temps écoulé depuis sa dernière recharge connue.
+// Nombre de clics restants aujourd'hui pour un coureur (200 par défaut s'il n'a pas encore pédalé).
 function getAvailableTdfCredits(idx) {
   const rec = tdfCredits[idx];
-  if (!rec) return TDF_CLICK_RATE_PER_HOUR; // nouveau coureur : 1h de réserve offerte au départ
-  const elapsedMs = Date.now() - rec.t;
-  const gained = elapsedMs / TDF_MS_PER_CLICK;
-  return Math.min(TDF_CLICK_CAP, rec.c + gained);
+  return rec!==undefined ? rec : TDF_CLICKS_PER_DAY;
 }
 
 function renderTdfCredits() {
@@ -1436,26 +1429,14 @@ function renderTdfCredits() {
   }
   wrap.style.display = "block";
   const available = getAvailableTdfCredits(tdfMyIdx);
-  const full = Math.floor(available);
-  if (full >= 1) {
-    txt.textContent = `🔋 ${full} clic${full>1?'s':''} disponible${full>1?'s':''} (+${TDF_CLICK_RATE_PER_HOUR}/h, max ${TDF_CLICK_CAP})`;
+  if (available >= 1) {
+    txt.textContent = `🔋 ${available} clic${available>1?'s':''} disponible${available>1?'s':''} aujourd'hui (sur ${TDF_CLICKS_PER_DAY})`;
     if (btn) btn.disabled = false;
   } else {
-    const missing = 1 - available;
-    const secs = Math.max(1, Math.ceil(missing * TDF_MS_PER_CLICK / 1000));
-    const mm = Math.floor(secs/60), ss = secs%60;
-    txt.textContent = `⏳ Plus de clics — prochain dans ${mm}:${String(ss).padStart(2,"0")}`;
+    txt.textContent = `⏳ Plus de clics aujourd'hui — nouvelle réserve à la mise à jour de midi`;
     if (btn) btn.disabled = true;
   }
-  bar.style.width = Math.min(100, (available/TDF_CLICK_CAP)*100) + "%";
-}
-
-let tdfCreditsTickInterval = null;
-function startTdfCreditsTicker() {
-  if (tdfCreditsTickInterval) return;
-  tdfCreditsTickInterval = setInterval(()=>{
-    if (currentTab===4 && dataReady) renderTdfCredits();
-  }, 1000);
+  bar.style.width = Math.min(100, (available/TDF_CLICKS_PER_DAY)*100) + "%";
 }
 
 // ── pédaler ──
@@ -1469,11 +1450,10 @@ async function pedalTdf() {
   const available = getAvailableTdfCredits(tdfMyIdx);
   if (available < 1) {
     renderTdfCredits();
-    return; // pas assez de clics en réserve, on attend la recharge
+    return; // plus de clics disponibles aujourd'hui
   }
   const newCredits = available - 1;
-  const now = Date.now();
-  tdfCredits[tdfMyIdx] = { c: newCredits, t: now }; // mise à jour optimiste locale
+  tdfCredits[tdfMyIdx] = newCredits; // mise à jour optimiste locale
   renderTdfCredits();
 
   let gain = Math.round(14 + Math.random()*22); // 14–36 m par coup de pédale
@@ -1490,8 +1470,8 @@ async function pedalTdf() {
     await db.collection(COLLECTION).doc("tdf_"+TODAY).set(
       { [tdfMyIdx]: firebase.firestore.FieldValue.increment(gain) }, { merge:true }
     );
-    await db.collection(COLLECTION).doc("tdf_credits").set(
-      { [tdfMyIdx]: { c: newCredits, t: now } }, { merge:true }
+    await db.collection(COLLECTION).doc("tdf_credits_"+TODAY).set(
+      { [tdfMyIdx]: newCredits }, { merge:true }
     );
   } catch(e) { console.error("Erreur d'enregistrement Tour de France", e); }
 }
@@ -1767,7 +1747,6 @@ function renderPanel5() {
   renderTdfRankList();
   renderTdfCredits();
   renderTdfResetBtn();
-  startTdfCreditsTicker();
 }
 
 // ─── tabs ─────────────────────────────────────────────────
