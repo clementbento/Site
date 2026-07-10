@@ -222,6 +222,60 @@
   #bg-leave-btn,#bg-cancel-btn{border:none;border-radius:12px;padding:10px 16px;font-size:.8rem;font-weight:800;cursor:pointer;margin:4px}
   #bg-leave-btn{background:#f1f5f9;color:#64748b}
   #bg-cancel-btn{background:#fef2f2;color:#dc2626}
+  #bg-lock-btn{border:none;border-radius:12px;padding:10px 16px;font-size:.8rem;font-weight:800;cursor:pointer;margin:4px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:white}
+
+  /* ── choix du jeu ── */
+  .game-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .game-option{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid #e2e8f0;border-radius:16px;padding:16px 10px;background:white;cursor:pointer;transition:all .15s;font-weight:700;color:#334155}
+  .game-option:not(:disabled):hover{border-color:#c7d2fe;background:#f5f3ff}
+  .game-option:not(:disabled):active{transform:scale(.96)}
+  .game-option:disabled{opacity:.5;cursor:default}
+  .game-option-emoji{font-size:1.8rem}
+  .game-option-name{font-size:.85rem;font-weight:800}
+  .game-option-desc{font-size:.68rem;color:#94a3b8;font-weight:600;text-align:center}
+  .game-option-soon{border-style:dashed}
+
+  /* ── Flip Seven ── */
+  .flip7-header{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:14px;padding:10px 14px;font-size:.85rem;font-weight:800;margin-bottom:12px}
+  .flip7-target{font-size:.7rem;font-weight:700;color:#e0e7ff}
+  .flip7-prompt{text-align:center;font-size:.85rem;font-weight:800;color:#1e293b;background:#eef2ff;border-radius:12px;padding:10px;margin-bottom:10px}
+  .flip7-waiting{text-align:center;font-size:.78rem;font-weight:700;color:#94a3b8;padding:10px;margin-bottom:10px}
+  .flip7-actions{display:flex;gap:8px;margin-bottom:12px}
+  .flip7-draw-btn,.flip7-stay-btn,.flip7-next-btn{flex:1;border:none;border-radius:14px;padding:13px;font-size:.88rem;font-weight:900;cursor:pointer;transition:transform .08s;color:white}
+  .flip7-draw-btn{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+  .flip7-stay-btn{background:linear-gradient(135deg,#10b981,#059669)}
+  .flip7-next-btn{background:linear-gradient(135deg,#f59e0b,#d97706);width:100%;margin-top:10px}
+  .flip7-draw-btn:active,.flip7-stay-btn:active,.flip7-next-btn:active{transform:scale(.96)}
+  .flip7-target-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px}
+  .flip7-target-btn{border:none;border-radius:12px;padding:9px 14px;font-size:.8rem;font-weight:800;color:white;cursor:pointer}
+  .flip7-players-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .flip7-player-card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:10px;box-shadow:0 1px 4px #0000000a}
+  .flip7-player-card.is-me{border-color:#6366f1;box-shadow:0 0 0 2px #6366f1}
+  .flip7-player-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+  .flip7-player-head .avatar{width:26px;height:26px;font-size:.7rem}
+  .flip7-player-name{font-size:.75rem;font-weight:700;color:#334155;flex:1}
+  .flip7-badge{font-size:.6rem;font-weight:800;border-radius:8px;padding:2px 6px}
+  .flip7-badge-bust{background:#fef2f2;color:#dc2626}
+  .flip7-badge-frozen{background:#eff6ff;color:#2563eb}
+  .flip7-badge-stayed{background:#f0fdf4;color:#16a34a}
+  .flip7-badge-turn{background:#fffbeb;color:#d97706}
+  .flip7-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;min-height:22px}
+  .flip7-chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:6px;font-size:.68rem;font-weight:800;padding:0 5px;color:white;background:#94a3b8}
+  .flip7-chip-num{background:#6366f1}
+  .flip7-chip-bonus{background:#10b981}
+  .flip7-chip-x2{background:#f59e0b}
+  .flip7-chip-sc{background:#0ea5e9}
+  .flip7-chip-empty{color:#cbd5e1;font-size:.7rem;font-weight:600}
+  .flip7-score{font-size:.78rem;font-weight:800;color:#1e293b}
+  .flip7-total{font-size:.68rem;color:#94a3b8;font-weight:600}
+  .flip7-summary{background:#fffbeb;border:2px solid #fcd34d;border-radius:16px;padding:14px;margin-bottom:12px}
+  .flip7-summary h4{font-size:.8rem;font-weight:900;color:#92400e;margin-bottom:8px;text-align:center}
+  .flip7-summary-row{display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;color:#78350f;padding:4px 2px;border-bottom:1px solid #fde68a}
+  .flip7-gameover{background:#eef2ff;border-color:#c7d2fe}
+  .flip7-gameover h4{color:#3730a3}
+  .flip7-winner{text-align:center;font-size:.82rem;font-weight:800;color:#4f46e5;margin-bottom:8px}
+  .flip7-log{background:#f8fafc;border-radius:12px;padding:10px 12px;margin-bottom:10px;max-height:120px;overflow-y:auto}
+  .flip7-log-row{font-size:.68rem;color:#64748b;font-weight:600;padding:2px 0}
 </style>
 </head>
 <body>
@@ -392,11 +446,6 @@ const db = firebase.firestore();
 let COLLECTION = null;
 
 // ─── ligues ────────────────────────────────────────────────
-// Chaque ligue a ses propres joueurs/scores/Tour de France, stockés dans une
-// collection Firestore séparée. La ligue "ICS" est celle qui existait déjà
-// avant ce système : elle pointe donc vers la collection historique "quizBureau"
-// (aucune migration de données nécessaire). Toute ligue créée ensuite obtient
-// sa propre collection "quizBureau_<slug>".
 const DEFAULT_LEAGUE_NAME = "ICS";
 const DEFAULT_LEAGUE_SLUG = "ics";
 const LEAGUES_REGISTRY_COLLECTION = "quizLeaguesRegistry";
@@ -404,7 +453,7 @@ const LEAGUES_REGISTRY_DOC = "index";
 
 function slugifyLeague(name) {
   return (name||"")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // enlève les accents
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .trim().toLowerCase()
     .replace(/[^a-z0-9]+/g,"_")
     .replace(/^_+|_+$/g,"")
@@ -413,7 +462,6 @@ function slugifyLeague(name) {
 function collectionForLeague(slug) {
   return slug===DEFAULT_LEAGUE_SLUG ? "quizBureau" : ("quizBureau_"+slug);
 }
-// Couleur stable dérivée du nom de la ligue (pour l'avatar dans le sélecteur).
 function leagueColor(slug) {
   let h=0;
   for (let i=0;i<slug.length;i++) h = (h*31 + slug.charCodeAt(i)) % 360;
@@ -422,10 +470,8 @@ function leagueColor(slug) {
 
 // ─── constants ───────────────────────────────────────────
 const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
-let N = DEFAULT_NAMES.length; // nombre de joueurs — évolue si des joueurs sont ajoutés
+let N = DEFAULT_NAMES.length;
 const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0ea5e9","#f97316","#14b8a6","#a855f7","#eab308","#f43f5e","#22c55e","#3b82f6","#d946ef","#84cc16"];
-// Couleur d'un joueur : puise dans la palette prédéfinie, puis génère une teinte
-// stable (angle doré) pour tout joueur ajouté au-delà de la palette de base.
 function playerColor(i) {
   if (COLORS[i]) return COLORS[i];
   const hue = Math.round((i * 137.508) % 360);
@@ -434,21 +480,18 @@ function playerColor(i) {
 const MEDAL  = ["🥇","🥈","🥉"];
 const FR_DAYS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
-// Skin spécial "maillot" pour certains joueurs au pilori
 const JERSEY_PLAYERS = ["clément","grégoire"];
 function isJerseyPlayer(name) {
   return JERSEY_PLAYERS.includes((name||"").toLowerCase());
 }
 
 // ─── projectiles du pilori (rareté) ───────────────────────
-// Plus l'objet est insolite, plus il est rare : piano 1/300, parpaing 1/100, œuf 1/50, tomate = le reste.
 const ITEM_TYPES = [
   { key:"piano",    label:"Piano",    emoji:"🎹", prob:1/300, color:0x1c1917, splatColor:0x0c0a09, size:.4,  rarity:"mythic" },
   { key:"parpaing", label:"Parpaing", emoji:"🧱", prob:1/100, color:0x9ca3af, splatColor:0x57534e, size:.34, rarity:"legendary" },
   { key:"oeuf",     label:"Œuf",      emoji:"🥚", prob:1/50,  color:0xfff7e6, splatColor:0xfacc15, size:.15, rarity:"rare" },
   { key:"tomate",   label:"Tomate",   emoji:"🍅", prob:1 - (1/300 + 1/100 + 1/50), color:0xdc2626, splatColor:0xb91c1c, size:.16, rarity:"commun" }
 ];
-// ─── Tour de France : maillots distinctifs, attribués selon le classement ──
 const TDF_JERSEYS = {
   jaune: { key:"jaune", label:"🟡 Maillot Jaune", bg:"#FFD700", accent:"#ffffff", text:"#78350f", desc:"Leader du classement général" },
   vert:  { key:"vert",  label:"🟢 Maillot Vert",  bg:"#16a34a", accent:"#ffffff", text:"#ffffff", desc:"Meilleur score du jour (sprint)" },
@@ -506,26 +549,21 @@ function buildItemMesh(item) {
 // ─── state ───────────────────────────────────────────────
 let names    = [...DEFAULT_NAMES];
 N = names.length;
-let scores   = {};       // { "2026-07-01": { 0:5, 1:3, … } }
-let bonus    = {};       // { 0: 5, 3: 2, … } – flat bonus points per player
-let malus    = {};       // { 0: 3, … } – flat malus points per player
-let validated = {};      // { 0: true } – locked today
+let scores   = {};
+let bonus    = {};
+let malus    = {};
+let validated = {};
 
 let adminUnlocked = false;
-let editCell = null;     // { type:'day'|'bonus'|'malus', date, idx }
+let editCell = null;
 let chartInst = null;
 let currentTab = 0;
 let dataReady = false;
 let stateReady = false, validatedReady = false;
 
-// ─── ligue (liée à l'appareil, comme l'identité) ────────────
-// La toute première visite sur un appareil demande "quelle est ta ligue" ; le
-// choix est ensuite mémorisé localement (localStorage), comme pour l'identité
-// du joueur. La ligue détermine quelle collection Firestore ("quizBureau" pour
-// ICS, "quizBureau_<slug>" pour les autres) est utilisée pour tout le reste.
+// ─── ligue ────────────────────────────────────────────────
 const LEAGUE_KEY = "quizMyLeagueId";
-let myLeagueId = null; // slug de la ligue choisie sur cet appareil
-// ICS existe toujours, même avant la première écriture du registre Firestore.
+let myLeagueId = null;
 let leaguesRegistry = { [DEFAULT_LEAGUE_SLUG]: DEFAULT_LEAGUE_NAME };
 
 function loadMyLeague() {
@@ -533,8 +571,6 @@ function loadMyLeague() {
   if (stored) myLeagueId = stored;
 }
 
-// Écoute (légère, indépendante de la ligue active) le registre global des
-// ligues connues, pour peupler la liste dans le sélecteur.
 function listenLeaguesRegistry() {
   db.collection(LEAGUES_REGISTRY_COLLECTION).doc(LEAGUES_REGISTRY_DOC).onSnapshot(
     (doc) => {
@@ -571,7 +607,7 @@ function openLeagueOverlay(isChange) {
   if (overlay) overlay.style.display = "flex";
 }
 function closeLeagueOverlay() {
-  if (myLeagueId===null) return; // pas de fermeture possible avant d'avoir choisi la première fois
+  if (myLeagueId===null) return;
   const overlay = document.getElementById("league-overlay");
   if (overlay) overlay.style.display = "none";
 }
@@ -589,10 +625,6 @@ function renderLeagueTag() {
 function chooseLeague(slug) {
   applyLeague(slug);
 }
-// Applique une ligue à cet appareil. Rejoindre pour la première fois démarre
-// directement les écouteurs Firestore ; changer de ligue en cours de route
-// recharge la page pour repartir sur une base propre (évite d'empiler deux
-// jeux d'écouteurs Firestore en parallèle).
 function applyLeague(slug) {
   const isSwitch = myLeagueId!==null && myLeagueId!==slug;
   myLeagueId = slug;
@@ -604,7 +636,6 @@ function applyLeague(slug) {
   startLeagueData();
 }
 
-// ── créer une nouvelle ligue ──
 function showNewLeagueForm() {
   const grid = document.getElementById("league-grid");
   const form = document.getElementById("league-newleague-form");
@@ -622,10 +653,6 @@ function hideNewLeagueForm() {
   if (grid) grid.style.display = "grid";
 }
 
-// Crée la ligue de façon atomique (transaction Firestore) : relit le registre
-// réel au moment de l'écriture et refuse si le nom (une fois normalisé) existe
-// déjà, pour éviter les doublons même si deux personnes créent une ligue au
-// même moment sur deux appareils.
 async function createNewLeague(rawName) {
   const trimmed = (rawName||"").trim();
   if (!trimmed) return { ok:false, reason:"empty" };
@@ -675,18 +702,14 @@ async function submitNewLeague() {
     return;
   }
 
-  leaguesRegistry[result.slug] = result.name; // mise à jour optimiste locale
+  leaguesRegistry[result.slug] = result.name;
   hideNewLeagueForm();
   applyLeague(result.slug);
 }
 
 // ─── connexion (identité liée à l'appareil) ────────────────
-// La première visite sur un appareil demande "qui es-tu" parmi les joueurs
-// existants ; le choix est ensuite mémorisé localement (localStorage) sur cet
-// appareil, donc chaque collègue n'a besoin de répondre qu'une seule fois par
-// appareil/navigateur qu'il utilise.
 const LOGIN_KEY = "quizMyPlayerIdx";
-let myPlayerIdx = null;   // index (0..N-1) du joueur connecté sur cet appareil
+let myPlayerIdx = null;
 
 function loadMyIdentity() {
   const stored = localStorage.getItem(LOGIN_KEY);
@@ -724,16 +747,13 @@ function openLoginOverlay(isChange) {
   if (overlay) overlay.style.display = "flex";
 }
 function closeLoginOverlay() {
-  if (myPlayerIdx===null) return; // on ne peut pas fermer sans avoir choisi la première fois
+  if (myPlayerIdx===null) return;
   const overlay = document.getElementById("login-overlay");
   if (overlay) overlay.style.display = "none";
 }
 function chooseIdentity(i) {
   applyIdentity(i);
 }
-// Applique une identité (existante ou tout juste créée) à cet appareil :
-// mémorise le choix, ferme la fenêtre de connexion et rafraîchit les panneaux
-// concernés (dont le coureur du Tour de France, toujours calqué sur l'identité).
 function applyIdentity(i) {
   myPlayerIdx = i;
   try { localStorage.setItem(LOGIN_KEY, String(i)); } catch(e) { console.error("localStorage indisponible", e); }
@@ -752,7 +772,6 @@ function applyIdentity(i) {
   if (dataReady && currentTab===5) renderPanel6();
 }
 
-// ── créer un nouveau joueur ──
 function showNewPlayerForm() {
   const grid = document.getElementById("login-grid");
   const form = document.getElementById("login-newplayer-form");
@@ -770,10 +789,6 @@ function hideNewPlayerForm() {
   if (grid) grid.style.display = "grid";
 }
 
-// Crée le joueur de façon atomique (transaction Firestore) : relit la liste
-// réelle des noms au moment de l'écriture et refuse si le prénom existe déjà
-// (comparaison insensible à la casse/espaces), pour éviter les doublons même
-// si deux personnes créent un compte au même moment sur deux appareils.
 async function createNewPlayer(rawName) {
   const trimmed = (rawName||"").trim();
   if (!trimmed) return { ok:false, reason:"empty" };
@@ -829,7 +844,6 @@ async function submitNewPlayer() {
     return;
   }
 
-  // mise à jour optimiste locale, en attendant que le listener Firestore confirme
   names.push(trimmed);
   N = names.length;
   hideNewPlayerForm();
@@ -869,9 +883,6 @@ function getWorkingDays(year,month) {
 }
 function isWeekday(d) { const wd=d.getDay(); return wd>=1 && wd<=5; }
 
-// Le quiz du jour N reste ouvert à la saisie jusqu'à midi du jour N+1.
-// Avant midi, on considère qu'on saisit encore le score du dernier jour ouvré précédent ;
-// après midi, le quiz "actif" bascule sur le jour ouvré courant.
 function getActiveQuizDay() {
   const n = new Date();
   const ref = new Date(n.getFullYear(), n.getMonth(), n.getDate());
@@ -885,9 +896,9 @@ const YEAR  = now.getFullYear();
 const MONTH = now.getMonth();
 const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
 let TODAY = getActiveQuizDay();
-if (TODAY < WORKING_DAYS[0]) TODAY = toISO(now); // sécurité en cas de changement de mois
+if (TODAY < WORKING_DAYS[0]) TODAY = toISO(now);
 
-// ─── Firestore persistence (partagé entre tous les utilisateurs) ──
+// ─── Firestore persistence ──
 function setConnStatus(ok) {
   const el = document.getElementById("conn-status");
   if (!el) return;
@@ -918,8 +929,6 @@ async function persistValidated() {
   }
 }
 
-// Écoute en temps réel : dès qu'un collègue enregistre un score,
-// tous les autres onglets ouverts se mettent à jour automatiquement.
 function listenState() {
   db.collection(COLLECTION).doc("state").onSnapshot(
     (doc) => {
@@ -1420,31 +1429,25 @@ function tomatoJerseyTexture(letter) {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
   const ctx = c.getContext("2d");
-  // fond bleu façon maillot
   ctx.fillStyle = "#1d4ed8"; ctx.fillRect(0,0,128,128);
-  // fines rayures verticales bleu foncé
   for (let x=-4; x<132; x+=12) {
     ctx.fillStyle = "#1e3a8a";
     ctx.fillRect(x,0,6,128);
   }
-  // liserés rouge/blanc dans chaque rayure
   for (let x=-4; x<132; x+=12) {
     ctx.fillStyle = "#dc2626"; ctx.fillRect(x+6,0,1.4,128);
     ctx.fillStyle = "#f8fafc"; ctx.fillRect(x+8,0,1.4,128);
   }
-  // écusson simplifié
   ctx.fillStyle = "#f8fafc";
   ctx.beginPath(); ctx.arc(50,38,9,0,7); ctx.fill();
   ctx.fillStyle = "#1d4ed8";
   ctx.font = "900 10px -apple-system,sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText("FR", 50, 39);
-  // petit drapeau français
   ctx.fillStyle = "#1e3a8a"; ctx.fillRect(44,52,7,10);
   ctx.fillStyle = "#f8fafc"; ctx.fillRect(51,52,7,10);
   ctx.fillStyle = "#dc2626"; ctx.fillRect(58,52,7,10);
   ctx.strokeStyle = "#facc15"; ctx.lineWidth = 1; ctx.strokeRect(44,52,21,10);
-  // lettre du joueur façon numéro de maillot
   ctx.fillStyle = "#f8fafc";
   ctx.font = "900 42px -apple-system,sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -1484,7 +1487,7 @@ function buildTomatoCharacter(idx) {
     new THREE.MeshStandardMaterial({ map: jersey ? tomatoJerseyTexture(letter) : tomatoBodyTexture(letter, playerColor(idx)) })
   );
   body.position.y = 1.5;
-  body.rotation.y = Math.PI; // recentre la lettre (dessinée au milieu de la texture) face à la caméra
+  body.rotation.y = Math.PI;
   body.castShadow = true;
   tomatoCharacter.add(body);
 
@@ -1493,7 +1496,7 @@ function buildTomatoCharacter(idx) {
     new THREE.MeshStandardMaterial({ map: tomatoFaceTexture("#fbcfa0") })
   );
   tomatoHead.position.y = 2.25;
-  tomatoHead.rotation.y = -Math.PI/2; // recentre le visage face à la caméra
+  tomatoHead.rotation.y = -Math.PI/2;
   tomatoHead.castShadow = true;
   tomatoCharacter.add(tomatoHead);
 
@@ -1609,7 +1612,7 @@ function shakeTomato(item) {
 }
 
 function refreshTomatoLoser() {
-  const ranking = getRanking(); // trié décroissant : le dernier de la liste est le perdant
+  const ranking = getRanking();
   const l = ranking[N-1].idx;
   const tag = document.getElementById("tomato-loser-tag");
   if(tag) tag.textContent = `🎯 Cible : ${names[l]}`;
@@ -1641,24 +1644,20 @@ function renderPanel4() {
 }
 
 // ─── panel 5 : Le Tour de France ────────────────────────────
-// Chaque joueur peut incarner un coureur. On pédale en cliquant : la distance
-// du jour est synchronisée en temps réel via Firestore (doc "tdf_"+TODAY),
-// comme un classement au sprint. Les maillots (jaune/vert/pois/blanc) sont
-// recalculés à partir du classement du quiz et de l'activité du jour.
-const TDF_SCALE = 0.15;       // 1 mètre pédalé = 0.15 unité 3D
-const TDF_TREE_SPAN = 208;    // cycle de recyclage du décor (arbres)
-const TDF_MARK_SPAN = 288;    // cycle de recyclage du décor (bornes)
+const TDF_SCALE = 0.15;
+const TDF_TREE_SPAN = 208;
+const TDF_MARK_SPAN = 288;
 
-let tdfMeters = {};           // { 0: 340, 3: 120, … } – mètres parcourus aujourd'hui
-let tdfMyIdx = null;          // index du coureur incarné par cet utilisateur
+let tdfMeters = {};
+let tdfMyIdx = null;
 let tdfJerseyAssignments = {};
-let tdfLastSign = {};         // suivi des dépassements pour ne les annoncer qu'une fois
+let tdfLastSign = {};
 
 let tdfScene, tdfCamera, tdfRenderer, tdfInited = false;
 let tdfMyRiderGroup = null;
-let tdfOtherRiders = {};      // idx -> THREE.Group
+let tdfOtherRiders = {};
 let tdfTrees = [], tdfKmMarkers = [];
-let tdfDisplayDistance = 0;   // distance lissée (unités 3D) pour une animation fluide
+let tdfDisplayDistance = 0;
 
 function computeTdfJerseys() {
   const ranking = getRanking();
@@ -1702,7 +1701,6 @@ function listenTdf() {
   );
 }
 
-// ── UI : HUD, classement du jour ──
 function renderTdfHud() {
   tdfJerseyAssignments = computeTdfJerseys();
   const tag = document.getElementById("tdf-jersey-tag");
@@ -1738,7 +1736,6 @@ function renderTdfRankList() {
   });
 }
 
-// ── bouton de reset (réservé à Clément) ──
 function renderTdfResetBtn() {
   const btn = document.getElementById("tdf-reset-btn");
   if (!btn) return;
@@ -1774,15 +1771,9 @@ async function resetTdfAll() {
   renderTdfCredits();
 }
 
-// ── système de clics limités (200 clics par jour) ──
-// Chaque coureur dispose d'une réserve de 200 clics par jour. Cette réserve est
-// remise à zéro (donc repart à 200) automatiquement au moment de la mise à jour
-// de midi, puisqu'elle est stockée dans un document daté "tdf_credits_"+TODAY,
-// exactement comme les mètres du jour ("tdf_"+TODAY) : dès que TODAY change,
-// c'est un tout nouveau document, vide, donc une réserve neuve.
 const TDF_CLICKS_PER_DAY = 200;
 
-let tdfCredits = {}; // { idx: clicsRestantsAujourdhui } — synchronisé via Firestore
+let tdfCredits = {};
 
 function listenTdfCredits() {
   db.collection(COLLECTION).doc("tdf_credits_"+TODAY).onSnapshot(
@@ -1794,7 +1785,6 @@ function listenTdfCredits() {
   );
 }
 
-// Nombre de clics restants aujourd'hui pour un coureur (200 par défaut s'il n'a pas encore pédalé).
 function getAvailableTdfCredits(idx) {
   const rec = tdfCredits[idx];
   return rec!==undefined ? rec : TDF_CLICKS_PER_DAY;
@@ -1823,7 +1813,6 @@ function renderTdfCredits() {
   bar.style.width = Math.min(100, (available/TDF_CLICKS_PER_DAY)*100) + "%";
 }
 
-// ── pédaler ──
 async function pedalTdf() {
   if (tdfMyIdx===null || tdfMyIdx===undefined) {
     const hint = document.getElementById("tdf-hint");
@@ -1831,16 +1820,14 @@ async function pedalTdf() {
     return;
   }
 
-  // Vérif rapide côté client pour un retour immédiat (purement indicatif : la
-  // vraie limite est appliquée ci-dessous, de façon atomique, côté serveur).
   if (getAvailableTdfCredits(tdfMyIdx) < 1) {
     renderTdfCredits();
     return;
   }
 
-  let gain = Math.round(14 + Math.random()*22); // 14–36 m par coup de pédale
+  let gain = Math.round(14 + Math.random()*22);
   let breakaway = false;
-  if (Math.random() < 1/40) { gain = Math.round(90 + Math.random()*60); breakaway = true; } // échappée rare
+  if (Math.random() < 1/40) { gain = Math.round(90 + Math.random()*60); breakaway = true; }
 
   const idx = tdfMyIdx;
   const creditsRef = db.collection(COLLECTION).doc("tdf_credits_"+TODAY);
@@ -1848,10 +1835,6 @@ async function pedalTdf() {
 
   let newCredits;
   try {
-    // Transaction atomique : lit le compteur réel du joueur (partagé par tous
-    // ses appareils), refuse si 0 restant, sinon décrémente et ajoute les mètres
-    // en une seule opération indivisible. Ça évite qu'un même joueur connecté
-    // sur plusieurs téléphones à la fois ne dépasse les 200 clics du jour.
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(creditsRef);
       const data = snap.exists ? snap.data() : {};
@@ -1863,7 +1846,7 @@ async function pedalTdf() {
     });
   } catch(e) {
     if (e.message === "TDF_NO_CREDITS") {
-      renderTdfCredits(); // le serveur dit qu'il n'y a plus rien : on rafraîchit l'affichage
+      renderTdfCredits();
     } else {
       console.error("Erreur d'enregistrement Tour de France", e);
     }
@@ -1900,7 +1883,6 @@ function showTdfToast(text) {
   }, 1800);
 }
 
-// ── textures et modèle 3D du coureur ──
 function tdfJerseyTexture(jersey, letter, fallbackColor) {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
@@ -1963,7 +1945,7 @@ function buildTdfRider(idx) {
     new THREE.MeshStandardMaterial({ map: tex })
   );
   torso.position.set(0,.95,.05);
-  torso.rotation.x = 1.05; // penché vers l'avant, position aéro
+  torso.rotation.x = 1.05;
   torso.castShadow = true;
   group.add(torso);
 
@@ -2011,7 +1993,6 @@ function buildKmMarker() {
 }
 
 function wrapZ(base, distance, span) {
-  // recycle un élément de décor pour donner l'illusion d'une route infinie
   const effective = ((base - distance) % span + span) % span;
   return 12 - effective;
 }
@@ -2120,7 +2101,7 @@ function animateTdf() {
     const idx = parseInt(idxStr);
     const g = tdfOtherRiders[idx];
     const otherDist = (tdfMeters[idx]||0) * TDF_SCALE;
-    const diff = otherDist - tdfDisplayDistance; // > 0 : ce coureur est devant moi
+    const diff = otherDist - tdfDisplayDistance;
     g.position.z = -diff;
     g.position.x = ((idx % 4) - 1.5) * 0.9;
     g.visible = Math.abs(diff) < 60;
@@ -2152,12 +2133,13 @@ function renderPanel5() {
   renderTdfResetBtn();
 }
 
-// ─── panel 6 : Board Game (session d'attente) ────────────────
+// ─── panel 6 : Board Game (session d'attente + choix du jeu + Flip Seven) ──
 // Une session est un simple document Firestore ("boardgame_session") contenant
-// qui est l'hôte et la liste des joueurs présents. Premier arrivé = crée la
-// session ; les suivants qui ouvrent l'onglet voient "Rejoindre Session" et
-// atterrissent, une fois rejoints, sur la même salle d'attente en temps réel.
-let bgSession = null; // { active, hostIdx, players: {idx:name} }
+// qui est l'hôte, la liste des joueurs présents, si les joueurs sont verrouillés
+// ("locked") et le jeu choisi ("selectedGame"). Une fois verrouillée, l'hôte
+// passe à un écran de choix du jeu ; pour l'instant, seul "Flip Seven" est
+// disponible. Le jeu lui-même vit dans son propre document ("flip7_game").
+let bgSession = null;
 
 function listenBoardGame() {
   db.collection(COLLECTION).doc("boardgame_session").onSnapshot(
@@ -2182,7 +2164,9 @@ async function startBoardGameSession() {
     await db.collection(COLLECTION).doc("boardgame_session").set({
       active: true,
       hostIdx: myPlayerIdx,
-      players: { [myPlayerIdx]: names[myPlayerIdx] }
+      players: { [myPlayerIdx]: names[myPlayerIdx] },
+      locked: false,
+      selectedGame: null
     });
   } catch(e) {
     console.error("Erreur de création de session", e);
@@ -2213,8 +2197,8 @@ async function leaveBoardGameSession() {
   const stillHasPlayers = Object.keys(remaining).length > 0;
   try {
     if (!stillHasPlayers || myPlayerIdx===bgSession.hostIdx) {
-      // plus personne, ou l'hôte quitte : on referme la session pour tout le monde
-      await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{} });
+      await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
+      await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
     } else {
       await db.collection(COLLECTION).doc("boardgame_session").set({ players: remaining });
     }
@@ -2228,7 +2212,8 @@ async function leaveBoardGameSession() {
 async function cancelBoardGameSession() {
   if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
   try {
-    await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{} });
+    await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
+    await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
   } catch(e) {
     console.error("Erreur d'annulation de session", e);
     alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
@@ -2236,6 +2221,338 @@ async function cancelBoardGameSession() {
   renderPanel6();
 }
 
+// ── verrouiller / déverrouiller la liste des joueurs ──
+async function lockBoardGamePlayers() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  const count = Object.keys(bgSession.players||{}).length;
+  if (count < 2) { alert("Il faut au moins 2 joueurs pour verrouiller."); return; }
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({ locked:true, selectedGame:null }, { merge:true });
+  } catch(e) {
+    console.error("Erreur de verrouillage", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+async function unlockBoardGamePlayers() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({ locked:false, selectedGame:null }, { merge:true });
+    await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur de déverrouillage", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// Flip Seven — moteur de jeu (état partagé via Firestore)
+// ══════════════════════════════════════════════════════════
+let flip7State = null;
+const FLIP7_TARGET_SCORE = 200;
+
+function listenFlip7() {
+  db.collection(COLLECTION).doc("flip7_game").onSnapshot(
+    (doc) => {
+      flip7State = doc.exists ? doc.data() : null;
+      if (currentTab===5 && dataReady) renderPanel6();
+    },
+    (err) => console.error("Erreur Flip Seven (listen)", err)
+  );
+}
+
+function shuffleFlip7(arr) {
+  const a = [...arr];
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function buildFlip7Deck() {
+  const deck = [];
+  const numberCounts = {0:1,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,11:11,12:12};
+  Object.keys(numberCounts).forEach(nStr=>{
+    const n = parseInt(nStr);
+    for (let i=0;i<numberCounts[nStr];i++) deck.push({ type:"number", value:n });
+  });
+  [2,4,6,8,10].forEach(v=>deck.push({ type:"bonus", value:v }));
+  deck.push({ type:"x2" });
+  for (let i=0;i<3;i++){
+    deck.push({ type:"freeze" });
+    deck.push({ type:"flip3" });
+    deck.push({ type:"second_chance" });
+  }
+  return deck;
+}
+function emptyFlip7Hand() {
+  return { numbers:[], bonusCards:[], hasX2:false, secondChance:false, busted:false, stayed:false, frozen:false, seven:false, bankedScore:null };
+}
+function flip7ComputeScore(hand) {
+  const numsSum = hand.numbers.reduce((a,b)=>a+b,0) * (hand.hasX2?2:1);
+  const bonusSum = hand.bonusCards.reduce((a,b)=>a+b,0);
+  const sevenBonus = hand.numbers.length>=7 ? 15 : 0;
+  return numsSum + bonusSum + sevenBonus;
+}
+
+// ── lancement d'une partie (hôte) ──
+async function selectBoardGame(gameKey) {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  if (gameKey==="flip7") {
+    const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
+    if (order.length<2) { alert("Il faut au moins 2 joueurs pour lancer Flip Seven."); return; }
+    const hands = {}; order.forEach(idx=>{ hands[idx] = emptyFlip7Hand(); });
+    const totals = {}; order.forEach(idx=>{ totals[idx] = 0; });
+    const state = {
+      status: "playing",
+      order, totals, hands,
+      deck: shuffleFlip7(buildFlip7Deck()),
+      discard: [],
+      round: 1,
+      turnIndex: 0,
+      pendingTarget: null,
+      forcedPlayer: null,
+      forcedRemaining: 0,
+      forcedResumeIndex: null,
+      targetScore: FLIP7_TARGET_SCORE,
+      log: ["🎉 La partie de Flip Seven commence !"],
+      winner: null,
+      lastRoundResults: null,
+      roundEndedBySeven: false
+    };
+    try {
+      await db.collection(COLLECTION).doc("flip7_game").set(state);
+      await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"flip7" }, { merge:true });
+    } catch(e) {
+      console.error("Erreur de lancement Flip Seven", e);
+      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    }
+  }
+}
+
+// ── moteur de tour ──
+function advanceFlip7Turn(state) {
+  const n = state.order.length;
+  for (let step=1; step<=n; step++){
+    const cand = (state.turnIndex + step) % n;
+    const pIdx = state.order[cand];
+    const hand = state.hands[pIdx];
+    if (!hand.busted && !hand.stayed) { state.turnIndex = cand; return true; }
+  }
+  return false;
+}
+function finalizeFlip7Round(state) {
+  const results = {};
+  state.order.forEach(idx=>{
+    const hand = state.hands[idx];
+    const score = hand.busted ? 0 : (hand.bankedScore!==null && hand.bankedScore!==undefined ? hand.bankedScore : flip7ComputeScore(hand));
+    results[idx] = score;
+    state.totals[idx] = (state.totals[idx]||0) + score;
+  });
+  state.lastRoundResults = results;
+  state.roundEndedBySeven = false;
+  const winnerIdx = state.order.reduce((best,idx)=> (state.totals[idx]>state.totals[best]?idx:best), state.order[0]);
+  if (state.totals[winnerIdx] >= state.targetScore) {
+    state.status = "game_over";
+    state.winner = winnerIdx;
+  } else {
+    state.status = "round_summary";
+  }
+  state.pendingTarget = null; state.forcedPlayer = null; state.forcedRemaining = 0; state.forcedResumeIndex = null;
+}
+function finalizeFlip7IfRoundOver(state) {
+  if (state.roundEndedBySeven) { finalizeFlip7Round(state); return true; }
+  const anyActive = state.order.some(idx=>{ const h=state.hands[idx]; return !h.busted && !h.stayed; });
+  if (!anyActive) { finalizeFlip7Round(state); return true; }
+  return false;
+}
+function processFlip7TurnAfterCard(state, playerIdx, wasForced) {
+  if (state.pendingTarget) return;
+  if (wasForced) {
+    state.forcedRemaining -= 1;
+    const hand = state.hands[state.forcedPlayer];
+    if (state.forcedRemaining <= 0 || hand.busted || hand.stayed) {
+      const resumeIdx = state.forcedResumeIndex;
+      state.forcedPlayer = null;
+      state.forcedRemaining = 0;
+      state.forcedResumeIndex = null;
+      if (finalizeFlip7IfRoundOver(state)) return;
+      state.turnIndex = resumeIdx;
+      if (!advanceFlip7Turn(state)) finalizeFlip7Round(state);
+    }
+  } else {
+    if (finalizeFlip7IfRoundOver(state)) return;
+    if (!advanceFlip7Turn(state)) finalizeFlip7Round(state);
+  }
+}
+function applyFlip7Card(state, playerIdx, card, isForced, log) {
+  const hand = state.hands[playerIdx];
+  const name = names[playerIdx] || "?";
+  if (card.type==="number") {
+    if (hand.numbers.includes(card.value)) {
+      if (hand.secondChance) {
+        hand.secondChance = false;
+        log.push(`🔁 ${name} évite un doublon (${card.value}) grâce à Seconde Chance.`);
+      } else {
+        hand.busted = true;
+        log.push(`💥 ${name} fait un doublon (${card.value}) et perd tous ses points de la manche.`);
+      }
+    } else {
+      hand.numbers.push(card.value);
+      log.push(`${name} retourne un ${card.value}.`);
+      if (hand.numbers.length>=7) {
+        hand.stayed = true; hand.seven = true;
+        hand.bankedScore = flip7ComputeScore(hand);
+        log.push(`🌟 ${name} obtient 7 numéros différents ! +15 pts, fin de manche.`);
+        state.roundEndedBySeven = true;
+      }
+    }
+  } else if (card.type==="bonus") {
+    hand.bonusCards.push(card.value);
+    log.push(`${name} pioche un bonus +${card.value}.`);
+  } else if (card.type==="x2") {
+    hand.hasX2 = true;
+    log.push(`${name} pioche un multiplicateur ×2 !`);
+  } else if (card.type==="second_chance") {
+    if (!hand.secondChance) { hand.secondChance = true; log.push(`🔁 ${name} obtient une Seconde Chance.`); }
+    else log.push(`${name} avait déjà une Seconde Chance, la carte est défaussée.`);
+  } else if (card.type==="freeze") {
+    if (isForced) {
+      hand.stayed = true; hand.frozen = true;
+      hand.bankedScore = flip7ComputeScore(hand);
+      log.push(`❄️ ${name} se gèle lui-même (tirage forcé).`);
+    } else {
+      state.pendingTarget = { action:"freeze", chooser: playerIdx };
+      log.push(`${name} pioche Freeze — doit choisir une cible.`);
+    }
+  } else if (card.type==="flip3") {
+    if (isForced) {
+      state.forcedRemaining += 3;
+      log.push(`🎯 ${name} s'inflige un Flip Three supplémentaire (tirage forcé).`);
+    } else {
+      state.pendingTarget = { action:"flip3", chooser: playerIdx };
+      log.push(`${name} pioche Flip Three — doit choisir une cible.`);
+    }
+  }
+}
+
+async function flip7Draw(playerIdx) {
+  const ref = db.collection(COLLECTION).doc("flip7_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status !== "playing") throw new Error("NOT_PLAYING");
+      const isForced = state.forcedPlayer!==null && state.forcedPlayer!==undefined;
+      const actingIdx = isForced ? state.forcedPlayer : state.order[state.turnIndex];
+      if (actingIdx !== playerIdx) throw new Error("NOT_YOUR_TURN");
+      if (state.pendingTarget) throw new Error("PENDING_TARGET");
+      const hand = state.hands[playerIdx];
+      if (hand.busted || hand.stayed) throw new Error("INACTIVE");
+
+      let deck = state.deck.slice();
+      let discard = state.discard.slice();
+      if (deck.length===0) { deck = shuffleFlip7(discard); discard = []; }
+      const card = deck.pop();
+      discard.push(card);
+
+      const log = (state.log||[]).slice(-11);
+      applyFlip7Card(state, playerIdx, card, isForced, log);
+      state.deck = deck; state.discard = discard; state.log = log;
+
+      processFlip7TurnAfterCard(state, playerIdx, isForced);
+
+      tx.set(ref, state);
+    });
+  } catch(e) {
+    if (e.message!=="NOT_YOUR_TURN" && e.message!=="PENDING_TARGET") console.error("Erreur Flip Seven (draw)", e);
+  }
+}
+
+async function flip7ChooseTarget(chooserIdx, targetIdx) {
+  const ref = db.collection(COLLECTION).doc("flip7_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (!state.pendingTarget || state.pendingTarget.chooser!==chooserIdx) throw new Error("NO_PENDING");
+      const action = state.pendingTarget.action;
+      const log = (state.log||[]).slice(-11);
+      const targetHand = state.hands[targetIdx];
+      if (!targetHand || targetHand.busted || targetHand.stayed) throw new Error("INVALID_TARGET");
+
+      if (action==="freeze") {
+        targetHand.stayed = true; targetHand.frozen = true;
+        targetHand.bankedScore = flip7ComputeScore(targetHand);
+        log.push(`❄️ ${names[chooserIdx]} gèle ${names[targetIdx]} (${targetHand.bankedScore} pts conservés).`);
+        state.pendingTarget = null;
+        state.log = log;
+        if (!finalizeFlip7IfRoundOver(state)) {
+          if (!advanceFlip7Turn(state)) finalizeFlip7Round(state);
+        }
+      } else if (action==="flip3") {
+        log.push(`🎯 ${names[chooserIdx]} force ${names[targetIdx]} à retourner 3 cartes.`);
+        state.pendingTarget = null;
+        state.forcedPlayer = targetIdx;
+        state.forcedRemaining = 3;
+        state.forcedResumeIndex = state.turnIndex;
+        state.log = log;
+      }
+      tx.set(ref, state);
+    });
+  } catch(e) { console.error("Erreur Flip Seven (cible)", e); }
+}
+
+async function flip7Stay(playerIdx) {
+  const ref = db.collection(COLLECTION).doc("flip7_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status!=="playing") throw new Error("NOT_PLAYING");
+      if (state.forcedPlayer || state.pendingTarget) throw new Error("BUSY");
+      if (state.order[state.turnIndex]!==playerIdx) throw new Error("NOT_YOUR_TURN");
+      const hand = state.hands[playerIdx];
+      if (hand.busted||hand.stayed) throw new Error("INACTIVE");
+      hand.stayed = true;
+      hand.bankedScore = flip7ComputeScore(hand);
+      const log = (state.log||[]).slice(-11);
+      log.push(`✋ ${names[playerIdx]} s'arrête avec ${hand.bankedScore} pts.`);
+      state.log = log;
+      if (!finalizeFlip7IfRoundOver(state)) {
+        if (!advanceFlip7Turn(state)) finalizeFlip7Round(state);
+      }
+      tx.set(ref, state);
+    });
+  } catch(e) { console.error("Erreur Flip Seven (rester)", e); }
+}
+
+async function flip7StartNewRound() {
+  const ref = db.collection(COLLECTION).doc("flip7_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status!=="round_summary") throw new Error("NOT_SUMMARY");
+      state.round += 1;
+      state.deck = shuffleFlip7(buildFlip7Deck());
+      state.discard = [];
+      state.hands = {};
+      state.order.forEach(idx=>{ state.hands[idx] = emptyFlip7Hand(); });
+      state.turnIndex = (state.round-1) % state.order.length;
+      state.status = "playing";
+      state.pendingTarget = null; state.forcedPlayer = null; state.forcedRemaining = 0; state.forcedResumeIndex = null;
+      state.lastRoundResults = null;
+      state.log = (state.log||[]).slice(-11).concat([`— Manche ${state.round} —`]);
+      tx.set(ref, state);
+    });
+  } catch(e) { console.error("Erreur Flip Seven (nouvelle manche)", e); }
+}
+
+// ── rendu ──
 function renderPanel6() {
   const wrap = document.getElementById("bg-wrap");
   if (!wrap) return;
@@ -2250,35 +2567,165 @@ function renderPanel6() {
     return;
   }
 
-  if (bgIsInSession()) {
+  if (!bgIsInSession()) {
+    const count = Object.keys(bgSession.players||{}).length;
+    wrap.innerHTML = `
+      <div id="bg-icon">🎲</div>
+      <div id="bg-subtitle">Une session est en cours (${count} joueur${count>1?'s':''}). Rejoins-la !</div>
+      <button id="bg-join-btn" onclick="joinBoardGameSession()">🙋 Rejoindre Session</button>`;
+    return;
+  }
+
+  const isHost = myPlayerIdx===bgSession.hostIdx;
+
+  if (!bgSession.locked) {
     const players = bgSession.players || {};
     const count = Object.keys(players).length;
     const rows = Object.keys(players).map(idxStr=>{
       const idx = parseInt(idxStr);
-      const isHost = idx===bgSession.hostIdx;
+      const isPHost = idx===bgSession.hostIdx;
       return `
         <div class="bg-player-row">
           <div class="avatar" style="background:${playerColor(idx)}">${(players[idxStr]||"?")[0]?.toUpperCase()}</div>
           <span class="bg-player-name">${players[idxStr]}${idx===myPlayerIdx?' (toi)':''}</span>
-          ${isHost?'<span class="bg-host-badge">Hôte</span>':''}
+          ${isPHost?'<span class="bg-host-badge">Hôte</span>':''}
         </div>`;
     }).join("");
-    const isHost = myPlayerIdx===bgSession.hostIdx;
     wrap.innerHTML = `
       <div id="bg-waiting-title"><span class="bg-spinner"></span>En attente des joueurs…</div>
       <div id="bg-waiting-sub">${count} joueur${count>1?'s':''} présent${count>1?'s':''}</div>
       <div class="bg-player-list">${rows}</div>
+      ${isHost && count>=2 ? '<button id="bg-lock-btn" onclick="lockBoardGamePlayers()">🔒 Verrouiller joueurs</button>' : ''}
       <button id="bg-leave-btn" onclick="leaveBoardGameSession()">Quitter la session</button>
       ${isHost?'<button id="bg-cancel-btn" onclick="cancelBoardGameSession()">Annuler la session</button>':''}`;
     return;
   }
 
-  // session active, mais je n'y suis pas encore
-  const count = Object.keys(bgSession.players||{}).length;
+  if (!bgSession.selectedGame) {
+    wrap.innerHTML = `
+      <div id="bg-icon">🎲</div>
+      <div id="bg-waiting-title">Choix du Board Game</div>
+      <div id="bg-waiting-sub">${isHost? "Choisis le jeu auquel vous allez jouer." : "En attente que l'hôte choisisse un jeu…"}</div>
+      <div class="game-select-grid">
+        <button class="game-option" ${isHost?`onclick="selectBoardGame('flip7')"`:'disabled'}>
+          <span class="game-option-emoji">🃏</span>
+          <span class="game-option-name">Flip Seven</span>
+          <span class="game-option-desc">Retourne des cartes, évite les doublons !</span>
+        </button>
+        <button class="game-option game-option-soon" disabled>
+          <span class="game-option-emoji">🔒</span>
+          <span class="game-option-name">Bientôt disponible</span>
+          <span class="game-option-desc">D'autres jeux arriveront plus tard</span>
+        </button>
+      </div>
+      ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Retour au salon</button>':''}`;
+    return;
+  }
+
+  if (bgSession.selectedGame==="flip7") {
+    renderFlip7(wrap, isHost);
+  }
+}
+
+function renderFlip7(wrap, isHost) {
+  const st = flip7State;
+  if (!st || st.status==="idle") {
+    wrap.innerHTML = `<div id="bg-icon">🃏</div><div id="bg-waiting-sub">⏳ Préparation de la partie…</div>`;
+    return;
+  }
+
+  const me = myPlayerIdx;
+  let actionHtml = "";
+
+  if (st.status === "playing") {
+    if (st.pendingTarget) {
+      if (st.pendingTarget.chooser === me) {
+        const label = st.pendingTarget.action==="freeze" ? "❄️ Choisis qui geler" : "🎯 Choisis qui doit retourner 3 cartes";
+        const targets = st.order.filter(idx => !st.hands[idx].busted && !st.hands[idx].stayed);
+        actionHtml = `<p class="flip7-prompt">${label}</p><div class="flip7-target-grid">
+          ${targets.map(idx=>`<button class="flip7-target-btn" style="background:${playerColor(idx)}" onclick="flip7ChooseTarget(${me},${idx})">${names[idx]}${idx===me?' (toi)':''}</button>`).join("")}
+        </div>`;
+      } else {
+        actionHtml = `<p class="flip7-waiting">⏳ ${names[st.pendingTarget.chooser]} choisit une cible…</p>`;
+      }
+    } else if (st.forcedPlayer!==null && st.forcedPlayer!==undefined) {
+      if (st.forcedPlayer===me) {
+        actionHtml = `<p class="flip7-prompt">🎯 Tirage forcé ! Encore ${st.forcedRemaining} carte${st.forcedRemaining>1?'s':''}.</p>
+          <button class="flip7-draw-btn" style="width:100%" onclick="flip7Draw(${me})">🎴 Retourner une carte</button>`;
+      } else {
+        actionHtml = `<p class="flip7-waiting">⏳ ${names[st.forcedPlayer]} effectue un tirage forcé…</p>`;
+      }
+    } else {
+      const current = st.order[st.turnIndex];
+      if (current===me) {
+        const hand = st.hands[me];
+        const currentScore = flip7ComputeScore(hand);
+        actionHtml = `<p class="flip7-prompt">🎲 À toi de jouer ! (${currentScore} pts si tu t'arrêtes)</p>
+          <div class="flip7-actions">
+            <button class="flip7-draw-btn" onclick="flip7Draw(${me})">🎴 Retourner une carte</button>
+            <button class="flip7-stay-btn" onclick="flip7Stay(${me})">✋ Rester</button>
+          </div>`;
+      } else if (current!==undefined) {
+        actionHtml = `<p class="flip7-waiting">⏳ Au tour de ${names[current]}…</p>`;
+      }
+    }
+  }
+
+  const playersHtml = st.order.map(idx=>{
+    const hand = st.hands[idx];
+    const score = hand.busted?0:flip7ComputeScore(hand);
+    let statusBadge = "";
+    if (hand.busted) statusBadge = `<span class="flip7-badge flip7-badge-bust">💥 Brûlé</span>`;
+    else if (hand.frozen) statusBadge = `<span class="flip7-badge flip7-badge-frozen">❄️ Gelé</span>`;
+    else if (hand.stayed) statusBadge = `<span class="flip7-badge flip7-badge-stayed">✋ Resté</span>`;
+    else if (st.status==="playing" && !st.forcedPlayer && !st.pendingTarget && st.order[st.turnIndex]===idx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🎲 En jeu</span>`;
+    const chips = [
+      ...hand.numbers.map(n=>`<span class="flip7-chip flip7-chip-num">${n}</span>`),
+      ...hand.bonusCards.map(b=>`<span class="flip7-chip flip7-chip-bonus">+${b}</span>`),
+      hand.hasX2?`<span class="flip7-chip flip7-chip-x2">×2</span>`:"",
+      hand.secondChance?`<span class="flip7-chip flip7-chip-sc">🔁</span>`:""
+    ].join("");
+    return `<div class="flip7-player-card${idx===me?' is-me':''}">
+      <div class="flip7-player-head">
+        <div class="avatar" style="background:${playerColor(idx)}">${(names[idx]||"?")[0]?.toUpperCase()}</div>
+        <span class="flip7-player-name">${names[idx]}${idx===me?' (toi)':''}</span>
+        ${statusBadge}
+      </div>
+      <div class="flip7-chips">${chips || '<span class="flip7-chip-empty">—</span>'}</div>
+      <div class="flip7-score">${score} pts <span class="flip7-total">(total ${st.totals[idx]||0})</span></div>
+    </div>`;
+  }).join("");
+
+  let summaryHtml = "";
+  if (st.status==="round_summary" && st.lastRoundResults) {
+    summaryHtml = `<div class="flip7-summary">
+      <h4>📋 Résultats de la manche ${st.round}</h4>
+      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${st.lastRoundResults[idx]} pts</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
+      ${isHost?'<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>':'<p class="flip7-waiting">⏳ En attente que l\\'hôte lance la manche suivante…</p>'}
+    </div>`;
+  }
+  if (st.status==="game_over") {
+    summaryHtml = `<div class="flip7-summary flip7-gameover">
+      <h4>🏆 Partie terminée !</h4>
+      <p class="flip7-winner">${names[st.winner]} remporte la partie avec ${st.totals[st.winner]} points !</p>
+      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
+      ${isHost?'<button class="flip7-next-btn" onclick="selectBoardGame(\'flip7\')">🔄 Nouvelle partie</button>':''}
+    </div>`;
+  }
+
+  const logHtml = (st.log||[]).slice(-6).map(l=>`<div class="flip7-log-row">${l}</div>`).join("");
+
   wrap.innerHTML = `
-    <div id="bg-icon">🎲</div>
-    <div id="bg-subtitle">Une session est en cours (${count} joueur${count>1?'s':''}). Rejoins-la !</div>
-    <button id="bg-join-btn" onclick="joinBoardGameSession()">🙋 Rejoindre Session</button>`;
+    <div class="flip7-header">
+      <span>🃏 Flip Seven — Manche ${st.round}</span>
+      <span class="flip7-target">Objectif : ${st.targetScore} pts</span>
+    </div>
+    ${actionHtml}
+    <div class="flip7-players-grid">${playersHtml}</div>
+    ${summaryHtml}
+    <div class="flip7-log">${logHtml}</div>
+    ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Quitter la partie</button>':''}
+  `;
 }
 
 // ─── tabs ─────────────────────────────────────────────────
@@ -2299,8 +2746,6 @@ function switchTab(i) {
 document.getElementById("date-display").textContent =
   now.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
-// Démarre (ou redémarre) tous les écouteurs Firestore propres à la ligue
-// active — appelé une fois la ligue connue (COLLECTION déjà fixé).
 function startLeagueData() {
   loadMyIdentity();
   listenState();
@@ -2308,16 +2753,17 @@ function startLeagueData() {
   listenTdf();
   listenTdfCredits();
   listenBoardGame();
+  listenFlip7();
 }
 
-listenLeaguesRegistry(); // indépendant de la ligue, toujours actif
+listenLeaguesRegistry();
 loadMyLeague();
 if (myLeagueId!==null) {
   COLLECTION = collectionForLeague(myLeagueId);
   renderLeagueTag();
   startLeagueData();
 } else {
-  openLeagueOverlay(false); // première visite sur cet appareil : on choisit d'abord la ligue
+  openLeagueOverlay(false);
 }
 </script>
 </body>
