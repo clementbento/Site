@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🧠 Qui qui est le moins con ?</title>
+<title>🧠 Qui qui est le plus con ?</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
@@ -24,6 +24,20 @@
   #conn-status.off{background:#dc262633;color:#fecaca}
   #whoami-tag{font-size:.65rem;font-weight:700;margin-top:4px;margin-left:6px;display:none;padding:2px 8px;border-radius:10px;background:#ffffff26;color:#e0e7ff;cursor:pointer}
   #whoami-tag:active{opacity:.7}
+  #league-tag{font-size:.65rem;font-weight:700;margin-top:4px;margin-left:6px;display:none;padding:2px 8px;border-radius:10px;background:#ffffff26;color:#e0e7ff;cursor:pointer}
+  #league-tag:active{opacity:.7}
+
+  /* ── league overlay ── */
+  #league-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#4f46e5ee,#7c3aedee);backdrop-filter:blur(6px);z-index:101;display:none;align-items:center;justify-content:center;padding:20px}
+  #league-card{position:relative;background:white;border-radius:24px;padding:28px 22px 22px;max-width:380px;width:100%;box-shadow:0 20px 60px #00000040;text-align:center}
+  #league-card h2{font-size:1.15rem;font-weight:900;color:#1e293b;margin-bottom:6px}
+  #league-card p{font-size:.78rem;color:#64748b;margin-bottom:18px}
+  #league-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #league-close{display:none;position:absolute;top:12px;right:14px;border:none;background:#f1f5f9;color:#64748b;width:28px;height:28px;border-radius:50%;font-size:.85rem;font-weight:900;cursor:pointer}
+  #league-newleague-form{display:none;flex-direction:column;gap:10px;text-align:left}
+  #league-newleague-input{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;font-size:.9rem;font-weight:600;outline:none;transition:border-color .15s;text-align:center}
+  #league-newleague-input:focus{border-color:#6366f1}
+  #league-newleague-err{display:none;color:#dc2626;font-size:.72rem;font-weight:700;text-align:center;margin:0}
 
   /* ── login overlay ── */
   #login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#4f46e5ee,#7c3aedee);backdrop-filter:blur(6px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
@@ -195,7 +209,26 @@
   <h1>🧠 Qui qui est le moins con ?</h1>
   <p id="date-display"></p>
   <span id="conn-status" class="off">⏳ Connexion…</span>
+  <span id="league-tag" onclick="openLeagueOverlay(true)"></span>
   <span id="whoami-tag" onclick="openLoginOverlay(true)"></span>
+</div>
+
+<div id="league-overlay">
+  <div id="league-card">
+    <button id="league-close" onclick="closeLeagueOverlay()">✕</button>
+    <h2>🏆 Ta ligue</h2>
+    <p>Rejoins la ligue de ton bureau, ou crée-en une nouvelle.</p>
+    <div id="league-grid"></div>
+    <div id="league-newleague-form">
+      <input id="league-newleague-input" type="text" placeholder="Nom de la nouvelle ligue" maxlength="30"
+        onkeydown="if(event.key==='Enter')submitNewLeague()"/>
+      <p id="league-newleague-err"></p>
+      <div class="login-newplayer-actions">
+        <button class="login-newplayer-cancel" onclick="hideNewLeagueForm()">Annuler</button>
+        <button id="league-newleague-submit" class="login-newplayer-submit" onclick="submitNewLeague()">Créer</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="login-overlay">
@@ -326,7 +359,38 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const COLLECTION = "quizBureau";
+// Le nom de la collection Firestore dépend de la ligue choisie sur cet appareil ;
+// il n'est fixé qu'une fois la ligue connue (voir applyLeague ci-dessous).
+let COLLECTION = null;
+
+// ─── ligues ────────────────────────────────────────────────
+// Chaque ligue a ses propres joueurs/scores/Tour de France, stockés dans une
+// collection Firestore séparée. La ligue "ICS" est celle qui existait déjà
+// avant ce système : elle pointe donc vers la collection historique "quizBureau"
+// (aucune migration de données nécessaire). Toute ligue créée ensuite obtient
+// sa propre collection "quizBureau_<slug>".
+const DEFAULT_LEAGUE_NAME = "ICS";
+const DEFAULT_LEAGUE_SLUG = "ics";
+const LEAGUES_REGISTRY_COLLECTION = "quizLeaguesRegistry";
+const LEAGUES_REGISTRY_DOC = "index";
+
+function slugifyLeague(name) {
+  return (name||"")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // enlève les accents
+    .trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g,"_")
+    .replace(/^_+|_+$/g,"")
+    .slice(0,60);
+}
+function collectionForLeague(slug) {
+  return slug===DEFAULT_LEAGUE_SLUG ? "quizBureau" : ("quizBureau_"+slug);
+}
+// Couleur stable dérivée du nom de la ligue (pour l'avatar dans le sélecteur).
+function leagueColor(slug) {
+  let h=0;
+  for (let i=0;i<slug.length;i++) h = (h*31 + slug.charCodeAt(i)) % 360;
+  return `hsl(${h}, 60%, 50%)`;
+}
 
 // ─── constants ───────────────────────────────────────────
 const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
@@ -425,6 +489,168 @@ let chartInst = null;
 let currentTab = 0;
 let dataReady = false;
 let stateReady = false, validatedReady = false;
+
+// ─── ligue (liée à l'appareil, comme l'identité) ────────────
+// La toute première visite sur un appareil demande "quelle est ta ligue" ; le
+// choix est ensuite mémorisé localement (localStorage), comme pour l'identité
+// du joueur. La ligue détermine quelle collection Firestore ("quizBureau" pour
+// ICS, "quizBureau_<slug>" pour les autres) est utilisée pour tout le reste.
+const LEAGUE_KEY = "quizMyLeagueId";
+let myLeagueId = null; // slug de la ligue choisie sur cet appareil
+// ICS existe toujours, même avant la première écriture du registre Firestore.
+let leaguesRegistry = { [DEFAULT_LEAGUE_SLUG]: DEFAULT_LEAGUE_NAME };
+
+function loadMyLeague() {
+  const stored = localStorage.getItem(LEAGUE_KEY);
+  if (stored) myLeagueId = stored;
+}
+
+// Écoute (légère, indépendante de la ligue active) le registre global des
+// ligues connues, pour peupler la liste dans le sélecteur.
+function listenLeaguesRegistry() {
+  db.collection(LEAGUES_REGISTRY_COLLECTION).doc(LEAGUES_REGISTRY_DOC).onSnapshot(
+    (doc) => {
+      const data = doc.exists ? doc.data() : {};
+      leaguesRegistry = { [DEFAULT_LEAGUE_SLUG]: DEFAULT_LEAGUE_NAME, ...data };
+      if (myLeagueId===null) renderLeagueGrid();
+      else renderLeagueTag();
+    },
+    (err) => console.error("Erreur registre des ligues", err)
+  );
+}
+
+function renderLeagueGrid() {
+  const grid = document.getElementById("league-grid");
+  if (!grid) return;
+  const entries = Object.entries(leaguesRegistry).sort((a,b)=>a[1].localeCompare(b[1],"fr"));
+  grid.innerHTML = entries.map(([slug,name])=>`
+    <button class="login-opt" onclick="chooseLeague('${slug}')">
+      <span class="login-avatar" style="background:${leagueColor(slug)}">${name[0]?.toUpperCase()||"?"}</span>
+      ${name}
+    </button>`).join("") + `
+    <button class="login-opt login-opt-new" onclick="showNewLeagueForm()">
+      <span class="login-avatar login-avatar-new">+</span>
+      Nouvelle ligue
+    </button>`;
+}
+
+function openLeagueOverlay(isChange) {
+  hideNewLeagueForm();
+  renderLeagueGrid();
+  const overlay = document.getElementById("league-overlay");
+  const closeBtn = document.getElementById("league-close");
+  if (closeBtn) closeBtn.style.display = isChange ? "flex" : "none";
+  if (overlay) overlay.style.display = "flex";
+}
+function closeLeagueOverlay() {
+  if (myLeagueId===null) return; // pas de fermeture possible avant d'avoir choisi la première fois
+  const overlay = document.getElementById("league-overlay");
+  if (overlay) overlay.style.display = "none";
+}
+function renderLeagueTag() {
+  const tag = document.getElementById("league-tag");
+  if (!tag) return;
+  if (myLeagueId!==null) {
+    tag.style.display = "inline-block";
+    tag.textContent = `🏆 ${leaguesRegistry[myLeagueId] || myLeagueId} · changer`;
+  } else {
+    tag.style.display = "none";
+  }
+}
+
+function chooseLeague(slug) {
+  applyLeague(slug);
+}
+// Applique une ligue à cet appareil. Rejoindre pour la première fois démarre
+// directement les écouteurs Firestore ; changer de ligue en cours de route
+// recharge la page pour repartir sur une base propre (évite d'empiler deux
+// jeux d'écouteurs Firestore en parallèle).
+function applyLeague(slug) {
+  const isSwitch = myLeagueId!==null && myLeagueId!==slug;
+  myLeagueId = slug;
+  try { localStorage.setItem(LEAGUE_KEY, slug); } catch(e) { console.error("localStorage indisponible", e); }
+  if (isSwitch) { location.reload(); return; }
+  COLLECTION = collectionForLeague(slug);
+  closeLeagueOverlay();
+  renderLeagueTag();
+  startLeagueData();
+}
+
+// ── créer une nouvelle ligue ──
+function showNewLeagueForm() {
+  const grid = document.getElementById("league-grid");
+  const form = document.getElementById("league-newleague-form");
+  const err = document.getElementById("league-newleague-err");
+  if (grid) grid.style.display = "none";
+  if (form) form.style.display = "flex";
+  if (err) err.style.display = "none";
+  const input = document.getElementById("league-newleague-input");
+  if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
+}
+function hideNewLeagueForm() {
+  const grid = document.getElementById("league-grid");
+  const form = document.getElementById("league-newleague-form");
+  if (form) form.style.display = "none";
+  if (grid) grid.style.display = "grid";
+}
+
+// Crée la ligue de façon atomique (transaction Firestore) : relit le registre
+// réel au moment de l'écriture et refuse si le nom (une fois normalisé) existe
+// déjà, pour éviter les doublons même si deux personnes créent une ligue au
+// même moment sur deux appareils.
+async function createNewLeague(rawName) {
+  const trimmed = (rawName||"").trim();
+  if (!trimmed) return { ok:false, reason:"empty" };
+  const slug = slugifyLeague(trimmed);
+  if (!slug) return { ok:false, reason:"invalid" };
+  const regRef = db.collection(LEAGUES_REGISTRY_COLLECTION).doc(LEAGUES_REGISTRY_DOC);
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(regRef);
+      const data = snap.exists ? snap.data() : {};
+      if (slug===DEFAULT_LEAGUE_SLUG || data[slug]!==undefined) throw new Error("TDF_DUP_LEAGUE");
+      tx.set(regRef, { [slug]: trimmed }, { merge:true });
+    });
+  } catch(e) {
+    if (e.message==="TDF_DUP_LEAGUE") return { ok:false, reason:"duplicate" };
+    console.error("Erreur de création de la ligue", e);
+    return { ok:false, reason:"error" };
+  }
+  return { ok:true, slug, name:trimmed };
+}
+
+async function submitNewLeague() {
+  const input = document.getElementById("league-newleague-input");
+  const err = document.getElementById("league-newleague-err");
+  if (!input) return;
+  const trimmed = input.value.trim();
+  if (err) err.style.display = "none";
+  if (!trimmed) {
+    if (err) { err.textContent = "Entre un nom de ligue."; err.style.display = "block"; }
+    return;
+  }
+  const btn = document.getElementById("league-newleague-submit");
+  if (btn) { btn.disabled = true; btn.textContent = "Création…"; }
+
+  const result = await createNewLeague(trimmed);
+
+  if (btn) { btn.disabled = false; btn.textContent = "Créer"; }
+
+  if (!result.ok) {
+    if (result.reason==="duplicate") {
+      alert(`La ligue "${trimmed}" existe déjà. Sélectionne-la dans la liste pour la rejoindre.`);
+    } else if (result.reason==="empty" || result.reason==="invalid") {
+      if (err) { err.textContent = "Merci d'utiliser au moins une lettre ou un chiffre."; err.style.display = "block"; }
+    } else {
+      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    }
+    return;
+  }
+
+  leaguesRegistry[result.slug] = result.name; // mise à jour optimiste locale
+  hideNewLeagueForm();
+  applyLeague(result.slug);
+}
 
 // ─── connexion (identité liée à l'appareil) ────────────────
 // La première visite sur un appareil demande "qui es-tu" parmi les joueurs
@@ -1913,11 +2139,25 @@ function switchTab(i) {
 document.getElementById("date-display").textContent =
   now.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
-loadMyIdentity();
-listenState();
-listenValidated();
-listenTdf();
-listenTdfCredits();
+// Démarre (ou redémarre) tous les écouteurs Firestore propres à la ligue
+// active — appelé une fois la ligue connue (COLLECTION déjà fixé).
+function startLeagueData() {
+  loadMyIdentity();
+  listenState();
+  listenValidated();
+  listenTdf();
+  listenTdfCredits();
+}
+
+listenLeaguesRegistry(); // indépendant de la ligue, toujours actif
+loadMyLeague();
+if (myLeagueId!==null) {
+  COLLECTION = collectionForLeague(myLeagueId);
+  renderLeagueTag();
+  startLeagueData();
+} else {
+  openLeagueOverlay(false); // première visite sur cet appareil : on choisit d'abord la ligue
+}
 </script>
 </body>
 </html>
