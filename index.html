@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🧠 Qui qui est le moins con ?</title>
+<title>🧠 Qui qui est le plus con ?</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
@@ -36,6 +36,20 @@
   .login-opt:active{transform:scale(.95)}
   .login-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:1.05rem}
   #login-close{display:none;position:absolute;top:12px;right:14px;border:none;background:#f1f5f9;color:#64748b;width:28px;height:28px;border-radius:50%;font-size:.85rem;font-weight:900;cursor:pointer}
+
+  .login-opt-new{border-style:dashed;border-color:#c7d2fe;color:#6366f1}
+  .login-opt-new:hover{border-color:#6366f1;background:#eef2ff}
+  .login-avatar-new{background:#eef2ff;color:#6366f1;border:2px dashed #c7d2fe;font-size:1.3rem;font-weight:900}
+
+  #login-newplayer-form{display:none;flex-direction:column;gap:10px;text-align:left}
+  #login-newplayer-input{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;font-size:.9rem;font-weight:600;outline:none;transition:border-color .15s;text-align:center}
+  #login-newplayer-input:focus{border-color:#6366f1}
+  #login-newplayer-err{display:none;color:#dc2626;font-size:.72rem;font-weight:700;text-align:center;margin:0}
+  .login-newplayer-actions{display:flex;gap:8px}
+  .login-newplayer-cancel,.login-newplayer-submit{flex:1;border:none;border-radius:12px;padding:10px;font-size:.82rem;font-weight:800;cursor:pointer}
+  .login-newplayer-cancel{background:#f1f5f9;color:#64748b}
+  .login-newplayer-submit{background:linear-gradient(135deg,#6366f1,#4f46e5);color:white}
+  .login-newplayer-submit:disabled{opacity:.6;cursor:default}
 
   /* ── tabs ── */
   #tabs{display:flex;background:white;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px #0000000d;overflow-x:auto}
@@ -190,6 +204,15 @@
     <h2>👋 Qui es-tu ?</h2>
     <p>Choisis ton prénom, on s'en souviendra sur cet appareil.</p>
     <div id="login-grid"></div>
+    <div id="login-newplayer-form">
+      <input id="login-newplayer-input" type="text" placeholder="Ton prénom" maxlength="24"
+        onkeydown="if(event.key==='Enter')submitNewPlayer()"/>
+      <p id="login-newplayer-err"></p>
+      <div class="login-newplayer-actions">
+        <button class="login-newplayer-cancel" onclick="hideNewPlayerForm()">Annuler</button>
+        <button id="login-newplayer-submit" class="login-newplayer-submit" onclick="submitNewPlayer()">Créer</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -306,9 +329,16 @@ const db = firebase.firestore();
 const COLLECTION = "quizBureau";
 
 // ─── constants ───────────────────────────────────────────
-const N = 8;
 const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
-const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0ea5e9","#f97316"];
+let N = DEFAULT_NAMES.length; // nombre de joueurs — évolue si des joueurs sont ajoutés
+const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0ea5e9","#f97316","#14b8a6","#a855f7","#eab308","#f43f5e","#22c55e","#3b82f6","#d946ef","#84cc16"];
+// Couleur d'un joueur : puise dans la palette prédéfinie, puis génère une teinte
+// stable (angle doré) pour tout joueur ajouté au-delà de la palette de base.
+function playerColor(i) {
+  if (COLORS[i]) return COLORS[i];
+  const hue = Math.round((i * 137.508) % 360);
+  return `hsl(${hue}, 65%, 52%)`;
+}
 const MEDAL  = ["🥇","🥈","🥉"];
 const FR_DAYS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
@@ -383,6 +413,7 @@ function buildItemMesh(item) {
 
 // ─── state ───────────────────────────────────────────────
 let names    = [...DEFAULT_NAMES];
+N = names.length;
 let scores   = {};       // { "2026-07-01": { 0:5, 1:3, … } }
 let bonus    = {};       // { 0: 5, 3: 2, … } – flat bonus points per player
 let malus    = {};       // { 0: 3, … } – flat malus points per player
@@ -415,12 +446,17 @@ function renderLoginGrid() {
   if (!grid) return;
   grid.innerHTML = names.map((n,i)=>`
     <button class="login-opt" onclick="chooseIdentity(${i})">
-      <span class="login-avatar" style="background:${COLORS[i]}">${n[0]?.toUpperCase()||"?"}</span>
+      <span class="login-avatar" style="background:${playerColor(i)}">${n[0]?.toUpperCase()||"?"}</span>
       ${n}
-    </button>`).join("");
+    </button>`).join("") + `
+    <button class="login-opt login-opt-new" onclick="showNewPlayerForm()">
+      <span class="login-avatar login-avatar-new">+</span>
+      Nouveau joueur
+    </button>`;
 }
 
 function openLoginOverlay(isChange) {
+  hideNewPlayerForm();
   renderLoginGrid();
   const overlay = document.getElementById("login-overlay");
   const closeBtn = document.getElementById("login-close");
@@ -439,11 +475,16 @@ function closeLoginOverlay() {
   if (overlay) overlay.style.display = "none";
 }
 function chooseIdentity(i) {
+  applyIdentity(i);
+}
+// Applique une identité (existante ou tout juste créée) à cet appareil :
+// mémorise le choix, ferme la fenêtre de connexion et rafraîchit les panneaux
+// concernés (dont le coureur du Tour de France, toujours calqué sur l'identité).
+function applyIdentity(i) {
   myPlayerIdx = i;
   try { localStorage.setItem(LOGIN_KEY, String(i)); } catch(e) { console.error("localStorage indisponible", e); }
   closeLoginOverlay();
   renderWhoamiTag();
-  // le coureur du Tour de France est toujours le personnage connecté
   tdfMyIdx = i;
   tdfLastSign = {};
   if (dataReady && currentTab===4) {
@@ -451,8 +492,95 @@ function chooseIdentity(i) {
     renderTdfHud(); renderTdfRankList(); renderTdfCredits();
   }
   if (dataReady && currentTab===0) renderPanel1();
+  if (dataReady && currentTab===1) renderPanel2();
+  if (dataReady && currentTab===2) renderPanel3();
   if (dataReady && currentTab===4) renderTdfResetBtn();
 }
+
+// ── créer un nouveau joueur ──
+function showNewPlayerForm() {
+  const grid = document.getElementById("login-grid");
+  const form = document.getElementById("login-newplayer-form");
+  const err = document.getElementById("login-newplayer-err");
+  if (grid) grid.style.display = "none";
+  if (form) form.style.display = "flex";
+  if (err) err.style.display = "none";
+  const input = document.getElementById("login-newplayer-input");
+  if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
+}
+function hideNewPlayerForm() {
+  const grid = document.getElementById("login-grid");
+  const form = document.getElementById("login-newplayer-form");
+  if (form) form.style.display = "none";
+  if (grid) grid.style.display = "grid";
+}
+
+// Crée le joueur de façon atomique (transaction Firestore) : relit la liste
+// réelle des noms au moment de l'écriture et refuse si le prénom existe déjà
+// (comparaison insensible à la casse/espaces), pour éviter les doublons même
+// si deux personnes créent un compte au même moment sur deux appareils.
+async function createNewPlayer(rawName) {
+  const trimmed = (rawName||"").trim();
+  if (!trimmed) return { ok:false, reason:"empty" };
+  const stateRef = db.collection(COLLECTION).doc("state");
+  let newIdx = -1;
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(stateRef);
+      const data = snap.exists ? snap.data() : {};
+      const currentNames = (data.names && data.names.length) ? data.names : names;
+      const dup = currentNames.some(n => (n||"").trim().toLowerCase() === trimmed.toLowerCase());
+      if (dup) throw new Error("TDF_DUP_NAME");
+      const updatedNames = [...currentNames, trimmed];
+      newIdx = updatedNames.length - 1;
+      tx.set(stateRef, {
+        names: updatedNames,
+        scores: data.scores || {},
+        bonus: data.bonus || {},
+        malus: data.malus || {}
+      });
+    });
+  } catch(e) {
+    if (e.message === "TDF_DUP_NAME") return { ok:false, reason:"duplicate" };
+    console.error("Erreur de création du joueur", e);
+    return { ok:false, reason:"error" };
+  }
+  return { ok:true, idx:newIdx };
+}
+
+async function submitNewPlayer() {
+  const input = document.getElementById("login-newplayer-input");
+  const err = document.getElementById("login-newplayer-err");
+  if (!input) return;
+  const trimmed = input.value.trim();
+  if (err) err.style.display = "none";
+  if (!trimmed) {
+    if (err) { err.textContent = "Entre un prénom."; err.style.display = "block"; }
+    return;
+  }
+  const btn = document.getElementById("login-newplayer-submit");
+  if (btn) { btn.disabled = true; btn.textContent = "Création…"; }
+
+  const result = await createNewPlayer(trimmed);
+
+  if (btn) { btn.disabled = false; btn.textContent = "Créer"; }
+
+  if (!result.ok) {
+    if (result.reason === "duplicate") {
+      alert(`Le prénom "${trimmed}" est déjà utilisé. Choisis un autre prénom, ou sélectionne ce joueur dans la liste.`);
+    } else {
+      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    }
+    return;
+  }
+
+  // mise à jour optimiste locale, en attendant que le listener Firestore confirme
+  names.push(trimmed);
+  N = names.length;
+  hideNewPlayerForm();
+  applyIdentity(result.idx);
+}
+
 function renderWhoamiTag() {
   const tag = document.getElementById("whoami-tag");
   if (!tag) return;
@@ -543,7 +671,7 @@ function listenState() {
       setConnStatus(true);
       if (doc.exists) {
         const d = doc.data();
-        if (d.names)  names  = d.names;
+        if (d.names)  { names = d.names; N = names.length; }
         if (d.scores) scores = d.scores;
         if (d.bonus)  bonus  = d.bonus;
         if (d.malus)  malus  = d.malus;
@@ -626,16 +754,16 @@ function renderPanel1() {
     const row = document.createElement("div");
     row.className = "player-row" + (locked?" locked":"") + (i===myPlayerIdx?" is-me":"");
     row.innerHTML = `
-      <div class="avatar" style="background:${COLORS[i]}">${names[i][0]?.toUpperCase()}</div>
+      <div class="avatar" style="background:${playerColor(i)}">${names[i][0]?.toUpperCase()}</div>
       <span class="player-name">${names[i]}${i===myPlayerIdx?'<span class="me-badge">toi</span>':''}</span>
       <div class="score-display" id="sd-${i}">
         ${locked
-          ? `<span class="score-val" style="color:${COLORS[i]}">${score}</span>
+          ? `<span class="score-val" style="color:${playerColor(i)}">${score}</span>
              <span class="score-ok">pts ✓</span>`
           : `<input class="score-input" id="inp-${i}" type="number" min="0" placeholder="Score"
-               style="border-color:#e2e8f0;color:${COLORS[i]}"
+               style="border-color:#e2e8f0;color:${playerColor(i)}"
                oninput="onInputChange(${i})" onkeydown="if(event.key==='Enter')doValidate(${i})"/>
-             <button class="validate-btn" id="btn-${i}" style="background:${COLORS[i]}" disabled onclick="doValidate(${i})">✓</button>`
+             <button class="validate-btn" id="btn-${i}" style="background:${playerColor(i)}" disabled onclick="doValidate(${i})">✓</button>`
         }
       </div>`;
     list.appendChild(row);
@@ -646,7 +774,7 @@ function onInputChange(i) {
   const btn = document.getElementById("btn-"+i);
   const v = inp.value.trim();
   btn.disabled = v==="";
-  inp.style.borderColor = v ? COLORS[i] : "#e2e8f0";
+  inp.style.borderColor = v ? playerColor(i) : "#e2e8f0";
 }
 async function doValidate(i) {
   const inp = document.getElementById("inp-"+i);
@@ -691,11 +819,11 @@ function renderPodium() {
     const crown = rank===0 ? `<div class="crown">👑</div>` : "";
     col.innerHTML = `
       ${crown}
-      <div class="podium-avatar${rank===0?' first':''}" style="background:${COLORS[r.idx]};box-shadow:0 4px 12px ${COLORS[r.idx]}55">
+      <div class="podium-avatar${rank===0?' first':''}" style="background:${playerColor(r.idx)};box-shadow:0 4px 12px ${playerColor(r.idx)}55">
         ${r.name[0]?.toUpperCase()}
       </div>
       <div class="podium-pname">${r.name}</div>
-      <div class="podium-pts" style="color:${COLORS[r.idx]}">${r.total} pts</div>
+      <div class="podium-pts" style="color:${playerColor(r.idx)}">${r.total} pts</div>
       <div class="podium-block" style="height:${heights[pos]}px;background:${bgColors[pos]}">${MEDAL[rank]}</div>`;
     wrap.appendChild(col);
   });
@@ -710,9 +838,9 @@ function renderRankList() {
     row.className="rank-row";
     row.innerHTML=`
       <span class="rank-pos" style="color:${pos<3?'#4f46e5':'#94a3b8'}">${pos<3?MEDAL[pos]:`${pos+1}.`}</span>
-      <div class="rank-dot" style="background:${COLORS[r.idx]}"></div>
+      <div class="rank-dot" style="background:${playerColor(r.idx)}"></div>
       <span class="rank-name">${r.name}</span>
-      <span class="rank-total" style="color:${COLORS[r.idx]}">${r.total} pts</span>`;
+      <span class="rank-total" style="color:${playerColor(r.idx)}">${r.total} pts</span>`;
     list.appendChild(row);
   });
 }
@@ -733,7 +861,7 @@ function renderChart() {
       datasets: Array.from({length:N},(_,i)=>({
         label: names[i],
         data: data.map(d=>d.vals[i]),
-        borderColor: COLORS[i],
+        borderColor: playerColor(i),
         backgroundColor: "transparent",
         borderWidth: 2.5,
         pointRadius: 0,
@@ -795,14 +923,14 @@ function renderDbBody() {
         const inp=document.createElement("input");
         inp.className="cell-edit"; inp.type="number";
         inp.value=val!==undefined?val:"";
-        inp.style.color=COLORS[i];
+        inp.style.color=playerColor(i);
         inp.addEventListener("blur",()=>commitEdit());
         inp.addEventListener("keydown",e=>{ if(e.key==="Enter") commitEdit(); });
         setTimeout(()=>inp.focus(),10);
         td.appendChild(inp);
       } else {
         td.textContent=val!==undefined?val:"—";
-        td.style.color=val!==undefined?COLORS[i]:"#cbd5e1";
+        td.style.color=val!==undefined?playerColor(i):"#cbd5e1";
         if(adminUnlocked&&!isFuture) td.onclick=()=>startEdit("day",day,i);
       }
       tr.appendChild(td);
@@ -877,7 +1005,7 @@ function renderNamesEditor() {
   names.forEach((n,i)=>{
     const div=document.createElement("div");
     div.className="name-field";
-    div.innerHTML=`<div class="name-bar" style="background:${COLORS[i]}"></div>
+    div.innerHTML=`<div class="name-bar" style="background:${playerColor(i)}"></div>
       <input class="name-input" id="ne-${i}" value="${n}" type="text"/>`;
     grid.appendChild(div);
   });
@@ -1091,13 +1219,13 @@ function tomatoFaceTexture(skin) {
 function buildTomatoCharacter(idx) {
   if(tomatoCharacter) tomatoScene.remove(tomatoCharacter);
   tomatoCharacter = new THREE.Group();
-  const color = new THREE.Color(COLORS[idx]);
+  const color = new THREE.Color(playerColor(idx));
   const letter = (names[idx]||"?")[0]?.toUpperCase() || "?";
   const jersey = isJerseyPlayer(names[idx]);
 
   const body = new THREE.Mesh(
     THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.42,.7,4,12) : new THREE.CylinderGeometry(.42,.5,1.1,16),
-    new THREE.MeshStandardMaterial({ map: jersey ? tomatoJerseyTexture(letter) : tomatoBodyTexture(letter, COLORS[idx]) })
+    new THREE.MeshStandardMaterial({ map: jersey ? tomatoJerseyTexture(letter) : tomatoBodyTexture(letter, playerColor(idx)) })
   );
   body.position.y = 1.5;
   body.rotation.y = Math.PI; // recentre la lettre (dessinée au milieu de la texture) face à la caméra
@@ -1347,9 +1475,9 @@ function renderTdfRankList() {
     row.className = "rank-row";
     row.innerHTML = `
       <span class="rank-pos" style="color:${pos<3?'#4f46e5':'#94a3b8'}">${pos<3?MEDAL[pos]:`${pos+1}.`}</span>
-      <div class="rank-dot" style="background:${jersey?jersey.bg:COLORS[r.idx]};border:${jersey?'1px solid #cbd5e1':'none'}"></div>
+      <div class="rank-dot" style="background:${jersey?jersey.bg:playerColor(r.idx)};border:${jersey?'1px solid #cbd5e1':'none'}"></div>
       <span class="rank-name">${r.name}${r.idx===tdfMyIdx?' (toi)':''}</span>
-      <span class="rank-total" style="color:${COLORS[r.idx]}">${r.m.toLocaleString("fr-FR")} m</span>`;
+      <span class="rank-total" style="color:${playerColor(r.idx)}">${r.m.toLocaleString("fr-FR")} m</span>`;
     list.appendChild(row);
   });
 }
@@ -1550,8 +1678,8 @@ function buildTdfRider(idx) {
   const group = new THREE.Group();
   const letter = (names[idx]||"?")[0]?.toUpperCase() || "?";
   const jersey = tdfJerseyAssignments[idx];
-  const tex = tdfJerseyTexture(jersey, letter, COLORS[idx]);
-  const frameColor = jersey ? jersey.accent : COLORS[idx];
+  const tex = tdfJerseyTexture(jersey, letter, playerColor(idx));
+  const frameColor = jersey ? jersey.accent : playerColor(idx);
 
   const wheelMat = new THREE.MeshStandardMaterial({ color:0x1e293b, roughness:.7 });
   const wheelGeo = new THREE.TorusGeometry(.32,.045,8,20);
@@ -1592,7 +1720,7 @@ function buildTdfRider(idx) {
 
   const helmet = new THREE.Mesh(
     new THREE.SphereGeometry(.18,16,16,0,Math.PI*2,0,Math.PI*.6),
-    new THREE.MeshStandardMaterial({ color: jersey ? jersey.bg : COLORS[idx] })
+    new THREE.MeshStandardMaterial({ color: jersey ? jersey.bg : playerColor(idx) })
   );
   helmet.position.set(0,1.22,-.32);
   helmet.rotation.x = -.3;
