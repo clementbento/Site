@@ -2701,7 +2701,7 @@ function renderFlip7(wrap, isHost) {
     summaryHtml = `<div class="flip7-summary">
       <h4>📋 Résultats de la manche ${st.round}</h4>
       ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${st.lastRoundResults[idx]} pts</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
-      ${isHost?'<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>':'<p class="flip7-waiting">⏳ En attente que l\\'hôte lance la manche suivante…</p>'}
+      ${isHost?'<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>':'<p class="flip7-waiting">⏳ En attente que l\'hôte lance la manche suivante…</p>'}
     </div>`;
   }
   if (st.status==="game_over") {
