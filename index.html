@@ -201,6 +201,27 @@
 
   #tdf-reset-btn{display:none;width:100%;margin-top:4px;border:none;border-radius:14px;padding:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:white;font-size:.82rem;font-weight:900;letter-spacing:.02em;box-shadow:0 4px 14px #ef444440;cursor:pointer;transition:transform .08s}
   #tdf-reset-btn:active{transform:scale(.96)}
+
+  /* ── panel 6 – Board Game ── */
+  #bg-wrap{background:white;border-radius:20px;padding:28px 18px;box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9;text-align:center}
+  #bg-icon{font-size:2.4rem;margin-bottom:10px}
+  #bg-subtitle{font-size:.8rem;color:#64748b;margin-bottom:18px}
+  #bg-start-btn,#bg-join-btn{border:none;border-radius:16px;padding:16px 24px;font-size:1rem;font-weight:900;letter-spacing:.02em;color:white;cursor:pointer;box-shadow:0 4px 14px #6366f140;transition:transform .08s}
+  #bg-start-btn{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+  #bg-join-btn{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px #10b98140}
+  #bg-start-btn:active,#bg-join-btn:active{transform:scale(.96)}
+  #bg-waiting-title{font-size:1rem;font-weight:900;color:#1e293b;margin-bottom:4px}
+  #bg-waiting-sub{font-size:.76rem;color:#94a3b8;margin-bottom:16px}
+  .bg-player-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;text-align:left}
+  .bg-player-row{display:flex;align-items:center;gap:10px;background:#f8fafc;border-radius:12px;padding:9px 12px;border:1px solid #f1f5f9}
+  .bg-player-row .avatar{width:32px;height:32px;font-size:.8rem}
+  .bg-player-name{flex:1;font-weight:700;font-size:.85rem;color:#334155}
+  .bg-host-badge{font-size:.6rem;font-weight:800;color:#d97706;background:#fffbeb;border-radius:8px;padding:2px 6px}
+  .bg-spinner{display:inline-block;width:14px;height:14px;border:2.5px solid #e2e8f0;border-top-color:#6366f1;border-radius:50%;animation:bg-spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+  @keyframes bg-spin{to{transform:rotate(360deg)}}
+  #bg-leave-btn,#bg-cancel-btn{border:none;border-radius:12px;padding:10px 16px;font-size:.8rem;font-weight:800;cursor:pointer;margin:4px}
+  #bg-leave-btn{background:#f1f5f9;color:#64748b}
+  #bg-cancel-btn{background:#fef2f2;color:#dc2626}
 </style>
 </head>
 <body>
@@ -255,6 +276,7 @@
   <button class="tab-btn" onclick="switchTab(2)">🗂️ Base de données</button>
   <button class="tab-btn" onclick="switchTab(3)">🍅 Bouuuu le nul</button>
   <button class="tab-btn" onclick="switchTab(4)">🚴 Tour de France</button>
+  <button class="tab-btn" onclick="switchTab(5)">🎲 Board Game</button>
 </div>
 
 <div id="app">
@@ -337,6 +359,12 @@
     <p class="section-title" style="margin-top:18px">Classement de l'étape (mètres)</p>
     <div id="tdf-rank-list" class="rank-list"></div>
     <button id="tdf-reset-btn" onclick="resetTdfAll()">🗑️ Réinitialiser mètres &amp; clics de tout le monde</button>
+  </div>
+
+  <!-- PANEL 6 -->
+  <div class="panel" id="panel-5">
+    <p class="section-title">Board Game</p>
+    <div id="bg-wrap"></div>
   </div>
 
 </div>
@@ -721,6 +749,7 @@ function applyIdentity(i) {
   if (dataReady && currentTab===1) renderPanel2();
   if (dataReady && currentTab===2) renderPanel3();
   if (dataReady && currentTab===4) renderTdfResetBtn();
+  if (dataReady && currentTab===5) renderPanel6();
 }
 
 // ── créer un nouveau joueur ──
@@ -934,6 +963,7 @@ function rerenderAll() {
   if (currentTab===2) renderPanel3();
   if (currentTab===3) refreshTomatoLoser();
   if (currentTab===4) { renderTdfHud(); renderTdfRankList(); }
+  if (currentTab===5) renderPanel6();
 }
 
 // ─── derived ─────────────────────────────────────────────
@@ -2122,6 +2152,135 @@ function renderPanel5() {
   renderTdfResetBtn();
 }
 
+// ─── panel 6 : Board Game (session d'attente) ────────────────
+// Une session est un simple document Firestore ("boardgame_session") contenant
+// qui est l'hôte et la liste des joueurs présents. Premier arrivé = crée la
+// session ; les suivants qui ouvrent l'onglet voient "Rejoindre Session" et
+// atterrissent, une fois rejoints, sur la même salle d'attente en temps réel.
+let bgSession = null; // { active, hostIdx, players: {idx:name} }
+
+function listenBoardGame() {
+  db.collection(COLLECTION).doc("boardgame_session").onSnapshot(
+    (doc) => {
+      bgSession = doc.exists ? doc.data() : null;
+      if (currentTab===5 && dataReady) renderPanel6();
+    },
+    (err) => console.error("Erreur session Board Game", err)
+  );
+}
+
+function bgIsInSession() {
+  return !!(bgSession && bgSession.active && myPlayerIdx!==null &&
+    bgSession.players && bgSession.players[myPlayerIdx]!==undefined);
+}
+
+async function startBoardGameSession() {
+  if (myPlayerIdx===null) { openLoginOverlay(false); return; }
+  const btn = document.getElementById("bg-start-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Création…"; }
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({
+      active: true,
+      hostIdx: myPlayerIdx,
+      players: { [myPlayerIdx]: names[myPlayerIdx] }
+    });
+  } catch(e) {
+    console.error("Erreur de création de session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+async function joinBoardGameSession() {
+  if (myPlayerIdx===null) { openLoginOverlay(false); return; }
+  const btn = document.getElementById("bg-join-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Connexion…"; }
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set(
+      { players: { [myPlayerIdx]: names[myPlayerIdx] } }, { merge:true }
+    );
+  } catch(e) {
+    console.error("Erreur pour rejoindre la session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+async function leaveBoardGameSession() {
+  if (!bgSession || myPlayerIdx===null) return;
+  const remaining = { ...(bgSession.players||{}) };
+  delete remaining[myPlayerIdx];
+  const stillHasPlayers = Object.keys(remaining).length > 0;
+  try {
+    if (!stillHasPlayers || myPlayerIdx===bgSession.hostIdx) {
+      // plus personne, ou l'hôte quitte : on referme la session pour tout le monde
+      await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{} });
+    } else {
+      await db.collection(COLLECTION).doc("boardgame_session").set({ players: remaining });
+    }
+  } catch(e) {
+    console.error("Erreur pour quitter la session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+async function cancelBoardGameSession() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{} });
+  } catch(e) {
+    console.error("Erreur d'annulation de session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+function renderPanel6() {
+  const wrap = document.getElementById("bg-wrap");
+  if (!wrap) return;
+
+  const active = bgSession && bgSession.active && bgSession.players && Object.keys(bgSession.players).length>0;
+
+  if (!active) {
+    wrap.innerHTML = `
+      <div id="bg-icon">🎲</div>
+      <div id="bg-subtitle">Aucune session en cours. Lance-en une pour que les autres puissent te rejoindre.</div>
+      <button id="bg-start-btn" onclick="startBoardGameSession()">🎲 Commencer Session de Jeu</button>`;
+    return;
+  }
+
+  if (bgIsInSession()) {
+    const players = bgSession.players || {};
+    const count = Object.keys(players).length;
+    const rows = Object.keys(players).map(idxStr=>{
+      const idx = parseInt(idxStr);
+      const isHost = idx===bgSession.hostIdx;
+      return `
+        <div class="bg-player-row">
+          <div class="avatar" style="background:${playerColor(idx)}">${(players[idxStr]||"?")[0]?.toUpperCase()}</div>
+          <span class="bg-player-name">${players[idxStr]}${idx===myPlayerIdx?' (toi)':''}</span>
+          ${isHost?'<span class="bg-host-badge">Hôte</span>':''}
+        </div>`;
+    }).join("");
+    const isHost = myPlayerIdx===bgSession.hostIdx;
+    wrap.innerHTML = `
+      <div id="bg-waiting-title"><span class="bg-spinner"></span>En attente des joueurs…</div>
+      <div id="bg-waiting-sub">${count} joueur${count>1?'s':''} présent${count>1?'s':''}</div>
+      <div class="bg-player-list">${rows}</div>
+      <button id="bg-leave-btn" onclick="leaveBoardGameSession()">Quitter la session</button>
+      ${isHost?'<button id="bg-cancel-btn" onclick="cancelBoardGameSession()">Annuler la session</button>':''}`;
+    return;
+  }
+
+  // session active, mais je n'y suis pas encore
+  const count = Object.keys(bgSession.players||{}).length;
+  wrap.innerHTML = `
+    <div id="bg-icon">🎲</div>
+    <div id="bg-subtitle">Une session est en cours (${count} joueur${count>1?'s':''}). Rejoins-la !</div>
+    <button id="bg-join-btn" onclick="joinBoardGameSession()">🙋 Rejoindre Session</button>`;
+}
+
 // ─── tabs ─────────────────────────────────────────────────
 function switchTab(i) {
   currentTab=i;
@@ -2133,6 +2292,7 @@ function switchTab(i) {
   if(i===2) renderPanel3();
   if(i===3) renderPanel4();
   if(i===4) renderPanel5();
+  if(i===5) renderPanel6();
 }
 
 // ─── init ────────────────────────────────────────────────
@@ -2147,6 +2307,7 @@ function startLeagueData() {
   listenValidated();
   listenTdf();
   listenTdfCredits();
+  listenBoardGame();
 }
 
 listenLeaguesRegistry(); // indépendant de la ligue, toujours actif
