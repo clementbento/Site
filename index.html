@@ -276,6 +276,20 @@
   .flip7-winner{text-align:center;font-size:.82rem;font-weight:800;color:#4f46e5;margin-bottom:8px}
   .flip7-log{background:#f8fafc;border-radius:12px;padding:10px 12px;margin-bottom:10px;max-height:120px;overflow-y:auto}
   .flip7-log-row{font-size:.68rem;color:#64748b;font-weight:600;padding:2px 0}
+
+  /* ── Diamant ── */
+  .diamant-card{background:white;border:2px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px;text-align:center}
+  .diamant-card.hazard{border-color:#fca5a5;background:#fef2f2}
+  .diamant-card.treasure{border-color:#fde68a;background:#fffbeb}
+  .diamant-card.relic{border-color:#c7d2fe;background:#eef2ff}
+  .diamant-card-emoji{font-size:2rem;margin-bottom:4px}
+  .diamant-card-label{font-size:.85rem;font-weight:800;color:#1e293b}
+  .diamant-card-sub{font-size:.72rem;color:#64748b;margin-top:2px}
+  .diamant-stats{display:flex;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .diamant-stat{background:white;border:1px solid #f1f5f9;border-radius:12px;padding:8px 14px;text-align:center;box-shadow:0 1px 4px #0000000a}
+  .diamant-stat-val{font-size:1.1rem;font-weight:900;color:#1e293b}
+  .diamant-stat-label{font-size:.62rem;color:#94a3b8;font-weight:700;text-transform:uppercase}
+  .diamant-config-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
 </style>
 </head>
 <body>
@@ -2199,6 +2213,7 @@ async function leaveBoardGameSession() {
     if (!stillHasPlayers || myPlayerIdx===bgSession.hostIdx) {
       await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
       await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+      await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
     } else {
       await db.collection(COLLECTION).doc("boardgame_session").set({ players: remaining });
     }
@@ -2214,6 +2229,7 @@ async function cancelBoardGameSession() {
   try {
     await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
     await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+    await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
   } catch(e) {
     console.error("Erreur d'annulation de session", e);
     alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
@@ -2238,6 +2254,7 @@ async function unlockBoardGamePlayers() {
   try {
     await db.collection(COLLECTION).doc("boardgame_session").set({ locked:false, selectedGame:null }, { merge:true });
     await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+    await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
   } catch(e) {
     console.error("Erreur de déverrouillage", e);
     alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
@@ -2324,6 +2341,15 @@ async function selectBoardGame(gameKey) {
       await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"flip7" }, { merge:true });
     } catch(e) {
       console.error("Erreur de lancement Flip Seven", e);
+      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    }
+  } else if (gameKey==="diamant") {
+    const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
+    if (order.length<2) { alert("Il faut au moins 2 joueurs pour lancer Diamant."); return; }
+    try {
+      await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant_config" }, { merge:true });
+    } catch(e) {
+      console.error("Erreur de sélection Diamant", e);
       alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
     }
   }
@@ -2552,6 +2578,236 @@ async function flip7StartNewRound() {
   } catch(e) { console.error("Erreur Flip Seven (nouvelle manche)", e); }
 }
 
+// ══════════════════════════════════════════════════════════
+// Diamant — moteur de jeu (état partagé via Firestore)
+// ══════════════════════════════════════════════════════════
+let diamantState = null;
+
+const DIAMANT_HAZARDS = [
+  { key:"serpent",     label:"Serpents",    emoji:"🐍" },
+  { key:"araignee",    label:"Araignées",   emoji:"🕷️" },
+  { key:"feu",         label:"Feu",         emoji:"🔥" },
+  { key:"momie",       label:"Momie",       emoji:"💀" },
+  { key:"eboulement",  label:"Éboulement",  emoji:"🪨" }
+];
+const DIAMANT_TREASURE_VALUES = [1,2,3,4,5,5,7,8,9,10,11,12,13,14,15];
+const DIAMANT_RELIC_POOL = [5,6,7,8,9,10,11,12,13];
+
+function listenDiamant() {
+  db.collection(COLLECTION).doc("diamant_game").onSnapshot(
+    (doc) => {
+      diamantState = doc.exists ? doc.data() : null;
+      if (currentTab===5 && dataReady) renderPanel6();
+    },
+    (err) => console.error("Erreur Diamant (listen)", err)
+  );
+}
+
+function buildDiamantTreasureDeck() {
+  return DIAMANT_TREASURE_VALUES.map(v=>({ type:"treasure", value:v }));
+}
+function buildDiamantHazardDeck() {
+  const deck = [];
+  DIAMANT_HAZARDS.forEach(h=>{
+    for (let i=0;i<3;i++) deck.push({ type:"hazard", key:h.key, label:h.label, emoji:h.emoji });
+  });
+  return deck;
+}
+function buildDiamantExpeditionDeck(pendingRelics, newRelicValue) {
+  const cards = [...buildDiamantTreasureDeck(), ...buildDiamantHazardDeck()];
+  (pendingRelics||[]).forEach(v=>cards.push({ type:"relic", value:v }));
+  if (newRelicValue!==null && newRelicValue!==undefined) cards.push({ type:"relic", value:newRelicValue });
+  return shuffleFlip7(cards);
+}
+
+function diamantRevealCard(state) {
+  if (state.deck.length===0) {
+    state.deck = shuffleFlip7(state.discard);
+    state.discard = [];
+  }
+  const card = state.deck.pop();
+  state.discard.push(card);
+  state.currentCard = card;
+  const log = (state.log||[]).slice(-11);
+
+  if (card.type==="treasure") {
+    const activeIdx = state.order.filter(idx=>state.inMine[idx]);
+    const n = activeIdx.length;
+    if (n>0) {
+      const share = Math.floor(card.value/n);
+      const remainder = card.value - share*n;
+      activeIdx.forEach(idx=>{ state.handTreasure[idx] = (state.handTreasure[idx]||0) + share; });
+      state.pathGems = (state.pathGems||0) + remainder;
+      log.push(`💰 Trésor de ${card.value} : +${share} chacun (reste ${remainder} au sol).`);
+    }
+    state.phase = "deciding";
+    state.decisions = {};
+  } else if (card.type==="relic") {
+    state.currentRelic = { value: card.value };
+    log.push(`🏺 Une relique (${card.value} pts) apparaît dans la mine !`);
+    state.phase = "deciding";
+    state.decisions = {};
+  } else if (card.type==="hazard") {
+    state.hazardsSeen[card.key] = (state.hazardsSeen[card.key]||0) + 1;
+    if (state.hazardsSeen[card.key] >= 2) {
+      log.push(`💀 ${card.label} apparaît une 2e fois ! Tous les explorateurs encore dans la mine perdent leurs trésors de l'expédition.`);
+      state.order.forEach(idx=>{ if (state.inMine[idx]) state.handTreasure[idx]=0; });
+      state.log = log;
+      finalizeDiamantExpedition(state);
+      return;
+    } else {
+      log.push(`${card.emoji} ${card.label} apparaît (1ère fois), rien ne se passe pour l'instant.`);
+      state.phase = "deciding";
+      state.decisions = {};
+    }
+  }
+  state.log = log;
+}
+
+function diamantResolveDecisions(state) {
+  const activeIdx = state.order.filter(idx=>state.inMine[idx]);
+  const leavers = activeIdx.filter(idx=>state.decisions[idx]==="leave");
+  const log = (state.log||[]).slice(-11);
+
+  if (leavers.length>0) {
+    const n = leavers.length;
+    const share = Math.floor((state.pathGems||0)/n);
+    const remainder = (state.pathGems||0) - share*n;
+    leavers.forEach(idx=>{
+      const secured = (state.handTreasure[idx]||0) + share;
+      state.totals[idx] = (state.totals[idx]||0) + secured;
+      state.handTreasure[idx] = 0;
+      state.inMine[idx] = false;
+    });
+    state.pathGems = remainder;
+    log.push(`🚪 ${leavers.map(i=>names[i]).join(", ")} quitte${leavers.length>1?"nt":""} la mine avec son trésor.`);
+
+    if (state.currentRelic && leavers.length===1) {
+      const idx = leavers[0];
+      state.totals[idx] = (state.totals[idx]||0) + state.currentRelic.value;
+      log.push(`🏺 ${names[idx]} récupère la relique (+${state.currentRelic.value} pts) !`);
+      state.currentRelic = null;
+    }
+  }
+  state.log = log;
+  state.decisions = {};
+
+  const stillIn = state.order.filter(idx=>state.inMine[idx]);
+  if (stillIn.length===0) {
+    const log2 = (state.log||[]).slice(-11);
+    log2.push("⛏️ Tout le monde a quitté la mine, fin de l'expédition.");
+    state.log = log2;
+    finalizeDiamantExpedition(state);
+  } else {
+    diamantRevealCard(state);
+  }
+}
+
+function finalizeDiamantExpedition(state) {
+  if (state.currentRelic) {
+    state.pendingRelics = [...(state.pendingRelics||[]), state.currentRelic.value];
+    state.currentRelic = null;
+  }
+  state.expeditionGains = {};
+  state.order.forEach(idx=>{
+    state.expeditionGains[idx] = (state.totals[idx]||0) - (state.expeditionStartTotals[idx]||0);
+  });
+  if (state.expeditionIndex >= state.numExpeditions) {
+    state.status = "game_over";
+    state.winner = state.order.reduce((best,idx)=>(state.totals[idx]>state.totals[best]?idx:best), state.order[0]);
+  } else {
+    state.status = "expedition_summary";
+  }
+}
+
+async function startDiamantGame(numExpeditions) {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
+  if (order.length<2) { alert("Il faut au moins 2 joueurs pour lancer Diamant."); return; }
+  const totals = {};
+  order.forEach(idx=>{ totals[idx]=0; });
+  const relicSchedule = shuffleFlip7(DIAMANT_RELIC_POOL).slice(0, numExpeditions);
+  const state = {
+    status:"playing", numExpeditions, expeditionIndex:1, order, totals,
+    relicSchedule, pendingRelics:[], currentRelic:null,
+    inMine:{}, handTreasure:{}, pathGems:0, hazardsSeen:{}, decisions:{}, phase:"deciding",
+    deck:[], discard:[], currentCard:null,
+    log:["🎉 La partie de Diamant commence !"],
+    winner:null, expeditionGains:null, expeditionStartTotals:{}
+  };
+  order.forEach(idx=>{ state.inMine[idx]=true; state.handTreasure[idx]=0; });
+  state.expeditionStartTotals = { ...totals };
+  state.deck = buildDiamantExpeditionDeck([], relicSchedule[0]);
+  diamantRevealCard(state);
+  try {
+    await db.collection(COLLECTION).doc("diamant_game").set(state);
+    await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur de lancement Diamant", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+
+async function diamantSubmitDecision(playerIdx, choice) {
+  const ref = db.collection(COLLECTION).doc("diamant_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status!=="playing") throw new Error("NOT_PLAYING");
+      if (state.phase!=="deciding") throw new Error("NOT_DECIDING");
+      if (!state.inMine[playerIdx]) throw new Error("NOT_IN_MINE");
+      if (state.decisions[playerIdx]!==undefined) throw new Error("ALREADY_DECIDED");
+      state.decisions[playerIdx] = choice;
+      const activeIdx = state.order.filter(idx=>state.inMine[idx]);
+      const allDecided = activeIdx.every(idx=>state.decisions[idx]!==undefined);
+      if (allDecided) diamantResolveDecisions(state);
+      tx.set(ref, state);
+    });
+  } catch(e) {
+    if (!["ALREADY_DECIDED","NOT_DECIDING","NOT_IN_MINE"].includes(e.message)) console.error("Erreur Diamant (décision)", e);
+  }
+}
+
+async function diamantStartNewExpedition() {
+  const ref = db.collection(COLLECTION).doc("diamant_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status!=="expedition_summary") throw new Error("NOT_SUMMARY");
+      state.expeditionIndex += 1;
+      state.order.forEach(idx=>{ state.inMine[idx]=true; state.handTreasure[idx]=0; });
+      state.pathGems = 0;
+      state.hazardsSeen = {};
+      state.decisions = {};
+      state.expeditionStartTotals = { ...state.totals };
+      const newRelic = state.relicSchedule[state.expeditionIndex-1] ?? null;
+      state.deck = buildDiamantExpeditionDeck(state.pendingRelics, newRelic);
+      state.pendingRelics = [];
+      state.discard = [];
+      const log = (state.log||[]).slice(-11).concat([`— Expédition ${state.expeditionIndex} —`]);
+      state.log = log;
+      state.status = "playing";
+      diamantRevealCard(state);
+      tx.set(ref, state);
+    });
+  } catch(e) { console.error("Erreur Diamant (nouvelle expédition)", e); }
+}
+
+async function diamantRestart() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  try {
+    await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
+    await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant_config" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur redémarrage Diamant", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+
 // ── rendu ──
 function renderPanel6() {
   const wrap = document.getElementById("bg-wrap");
@@ -2612,19 +2868,149 @@ function renderPanel6() {
           <span class="game-option-name">Flip Seven</span>
           <span class="game-option-desc">Retourne des cartes, évite les doublons !</span>
         </button>
-        <button class="game-option game-option-soon" disabled>
-          <span class="game-option-emoji">🔒</span>
-          <span class="game-option-name">Bientôt disponible</span>
-          <span class="game-option-desc">D'autres jeux arriveront plus tard</span>
+        <button class="game-option" ${isHost?`onclick="selectBoardGame('diamant')"`:'disabled'}>
+          <span class="game-option-emoji">💎</span>
+          <span class="game-option-name">Diamant</span>
+          <span class="game-option-desc">Explore la mine, sors avant le danger !</span>
         </button>
       </div>
       ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Retour au salon</button>':''}`;
     return;
   }
 
+  if (bgSession.selectedGame==="diamant_config") {
+    renderDiamantConfig(wrap, isHost);
+    return;
+  }
+
   if (bgSession.selectedGame==="flip7") {
     renderFlip7(wrap, isHost);
   }
+  if (bgSession.selectedGame==="diamant") {
+    renderDiamant(wrap, isHost);
+  }
+}
+
+function renderDiamantConfig(wrap, isHost) {
+  wrap.innerHTML = `
+    <div id="bg-icon">💎</div>
+    <div id="bg-waiting-title">Configuration de Diamant</div>
+    <div id="bg-waiting-sub">${isHost ? "Choisis le nombre d'expéditions." : "En attente que l'hôte configure la partie…"}</div>
+    ${isHost ? `
+    <div class="diamant-config-grid">
+      <button class="flip7-target-btn" style="background:#6366f1" onclick="startDiamantGame(3)">3 expéditions</button>
+      <button class="flip7-target-btn" style="background:#f59e0b" onclick="startDiamantGame(5)">5 expéditions</button>
+      <button class="flip7-target-btn" style="background:#10b981" onclick="startDiamantGame(7)">7 expéditions</button>
+    </div>
+    <button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Retour au salon</button>` : ""}
+  `;
+}
+
+function renderDiamant(wrap, isHost) {
+  const st = diamantState;
+  if (!st || st.status==="idle") {
+    wrap.innerHTML = `<div id="bg-icon">💎</div><div id="bg-waiting-sub">⏳ Préparation de la partie…</div>`;
+    return;
+  }
+  const me = myPlayerIdx;
+
+  let cardHtml = "";
+  const card = st.currentCard;
+  if (card) {
+    if (card.type==="treasure") {
+      cardHtml = `<div class="diamant-card treasure"><div class="diamant-card-emoji">💰</div>
+        <div class="diamant-card-label">Trésor : ${card.value} gemmes</div>
+        <div class="diamant-card-sub">Partagées entre les explorateurs encore dans la mine</div></div>`;
+    } else if (card.type==="relic") {
+      cardHtml = `<div class="diamant-card relic"><div class="diamant-card-emoji">🏺</div>
+        <div class="diamant-card-label">Relique : ${card.value} points</div>
+        <div class="diamant-card-sub">Un seul explorateur doit sortir ce tour pour la récupérer</div></div>`;
+    } else if (card.type==="hazard") {
+      const count = (st.hazardsSeen && st.hazardsSeen[card.key]) || 0;
+      cardHtml = `<div class="diamant-card hazard"><div class="diamant-card-emoji">${card.emoji}</div>
+        <div class="diamant-card-label">${card.label} ${count>=2?"(2e fois !)":"(1ère fois)"}</div>
+        <div class="diamant-card-sub">${count>=2 ? "Expédition terminée, trésors non sécurisés perdus" : "Rien ne se passe pour l'instant"}</div></div>`;
+    }
+  }
+
+  const hazardTrack = DIAMANT_HAZARDS.map(h=>{
+    const seen = (st.hazardsSeen && st.hazardsSeen[h.key]) || 0;
+    const color = seen>=2 ? "#dc2626" : seen===1 ? "#d97706" : "#cbd5e1";
+    return `<span style="margin:0 6px;font-size:.9rem">${h.emoji}<span style="font-size:.62rem;font-weight:800;color:${color}"> ${seen}/2</span></span>`;
+  }).join("");
+
+  const statsHtml = `
+    <div class="diamant-stats">
+      <div class="diamant-stat"><div class="diamant-stat-val">${st.expeditionIndex}/${st.numExpeditions}</div><div class="diamant-stat-label">Expédition</div></div>
+      <div class="diamant-stat"><div class="diamant-stat-val">${st.pathGems||0}</div><div class="diamant-stat-label">Gemmes au sol</div></div>
+      <div class="diamant-stat"><div class="diamant-stat-val">${st.currentRelic ? st.currentRelic.value : "—"}</div><div class="diamant-stat-label">Relique dispo</div></div>
+    </div>
+    <div style="text-align:center;margin-bottom:12px">${hazardTrack}</div>`;
+
+  let actionHtml = "";
+  if (st.status==="playing") {
+    const iAmIn = st.inMine[me];
+    if (!iAmIn) {
+      actionHtml = `<p class="flip7-waiting">🏖️ Tu es en sécurité hors de la mine. En attente des autres explorateurs…</p>`;
+    } else if (st.decisions[me]!==undefined) {
+      actionHtml = `<p class="flip7-waiting">✅ Choix enregistré. En attente des autres explorateurs…</p>`;
+    } else {
+      actionHtml = `<p class="flip7-prompt">⛏️ Que fais-tu ? (${st.handTreasure[me]||0} gemmes en poche)</p>
+        <div class="flip7-actions">
+          <button class="flip7-draw-btn" onclick="diamantSubmitDecision(${me},'continue')">➡️ Continuer</button>
+          <button class="flip7-stay-btn" onclick="diamantSubmitDecision(${me},'leave')">🚪 Sortir</button>
+        </div>`;
+    }
+  }
+
+  const playersHtml = st.order.map(idx=>{
+    const inMine = st.inMine[idx];
+    const decided = st.decisions[idx]!==undefined;
+    let badge = "";
+    if (!inMine) badge = `<span class="flip7-badge flip7-badge-stayed">🏖️ Sorti</span>`;
+    else if (decided) badge = `<span class="flip7-badge flip7-badge-frozen">✅ Décidé</span>`;
+    else if (st.status==="playing") badge = `<span class="flip7-badge flip7-badge-turn">⛏️ En mine</span>`;
+    return `<div class="flip7-player-card${idx===me?' is-me':''}">
+      <div class="flip7-player-head">
+        <div class="avatar" style="background:${playerColor(idx)}">${(names[idx]||"?")[0]?.toUpperCase()}</div>
+        <span class="flip7-player-name">${names[idx]}${idx===me?' (toi)':''}</span>
+        ${badge}
+      </div>
+      <div class="flip7-score">${inMine ? (st.handTreasure[idx]||0)+" gemmes en poche" : "en sécurité"} <span class="flip7-total">(total ${st.totals[idx]||0})</span></div>
+    </div>`;
+  }).join("");
+
+  let summaryHtml = "";
+  if (st.status==="expedition_summary") {
+    summaryHtml = `<div class="flip7-summary">
+      <h4>📋 Résultats de l'expédition ${st.expeditionIndex}</h4>
+      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${(st.expeditionGains&&st.expeditionGains[idx])||0} pts</span><span>Total : ${st.totals[idx]||0}</span></div>`).join("")}
+      ${isHost?'<button class="flip7-next-btn" onclick="diamantStartNewExpedition()">▶️ Expédition suivante</button>':"<p class=\"flip7-waiting\">⏳ En attente que l'hôte lance l'expédition suivante…</p>"}
+    </div>`;
+  }
+  if (st.status==="game_over") {
+    summaryHtml = `<div class="flip7-summary flip7-gameover">
+      <h4>🏆 Partie terminée !</h4>
+      <p class="flip7-winner">${names[st.winner]} remporte la partie avec ${st.totals[st.winner]} points !</p>
+      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>Total : ${st.totals[idx]||0}</span></div>`).join("")}
+      ${isHost?'<button class="flip7-next-btn" onclick="diamantRestart()">🔄 Nouvelle partie</button>':''}
+    </div>`;
+  }
+
+  const logHtml = (st.log||[]).slice(-6).map(l=>`<div class="flip7-log-row">${l}</div>`).join("");
+
+  wrap.innerHTML = `
+    <div class="flip7-header">
+      <span>💎 Diamant — Expédition ${st.expeditionIndex}/${st.numExpeditions}</span>
+    </div>
+    ${statsHtml}
+    ${cardHtml}
+    ${actionHtml}
+    <div class="flip7-players-grid">${playersHtml}</div>
+    ${summaryHtml}
+    <div class="flip7-log">${logHtml}</div>
+    ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Quitter la partie</button>':''}
+  `;
 }
 
 function renderFlip7(wrap, isHost) {
@@ -2701,7 +3087,7 @@ function renderFlip7(wrap, isHost) {
     summaryHtml = `<div class="flip7-summary">
       <h4>📋 Résultats de la manche ${st.round}</h4>
       ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${st.lastRoundResults[idx]} pts</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
-      ${isHost?'<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>':'<p class="flip7-waiting">⏳ En attente que l\'hôte lance la manche suivante…</p>'}
+      ${isHost?'<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>':"<p class=\"flip7-waiting\">⏳ En attente que l'hôte lance la manche suivante…</p>"}
     </div>`;
   }
   if (st.status==="game_over") {
@@ -2709,7 +3095,7 @@ function renderFlip7(wrap, isHost) {
       <h4>🏆 Partie terminée !</h4>
       <p class="flip7-winner">${names[st.winner]} remporte la partie avec ${st.totals[st.winner]} points !</p>
       ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
-      ${isHost?'<button class="flip7-next-btn" onclick="selectBoardGame(\'flip7\')">🔄 Nouvelle partie</button>':''}
+      ${isHost?"<button class=\"flip7-next-btn\" onclick=\"selectBoardGame('flip7')\">🔄 Nouvelle partie</button>":''}
     </div>`;
   }
 
@@ -2754,6 +3140,7 @@ function startLeagueData() {
   listenTdfCredits();
   listenBoardGame();
   listenFlip7();
+  listenDiamant();
 }
 
 listenLeaguesRegistry();
