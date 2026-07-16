@@ -306,11 +306,24 @@ async function flip7StartNewRound() {
 // construire le HTML. Le moteur de jeu (transactions Firestore, calcul
 // des scores, tour par tour…) reste strictement inchangé au-dessus.
 //
+// ── Choix de mise en page (v2) ──
+// L'ancienne version plaçait tous les sièges en cercle avec des tailles
+// en `vw`, sans aucune gestion de collision : dès que le nombre de
+// joueurs ou la largeur d'écran variait un peu, les sièges et le texte
+// se chevauchaient. La disposition est donc revue ainsi :
+//   - les ADVERSAIRES sont dans une rangée flex qui "wrap" (retour à la
+//     ligne automatique) en haut de la table : impossible de se
+//     chevaucher, quel que soit leur nombre (2 à 8).
+//   - "MOI" a sa propre bannière pleine largeur sous la table, avec des
+//     cartes plus grandes : plus de conflit d'espace avec les adversaires.
+//
 // « Composants » réutilisables (façon composants UI, en vanilla JS) :
-//   - flip7PlayingCard(card)   → une carte individuelle
-//   - flip7PlayerHand(cards)   → la pile/éventail de cartes d'un joueur
-//   - flip7PlayerSeat(...)     → un siège complet (avatar + main + score)
-//   - flip7GameTable(...)      → la table avec tous les sièges placés
+//   - flip7PlayingCard(card)       → une carte individuelle
+//   - flip7PlayerHand(cards)       → la pile/éventail de cartes d'un joueur
+//   - flip7StatusBadge(...)        → le badge d'état (brûlé/gelé/en jeu…)
+//   - flip7PlayerSeat(...)         → le siège d'un adversaire (rangée du haut)
+//   - flip7MePanel(...)            → la bannière du joueur local (bas)
+//   - flip7GameTable(...)          → assemble la table complète
 // ══════════════════════════════════════════════════════════
 
 // Mémorise, entre deux rendus, le nombre de cartes déjà affichées pour
@@ -319,49 +332,53 @@ async function flip7StartNewRound() {
 let flip7PrevCardCounts = {};
 
 // ── injection unique des styles de la scène de jeu ──
-// On injecte un <style> dans le <head> plutôt que de toucher au CSS
-// global d'index.html : la partie Flip Seven reste 100% autonome et
-// n'a aucune chance d'impacter le reste du site (ni le jeu Diamant,
-// qui réutilise les classes .flip7-* existantes).
 function flip7InjectStyles() {
-  if (document.getElementById("flip7-scene-styles")) return;
+  const existing = document.getElementById("flip7-scene-styles");
+  if (existing) existing.remove(); // permet de recharger les styles proprement si le script est réinjecté
   const style = document.createElement("style");
   style.id = "flip7-scene-styles";
   style.textContent = `
     .f7-scene{margin-bottom:14px}
-    .f7-table-rim{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;padding:clamp(6px,2vw,12px);box-shadow:0 12px 28px #4f46e540}
-    .f7-table{position:relative;width:100%;aspect-ratio:1/1.18;border-radius:50%;overflow:visible;
-      background:radial-gradient(ellipse at 50% 42%,#1c8a4f 0%,#146a3c 55%,#0d4b2a 100%);
+    .f7-table-rim{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:18px;padding:clamp(6px,2vw,12px);box-shadow:0 12px 28px #4f46e540}
+    .f7-table{position:relative;border-radius:14px;display:flex;flex-direction:column;gap:12px;padding:12px 10px 16px;
+      background:radial-gradient(ellipse at 50% 20%,#1c8a4f 0%,#146a3c 55%,#0d4b2a 100%);
       box-shadow:inset 0 10px 34px #00000060, inset 0 -6px 16px #ffffff1f}
-    @media(min-width:600px){.f7-table{aspect-ratio:16/9.2}}
 
-    .f7-table-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:clamp(10px,4vw,20px);align-items:center;z-index:1}
-    .f7-pile{position:relative;display:flex;flex-direction:column;align-items:center;opacity:.92}
-    .f7-pile-label{font-size:clamp(.5rem,2vw,.6rem);color:#ffffffcc;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:.05em;text-shadow:0 1px 2px #00000080}
-
-    .f7-seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:clamp(58px,21vw,108px);z-index:2;transition:filter .2s}
-    .f7-seat--me{width:clamp(80px,30vw,168px);z-index:6}
+    /* ── rangée des adversaires : wrap = jamais de chevauchement ── */
+    .f7-opponents-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:clamp(8px,2.5vw,18px)}
+    .f7-seat{display:flex;flex-direction:column;align-items:center;width:clamp(64px,22vw,104px);flex:0 0 auto;transition:filter .2s}
     .f7-seat-info{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:5px;max-width:100%}
-    .f7-seat .avatar.f7-avatar{width:clamp(26px,7.5vw,38px)!important;height:clamp(26px,7.5vw,38px)!important;font-size:clamp(.6rem,3vw,.82rem)!important;border:2px solid #ffffffdd;box-shadow:0 2px 6px #00000040}
-    .f7-seat--me .avatar.f7-avatar{width:clamp(36px,10vw,54px)!important;height:clamp(36px,10vw,54px)!important;font-size:clamp(.75rem,3.4vw,1rem)!important}
-    .f7-seat-name{font-size:clamp(.56rem,2.3vw,.72rem);font-weight:800;color:#fff;text-shadow:0 1px 3px #00000090;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .f7-seat-badge{margin-top:1px}
-    .f7-seat-score{font-size:clamp(.54rem,2.1vw,.66rem);font-weight:800;color:#eafff0;margin-top:4px;background:#00000045;padding:1px 7px;border-radius:8px;white-space:nowrap}
-
+    .f7-seat .avatar.f7-avatar{width:clamp(26px,7vw,36px)!important;height:clamp(26px,7vw,36px)!important;font-size:clamp(.6rem,2.8vw,.8rem)!important;border:2px solid #ffffffdd;box-shadow:0 2px 6px #00000040}
+    .f7-seat-name{font-size:clamp(.56rem,2.2vw,.7rem);font-weight:800;color:#fff;text-shadow:0 1px 3px #00000090;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .f7-seat-badge{margin-top:1px;min-height:1.1em}
+    .f7-seat-score{font-size:clamp(.52rem,2vw,.64rem);font-weight:800;color:#eafff0;margin-top:4px;background:#00000045;padding:1px 7px;border-radius:8px;white-space:nowrap}
     .f7-seat--active{filter:drop-shadow(0 0 9px #fde047cc)}
     .f7-seat--active .avatar.f7-avatar{animation:f7pulse 1.4s ease-in-out infinite}
     @keyframes f7pulse{0%,100%{box-shadow:0 0 0 3px #fde047,0 0 12px 3px #fde04799}50%{box-shadow:0 0 0 5px #fde047,0 0 20px 7px #fde047cc}}
 
-    .f7-hand{display:flex;flex-wrap:wrap;justify-content:center;max-width:clamp(84px,32vw,210px)}
-    .f7-seat--me .f7-hand{max-width:clamp(150px,62vw,340px)}
-    .f7-card{width:clamp(18px,5.8vw,30px);height:clamp(26px,8.2vw,42px);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-weight:900;font-size:clamp(.52rem,2.3vw,.74rem);margin-left:-10px;box-shadow:0 2px 5px #00000045;border:1.5px solid #ffffff50;position:relative}
+    /* ── pioche / défausse, au centre, en flux normal (jamais superposées) ── */
+    .f7-center-piles{display:flex;justify-content:center;align-items:flex-start;gap:clamp(16px,5vw,32px);padding:2px 0 4px}
+    .f7-pile{position:relative;display:flex;flex-direction:column;align-items:center;opacity:.92}
+    .f7-pile-label{font-size:clamp(.5rem,2vw,.6rem);color:#ffffffcc;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:.05em;text-shadow:0 1px 2px #00000080}
+    .f7-card-back{background:repeating-linear-gradient(45deg,#4f46e5,#4f46e5 6px,#7c3aed 6px,#7c3aed 12px);width:clamp(24px,7vw,34px);height:clamp(34px,10vw,48px);border-radius:5px;border:1.5px solid #ffffff55;box-shadow:0 3px 8px #00000050}
+    .f7-pile-count{position:absolute;bottom:-6px;right:-6px;background:#1e293b;color:#fff;font-size:.6rem;font-weight:800;border-radius:8px;padding:1px 6px;box-shadow:0 1px 4px #00000040}
+
+    /* ── main de cartes : wrap pour ne jamais déborder du siège ── */
+    .f7-hand{display:flex;flex-wrap:wrap;justify-content:center;row-gap:6px;max-width:100%}
+    .f7-card{width:clamp(18px,5.5vw,28px);height:clamp(26px,7.8vw,40px);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-weight:900;font-size:clamp(.52rem,2.2vw,.72rem);margin-left:-9px;box-shadow:0 2px 5px #00000045;border:1.5px solid #ffffff50;position:relative}
     .f7-card:first-child{margin-left:0}
-    .f7-seat--me .f7-card{width:clamp(27px,8.4vw,42px);height:clamp(38px,11.6vw,58px);font-size:clamp(.68rem,2.9vw,.98rem);margin-left:-13px}
     .f7-card-label{font-size:.48em;font-weight:700;opacity:.88;margin-top:1px;letter-spacing:.02em}
     .f7-card-empty{color:#ffffffb0;font-size:.65rem;font-weight:700;background:none;box-shadow:none;border:1.5px dashed #ffffff40;width:auto;height:auto;padding:4px 10px;margin-left:0}
 
-    .f7-card-back{background:repeating-linear-gradient(45deg,#4f46e5,#4f46e5 6px,#7c3aed 6px,#7c3aed 12px);width:clamp(24px,7vw,34px);height:clamp(34px,10vw,48px);border-radius:5px;border:1.5px solid #ffffff55;box-shadow:0 3px 8px #00000050}
-    .f7-pile-count{position:absolute;bottom:-6px;right:-6px;background:#1e293b;color:#fff;font-size:.6rem;font-weight:800;border-radius:8px;padding:1px 6px;box-shadow:0 1px 4px #00000040}
+    /* ── bannière "moi", pleine largeur, sous la table ── */
+    .f7-me-panel{margin-top:10px;background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:14px;padding:10px 12px 12px;box-shadow:0 8px 20px #00000040;transition:box-shadow .2s}
+    .f7-me-panel--active{box-shadow:0 0 0 3px #fde047,0 8px 20px #00000040}
+    .f7-me-header{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:9px}
+    .f7-me-header .avatar.f7-avatar{width:34px!important;height:34px!important;font-size:.85rem!important;border:2px solid #ffffffdd}
+    .f7-me-name{font-size:.85rem;font-weight:800;color:#fff}
+    .f7-me-score{margin-left:auto;font-size:.72rem;font-weight:800;color:#eafff0;background:#ffffff1a;padding:3px 9px;border-radius:9px;white-space:nowrap}
+    .f7-me-panel .f7-card{width:clamp(30px,9vw,44px);height:clamp(42px,12.5vw,62px);font-size:clamp(.68rem,2.8vw,.95rem);margin-left:-12px}
+    .f7-me-panel .f7-card:first-child{margin-left:0}
 
     @keyframes f7deal{from{opacity:0;transform:translateY(-20px) scale(.4) rotate(var(--f7rot,0deg))}to{opacity:1;transform:translateY(0) scale(1) rotate(var(--f7rot,0deg))}}
     .f7-card--new{animation:f7deal .5s cubic-bezier(.34,1.56,.64,1) both}
@@ -370,12 +387,8 @@ function flip7InjectStyles() {
 }
 
 // ── palette des cartes (façon "vraies cartes" du jeu physique) ──
-// Chaque type de carte a sa propre couleur pour rester identifiable
-// au premier coup d'œil, comme sur les cartes physiques de Flip 7.
 function flip7CardVisual(card) {
   if (card.kind === "number") {
-    // Un dégradé de teinte différent par valeur (0 → 12), comme les
-    // vraies cartes numérotées qui ont chacune leur couleur.
     const hue = Math.round((card.value / 12) * 300);
     return {
       bg: `linear-gradient(160deg,hsl(${hue} 72% 52%),hsl(${hue} 70% 38%))`,
@@ -434,40 +447,26 @@ function flip7PlayerHand(playerIdx, hand) {
   return `<div class="f7-hand">${html}</div>`;
 }
 
-// ── calcule les positions (en %) des sièges autour de la table ──
-// Une seule formule couvre tous les cas demandés :
-//   n=2 → face à face, n=3 → triangle, n=4 → 4 côtés, n=5..8 → cercle.
-// Le joueur i=0 (toujours "moi" une fois la liste réordonnée) est
-// placé en bas, les suivants sont répartis autour de l'ellipse.
-function flip7SeatPositions(n) {
-  const Rx = 43, Ry = 40;
-  const positions = [];
-  for (let i = 0; i < n; i++) {
-    const theta = (90 + (i * 360) / n) * (Math.PI / 180);
-    positions.push({
-      left: 50 + Rx * Math.cos(theta),
-      top: 50 + Ry * Math.sin(theta)
-    });
-  }
-  return positions;
+// ── badge d'état d'un joueur (brûlé / gelé / resté / en jeu / forcé / choisit) ──
+function flip7StatusBadge(hand, idx, currentTurnIdx, forcedIdx, choosingIdx) {
+  if (hand.busted) return `<span class="flip7-badge flip7-badge-bust">💥 Brûlé</span>`;
+  if (hand.frozen) return `<span class="flip7-badge flip7-badge-frozen">❄️ Gelé</span>`;
+  if (hand.stayed) return `<span class="flip7-badge flip7-badge-stayed">✋ Resté</span>`;
+  if (idx === currentTurnIdx) return `<span class="flip7-badge flip7-badge-turn">🎲 En jeu</span>`;
+  if (idx === forcedIdx) return `<span class="flip7-badge flip7-badge-turn">🎯 Forcé</span>`;
+  if (idx === choosingIdx) return `<span class="flip7-badge flip7-badge-turn">🤔 Choisit</span>`;
+  return "";
 }
 
-// ── réordonne la liste des joueurs pour que "moi" soit en premier (bas de table) ──
-function flip7DisplayOrder(order, me) {
-  const meIdx = order.indexOf(me);
-  if (meIdx <= 0) return order.slice();
-  return order.slice(meIdx).concat(order.slice(0, meIdx));
-}
-
-// ── composant : un siège de joueur complet ──
-function flip7PlayerSeat(idx, pos, opts) {
-  const { hand, score, total, isMe, isActive, statusBadge } = opts;
+// ── composant : le siège d'un adversaire (rangée du haut, jamais de chevauchement grâce au wrap) ──
+function flip7PlayerSeat(idx, opts) {
+  const { hand, score, total, isActive, statusBadge } = opts;
   const initial = (names[idx] || "?")[0]?.toUpperCase() || "?";
-  const seatClasses = `f7-seat${isMe ? " f7-seat--me" : ""}${isActive ? " f7-seat--active" : ""}`;
-  return `<div class="${seatClasses}" style="left:${pos.left}%;top:${pos.top}%">
+  const seatClasses = `f7-seat${isActive ? " f7-seat--active" : ""}`;
+  return `<div class="${seatClasses}">
     <div class="f7-seat-info">
       <div class="avatar f7-avatar" style="background:${playerColor(idx)}">${initial}</div>
-      <span class="f7-seat-name">${names[idx]}${isMe ? " (toi)" : ""}</span>
+      <span class="f7-seat-name">${names[idx]}</span>
       <span class="f7-seat-badge">${statusBadge || ""}</span>
     </div>
     ${flip7PlayerHand(idx, hand)}
@@ -475,37 +474,41 @@ function flip7PlayerSeat(idx, pos, opts) {
   </div>`;
 }
 
-// ── composant : la table complète avec tous les sièges ──
-function flip7GameTable(st, me) {
-  const displayOrder = flip7DisplayOrder(st.order, me);
-  const positions = flip7SeatPositions(displayOrder.length);
+// ── composant : la bannière du joueur local, pleine largeur, sous la table ──
+function flip7MePanel(idx, opts) {
+  const { hand, score, total, isActive, statusBadge } = opts;
+  const initial = (names[idx] || "?")[0]?.toUpperCase() || "?";
+  const panelClass = `f7-me-panel${isActive ? " f7-me-panel--active" : ""}`;
+  return `<div class="${panelClass}">
+    <div class="f7-me-header">
+      <div class="avatar f7-avatar" style="background:${playerColor(idx)}">${initial}</div>
+      <span class="f7-me-name">${names[idx]} (toi)</span>
+      ${statusBadge || ""}
+      <span class="f7-me-score">${score} pts · total ${total}</span>
+    </div>
+    ${flip7PlayerHand(idx, hand)}
+  </div>`;
+}
 
+// ── composant : la table complète (adversaires en haut + pioche/défausse + "moi" en bas) ──
+function flip7GameTable(st, me) {
   const currentTurnIdx = (st.status === "playing" && !st.pendingTarget && (st.forcedPlayer === null || st.forcedPlayer === undefined))
     ? st.order[st.turnIndex]
     : null;
   const forcedIdx = (st.forcedPlayer !== null && st.forcedPlayer !== undefined) ? st.forcedPlayer : null;
   const choosingIdx = st.pendingTarget ? st.pendingTarget.chooser : null;
 
-  const seatsHtml = displayOrder.map((idx, i) => {
+  const others = st.order.filter(idx => idx !== me);
+
+  const opponentsHtml = others.map(idx => {
     const hand = st.hands[idx];
     const score = hand.busted ? 0 : flip7ComputeScore(hand);
-    let statusBadge = "";
-    if (hand.busted) statusBadge = `<span class="flip7-badge flip7-badge-bust">💥 Brûlé</span>`;
-    else if (hand.frozen) statusBadge = `<span class="flip7-badge flip7-badge-frozen">❄️ Gelé</span>`;
-    else if (hand.stayed) statusBadge = `<span class="flip7-badge flip7-badge-stayed">✋ Resté</span>`;
-    else if (idx === currentTurnIdx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🎲 En jeu</span>`;
-    else if (idx === forcedIdx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🎯 Forcé</span>`;
-    else if (idx === choosingIdx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🤔 Choisit</span>`;
-
+    const statusBadge = flip7StatusBadge(hand, idx, currentTurnIdx, forcedIdx, choosingIdx);
     const isActive = idx === currentTurnIdx || idx === forcedIdx || idx === choosingIdx;
-
-    return flip7PlayerSeat(idx, positions[i], {
-      hand, score, total: st.totals[idx] || 0,
-      isMe: idx === me, isActive, statusBadge
-    });
+    return flip7PlayerSeat(idx, { hand, score, total: st.totals[idx] || 0, isActive, statusBadge });
   }).join("");
 
-  const centerHtml = `<div class="f7-table-center">
+  const centerHtml = `<div class="f7-center-piles">
     <div class="f7-pile">
       <div class="f7-card-back"></div>
       <span class="f7-pile-count">${st.deck.length}</span>
@@ -518,13 +521,23 @@ function flip7GameTable(st, me) {
     </div>
   </div>`;
 
+  let meHtml = "";
+  const meHand = st.hands[me];
+  if (meHand) {
+    const meScore = meHand.busted ? 0 : flip7ComputeScore(meHand);
+    const meBadge = flip7StatusBadge(meHand, me, currentTurnIdx, forcedIdx, choosingIdx);
+    const isActiveMe = me === currentTurnIdx || me === forcedIdx || me === choosingIdx;
+    meHtml = flip7MePanel(me, { hand: meHand, score: meScore, total: st.totals[me] || 0, isActive: isActiveMe, statusBadge: meBadge });
+  }
+
   return `<div class="f7-scene">
     <div class="f7-table-rim">
       <div class="f7-table">
+        ${opponentsHtml ? `<div class="f7-opponents-row">${opponentsHtml}</div>` : ""}
         ${centerHtml}
-        ${seatsHtml}
       </div>
     </div>
+    ${meHtml}
   </div>`;
 }
 
