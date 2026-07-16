@@ -299,10 +299,241 @@ async function flip7StartNewRound() {
   } catch(e) { console.error("Erreur Flip Seven (nouvelle manche)", e); }
 }
 
-// ── rendu ──
+// ══════════════════════════════════════════════════════════
+// Flip Seven — COUCHE DE RENDU (vue "table de jeu")
+// Tout ce qui suit ne touche à AUCUNE logique de jeu : ces fonctions ne
+// font que lire l'état `flip7State` (déjà calculé plus haut) pour
+// construire le HTML. Le moteur de jeu (transactions Firestore, calcul
+// des scores, tour par tour…) reste strictement inchangé au-dessus.
+//
+// « Composants » réutilisables (façon composants UI, en vanilla JS) :
+//   - flip7PlayingCard(card)   → une carte individuelle
+//   - flip7PlayerHand(cards)   → la pile/éventail de cartes d'un joueur
+//   - flip7PlayerSeat(...)     → un siège complet (avatar + main + score)
+//   - flip7GameTable(...)      → la table avec tous les sièges placés
+// ══════════════════════════════════════════════════════════
+
+// Mémorise, entre deux rendus, le nombre de cartes déjà affichées pour
+// chaque joueur — permet de n'animer que les cartes qui viennent
+// d'arriver (et pas de tout re-jouer l'animation à chaque snapshot).
+let flip7PrevCardCounts = {};
+
+// ── injection unique des styles de la scène de jeu ──
+// On injecte un <style> dans le <head> plutôt que de toucher au CSS
+// global d'index.html : la partie Flip Seven reste 100% autonome et
+// n'a aucune chance d'impacter le reste du site (ni le jeu Diamant,
+// qui réutilise les classes .flip7-* existantes).
+function flip7InjectStyles() {
+  if (document.getElementById("flip7-scene-styles")) return;
+  const style = document.createElement("style");
+  style.id = "flip7-scene-styles";
+  style.textContent = `
+    .f7-scene{margin-bottom:14px}
+    .f7-table-rim{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;padding:clamp(6px,2vw,12px);box-shadow:0 12px 28px #4f46e540}
+    .f7-table{position:relative;width:100%;aspect-ratio:1/1.18;border-radius:50%;overflow:visible;
+      background:radial-gradient(ellipse at 50% 42%,#1c8a4f 0%,#146a3c 55%,#0d4b2a 100%);
+      box-shadow:inset 0 10px 34px #00000060, inset 0 -6px 16px #ffffff1f}
+    @media(min-width:600px){.f7-table{aspect-ratio:16/9.2}}
+
+    .f7-table-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:clamp(10px,4vw,20px);align-items:center;z-index:1}
+    .f7-pile{position:relative;display:flex;flex-direction:column;align-items:center;opacity:.92}
+    .f7-pile-label{font-size:clamp(.5rem,2vw,.6rem);color:#ffffffcc;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:.05em;text-shadow:0 1px 2px #00000080}
+
+    .f7-seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:clamp(58px,21vw,108px);z-index:2;transition:filter .2s}
+    .f7-seat--me{width:clamp(80px,30vw,168px);z-index:6}
+    .f7-seat-info{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:5px;max-width:100%}
+    .f7-seat .avatar.f7-avatar{width:clamp(26px,7.5vw,38px)!important;height:clamp(26px,7.5vw,38px)!important;font-size:clamp(.6rem,3vw,.82rem)!important;border:2px solid #ffffffdd;box-shadow:0 2px 6px #00000040}
+    .f7-seat--me .avatar.f7-avatar{width:clamp(36px,10vw,54px)!important;height:clamp(36px,10vw,54px)!important;font-size:clamp(.75rem,3.4vw,1rem)!important}
+    .f7-seat-name{font-size:clamp(.56rem,2.3vw,.72rem);font-weight:800;color:#fff;text-shadow:0 1px 3px #00000090;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .f7-seat-badge{margin-top:1px}
+    .f7-seat-score{font-size:clamp(.54rem,2.1vw,.66rem);font-weight:800;color:#eafff0;margin-top:4px;background:#00000045;padding:1px 7px;border-radius:8px;white-space:nowrap}
+
+    .f7-seat--active{filter:drop-shadow(0 0 9px #fde047cc)}
+    .f7-seat--active .avatar.f7-avatar{animation:f7pulse 1.4s ease-in-out infinite}
+    @keyframes f7pulse{0%,100%{box-shadow:0 0 0 3px #fde047,0 0 12px 3px #fde04799}50%{box-shadow:0 0 0 5px #fde047,0 0 20px 7px #fde047cc}}
+
+    .f7-hand{display:flex;flex-wrap:wrap;justify-content:center;max-width:clamp(84px,32vw,210px)}
+    .f7-seat--me .f7-hand{max-width:clamp(150px,62vw,340px)}
+    .f7-card{width:clamp(18px,5.8vw,30px);height:clamp(26px,8.2vw,42px);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-weight:900;font-size:clamp(.52rem,2.3vw,.74rem);margin-left:-10px;box-shadow:0 2px 5px #00000045;border:1.5px solid #ffffff50;position:relative}
+    .f7-card:first-child{margin-left:0}
+    .f7-seat--me .f7-card{width:clamp(27px,8.4vw,42px);height:clamp(38px,11.6vw,58px);font-size:clamp(.68rem,2.9vw,.98rem);margin-left:-13px}
+    .f7-card-label{font-size:.48em;font-weight:700;opacity:.88;margin-top:1px;letter-spacing:.02em}
+    .f7-card-empty{color:#ffffffb0;font-size:.65rem;font-weight:700;background:none;box-shadow:none;border:1.5px dashed #ffffff40;width:auto;height:auto;padding:4px 10px;margin-left:0}
+
+    .f7-card-back{background:repeating-linear-gradient(45deg,#4f46e5,#4f46e5 6px,#7c3aed 6px,#7c3aed 12px);width:clamp(24px,7vw,34px);height:clamp(34px,10vw,48px);border-radius:5px;border:1.5px solid #ffffff55;box-shadow:0 3px 8px #00000050}
+    .f7-pile-count{position:absolute;bottom:-6px;right:-6px;background:#1e293b;color:#fff;font-size:.6rem;font-weight:800;border-radius:8px;padding:1px 6px;box-shadow:0 1px 4px #00000040}
+
+    @keyframes f7deal{from{opacity:0;transform:translateY(-20px) scale(.4) rotate(var(--f7rot,0deg))}to{opacity:1;transform:translateY(0) scale(1) rotate(var(--f7rot,0deg))}}
+    .f7-card--new{animation:f7deal .5s cubic-bezier(.34,1.56,.64,1) both}
+  `;
+  document.head.appendChild(style);
+}
+
+// ── palette des cartes (façon "vraies cartes" du jeu physique) ──
+// Chaque type de carte a sa propre couleur pour rester identifiable
+// au premier coup d'œil, comme sur les cartes physiques de Flip 7.
+function flip7CardVisual(card) {
+  if (card.kind === "number") {
+    // Un dégradé de teinte différent par valeur (0 → 12), comme les
+    // vraies cartes numérotées qui ont chacune leur couleur.
+    const hue = Math.round((card.value / 12) * 300);
+    return {
+      bg: `linear-gradient(160deg,hsl(${hue} 72% 52%),hsl(${hue} 70% 38%))`,
+      main: card.value,
+      label: ""
+    };
+  }
+  if (card.kind === "bonus") {
+    return { bg: "linear-gradient(160deg,#34d399,#059669)", main: `+${card.value}`, label: "BONUS" };
+  }
+  if (card.kind === "x2") {
+    return { bg: "linear-gradient(160deg,#fbbf24,#d97706)", main: "×2", label: "MULTI" };
+  }
+  if (card.kind === "freeze") {
+    return { bg: "linear-gradient(160deg,#60a5fa,#2563eb)", main: "❄️", label: "FREEZE" };
+  }
+  if (card.kind === "flip3") {
+    return { bg: "linear-gradient(160deg,#fb7185,#dc2626)", main: "🎯", label: "FLIP 3" };
+  }
+  if (card.kind === "second_chance") {
+    return { bg: "linear-gradient(160deg,#22d3ee,#0891b2)", main: "🔁", label: "CHANCE" };
+  }
+  return { bg: "#94a3b8", main: "?", label: "" };
+}
+
+// ── composant : une carte individuelle ──
+function flip7PlayingCard(card, index, isNew) {
+  const v = flip7CardVisual(card);
+  const rot = ((index % 2 === 0) ? -1 : 1) * (4 + ((index * 7) % 9));
+  const cls = `f7-card${isNew ? " f7-card--new" : ""}`;
+  return `<div class="${cls}" style="background:${v.bg};--f7rot:${rot}deg;transform:rotate(${rot}deg)">
+    <span>${v.main}</span>
+    ${v.label ? `<span class="f7-card-label">${v.label}</span>` : ""}
+  </div>`;
+}
+
+// ── construit la liste des "cartes" représentant une main ──
+function flip7HandCards(hand) {
+  const cards = [];
+  (hand.numbers || []).forEach(n => cards.push({ kind: "number", value: n }));
+  (hand.bonusCards || []).forEach(b => cards.push({ kind: "bonus", value: b }));
+  if (hand.hasX2) cards.push({ kind: "x2" });
+  if (hand.secondChance) cards.push({ kind: "second_chance" });
+  return cards;
+}
+
+// ── composant : la main d'un joueur (pile/éventail de cartes) ──
+function flip7PlayerHand(playerIdx, hand) {
+  const cards = flip7HandCards(hand);
+  if (cards.length === 0) {
+    return `<div class="f7-hand"><span class="f7-card-empty">— aucune carte —</span></div>`;
+  }
+  const prevCount = flip7PrevCardCounts[playerIdx] || 0;
+  const html = cards.map((c, i) => flip7PlayingCard(c, i, i >= prevCount)).join("");
+  flip7PrevCardCounts[playerIdx] = cards.length;
+  return `<div class="f7-hand">${html}</div>`;
+}
+
+// ── calcule les positions (en %) des sièges autour de la table ──
+// Une seule formule couvre tous les cas demandés :
+//   n=2 → face à face, n=3 → triangle, n=4 → 4 côtés, n=5..8 → cercle.
+// Le joueur i=0 (toujours "moi" une fois la liste réordonnée) est
+// placé en bas, les suivants sont répartis autour de l'ellipse.
+function flip7SeatPositions(n) {
+  const Rx = 43, Ry = 40;
+  const positions = [];
+  for (let i = 0; i < n; i++) {
+    const theta = (90 + (i * 360) / n) * (Math.PI / 180);
+    positions.push({
+      left: 50 + Rx * Math.cos(theta),
+      top: 50 + Ry * Math.sin(theta)
+    });
+  }
+  return positions;
+}
+
+// ── réordonne la liste des joueurs pour que "moi" soit en premier (bas de table) ──
+function flip7DisplayOrder(order, me) {
+  const meIdx = order.indexOf(me);
+  if (meIdx <= 0) return order.slice();
+  return order.slice(meIdx).concat(order.slice(0, meIdx));
+}
+
+// ── composant : un siège de joueur complet ──
+function flip7PlayerSeat(idx, pos, opts) {
+  const { hand, score, total, isMe, isActive, statusBadge } = opts;
+  const initial = (names[idx] || "?")[0]?.toUpperCase() || "?";
+  const seatClasses = `f7-seat${isMe ? " f7-seat--me" : ""}${isActive ? " f7-seat--active" : ""}`;
+  return `<div class="${seatClasses}" style="left:${pos.left}%;top:${pos.top}%">
+    <div class="f7-seat-info">
+      <div class="avatar f7-avatar" style="background:${playerColor(idx)}">${initial}</div>
+      <span class="f7-seat-name">${names[idx]}${isMe ? " (toi)" : ""}</span>
+      <span class="f7-seat-badge">${statusBadge || ""}</span>
+    </div>
+    ${flip7PlayerHand(idx, hand)}
+    <div class="f7-seat-score">${score} pts <span style="opacity:.75">· total ${total}</span></div>
+  </div>`;
+}
+
+// ── composant : la table complète avec tous les sièges ──
+function flip7GameTable(st, me) {
+  const displayOrder = flip7DisplayOrder(st.order, me);
+  const positions = flip7SeatPositions(displayOrder.length);
+
+  const currentTurnIdx = (st.status === "playing" && !st.pendingTarget && (st.forcedPlayer === null || st.forcedPlayer === undefined))
+    ? st.order[st.turnIndex]
+    : null;
+  const forcedIdx = (st.forcedPlayer !== null && st.forcedPlayer !== undefined) ? st.forcedPlayer : null;
+  const choosingIdx = st.pendingTarget ? st.pendingTarget.chooser : null;
+
+  const seatsHtml = displayOrder.map((idx, i) => {
+    const hand = st.hands[idx];
+    const score = hand.busted ? 0 : flip7ComputeScore(hand);
+    let statusBadge = "";
+    if (hand.busted) statusBadge = `<span class="flip7-badge flip7-badge-bust">💥 Brûlé</span>`;
+    else if (hand.frozen) statusBadge = `<span class="flip7-badge flip7-badge-frozen">❄️ Gelé</span>`;
+    else if (hand.stayed) statusBadge = `<span class="flip7-badge flip7-badge-stayed">✋ Resté</span>`;
+    else if (idx === currentTurnIdx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🎲 En jeu</span>`;
+    else if (idx === forcedIdx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🎯 Forcé</span>`;
+    else if (idx === choosingIdx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🤔 Choisit</span>`;
+
+    const isActive = idx === currentTurnIdx || idx === forcedIdx || idx === choosingIdx;
+
+    return flip7PlayerSeat(idx, positions[i], {
+      hand, score, total: st.totals[idx] || 0,
+      isMe: idx === me, isActive, statusBadge
+    });
+  }).join("");
+
+  const centerHtml = `<div class="f7-table-center">
+    <div class="f7-pile">
+      <div class="f7-card-back"></div>
+      <span class="f7-pile-count">${st.deck.length}</span>
+      <span class="f7-pile-label">Pioche</span>
+    </div>
+    <div class="f7-pile">
+      <div class="f7-card-back" style="opacity:.6"></div>
+      <span class="f7-pile-count">${st.discard.length}</span>
+      <span class="f7-pile-label">Défausse</span>
+    </div>
+  </div>`;
+
+  return `<div class="f7-scene">
+    <div class="f7-table-rim">
+      <div class="f7-table">
+        ${centerHtml}
+        ${seatsHtml}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── rendu principal (remplace l'ancienne grille de cartes par la table) ──
 function renderFlip7(wrap, isHost) {
+  flip7InjectStyles();
   const st = flip7State;
-  if (!st || st.status==="idle") {
+  if (!st || st.status === "idle") {
+    flip7PrevCardCounts = {};
     wrap.innerHTML = `<div id="bg-icon">🃏</div><div id="bg-waiting-sub">⏳ Préparation de la partie…</div>`;
     return;
   }
@@ -313,24 +544,24 @@ function renderFlip7(wrap, isHost) {
   if (st.status === "playing") {
     if (st.pendingTarget) {
       if (st.pendingTarget.chooser === me) {
-        const label = st.pendingTarget.action==="freeze" ? "❄️ Choisis qui geler" : "🎯 Choisis qui doit retourner 3 cartes";
+        const label = st.pendingTarget.action === "freeze" ? "❄️ Choisis qui geler" : "🎯 Choisis qui doit retourner 3 cartes";
         const targets = st.order.filter(idx => !st.hands[idx].busted && !st.hands[idx].stayed);
         actionHtml = `<p class="flip7-prompt">${label}</p><div class="flip7-target-grid">
-          ${targets.map(idx=>`<button class="flip7-target-btn" style="background:${playerColor(idx)}" onclick="flip7ChooseTarget(${me},${idx})">${names[idx]}${idx===me?' (toi)':''}</button>`).join("")}
+          ${targets.map(idx => `<button class="flip7-target-btn" style="background:${playerColor(idx)}" onclick="flip7ChooseTarget(${me},${idx})">${names[idx]}${idx === me ? ' (toi)' : ''}</button>`).join("")}
         </div>`;
       } else {
         actionHtml = `<p class="flip7-waiting">⏳ ${names[st.pendingTarget.chooser]} choisit une cible…</p>`;
       }
-    } else if (st.forcedPlayer!==null && st.forcedPlayer!==undefined) {
-      if (st.forcedPlayer===me) {
-        actionHtml = `<p class="flip7-prompt">🎯 Tirage forcé ! Encore ${st.forcedRemaining} carte${st.forcedRemaining>1?'s':''}.</p>
+    } else if (st.forcedPlayer !== null && st.forcedPlayer !== undefined) {
+      if (st.forcedPlayer === me) {
+        actionHtml = `<p class="flip7-prompt">🎯 Tirage forcé ! Encore ${st.forcedRemaining} carte${st.forcedRemaining > 1 ? 's' : ''}.</p>
           <button class="flip7-draw-btn" style="width:100%" onclick="flip7Draw(${me})">🎴 Retourner une carte</button>`;
       } else {
         actionHtml = `<p class="flip7-waiting">⏳ ${names[st.forcedPlayer]} effectue un tirage forcé…</p>`;
       }
     } else {
       const current = st.order[st.turnIndex];
-      if (current===me) {
+      if (current === me) {
         const hand = st.hands[me];
         const currentScore = flip7ComputeScore(hand);
         actionHtml = `<p class="flip7-prompt">🎲 À toi de jouer ! (${currentScore} pts si tu t'arrêtes)</p>
@@ -338,55 +569,33 @@ function renderFlip7(wrap, isHost) {
             <button class="flip7-draw-btn" onclick="flip7Draw(${me})">🎴 Retourner une carte</button>
             <button class="flip7-stay-btn" onclick="flip7Stay(${me})">✋ Rester</button>
           </div>`;
-      } else if (current!==undefined) {
+      } else if (current !== undefined) {
         actionHtml = `<p class="flip7-waiting">⏳ Au tour de ${names[current]}…</p>`;
       }
     }
   }
 
-  const playersHtml = st.order.map(idx=>{
-    const hand = st.hands[idx];
-    const score = hand.busted?0:flip7ComputeScore(hand);
-    let statusBadge = "";
-    if (hand.busted) statusBadge = `<span class="flip7-badge flip7-badge-bust">💥 Brûlé</span>`;
-    else if (hand.frozen) statusBadge = `<span class="flip7-badge flip7-badge-frozen">❄️ Gelé</span>`;
-    else if (hand.stayed) statusBadge = `<span class="flip7-badge flip7-badge-stayed">✋ Resté</span>`;
-    else if (st.status==="playing" && !st.forcedPlayer && !st.pendingTarget && st.order[st.turnIndex]===idx) statusBadge = `<span class="flip7-badge flip7-badge-turn">🎲 En jeu</span>`;
-    const chips = [
-      ...hand.numbers.map(n=>`<span class="flip7-chip flip7-chip-num">${n}</span>`),
-      ...hand.bonusCards.map(b=>`<span class="flip7-chip flip7-chip-bonus">+${b}</span>`),
-      hand.hasX2?`<span class="flip7-chip flip7-chip-x2">×2</span>`:"",
-      hand.secondChance?`<span class="flip7-chip flip7-chip-sc">🔁</span>`:""
-    ].join("");
-    return `<div class="flip7-player-card${idx===me?' is-me':''}">
-      <div class="flip7-player-head">
-        <div class="avatar" style="background:${playerColor(idx)}">${(names[idx]||"?")[0]?.toUpperCase()}</div>
-        <span class="flip7-player-name">${names[idx]}${idx===me?' (toi)':''}</span>
-        ${statusBadge}
-      </div>
-      <div class="flip7-chips">${chips || '<span class="flip7-chip-empty">—</span>'}</div>
-      <div class="flip7-score">${score} pts <span class="flip7-total">(total ${st.totals[idx]||0})</span></div>
-    </div>`;
-  }).join("");
+  // la table remplace l'ancienne grille de cartes des joueurs
+  const tableHtml = flip7GameTable(st, me);
 
   let summaryHtml = "";
-  if (st.status==="round_summary" && st.lastRoundResults) {
+  if (st.status === "round_summary" && st.lastRoundResults) {
     summaryHtml = `<div class="flip7-summary">
       <h4>📋 Résultats de la manche ${st.round}</h4>
-      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${st.lastRoundResults[idx]} pts</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
-      ${isHost?'<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>':"<p class=\"flip7-waiting\">⏳ En attente que l'hôte lance la manche suivante…</p>"}
+      ${st.order.map(idx => `<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${st.lastRoundResults[idx]} pts</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
+      ${isHost ? '<button class="flip7-next-btn" onclick="flip7StartNewRound()">▶️ Manche suivante</button>' : "<p class=\"flip7-waiting\">⏳ En attente que l'hôte lance la manche suivante…</p>"}
     </div>`;
   }
-  if (st.status==="game_over") {
+  if (st.status === "game_over") {
     summaryHtml = `<div class="flip7-summary flip7-gameover">
       <h4>🏆 Partie terminée !</h4>
       <p class="flip7-winner">${names[st.winner]} remporte la partie avec ${st.totals[st.winner]} points !</p>
-      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
-      ${isHost?"<button class=\"flip7-next-btn\" onclick=\"selectBoardGame('flip7')\">🔄 Nouvelle partie</button>":''}
+      ${st.order.map(idx => `<div class="flip7-summary-row"><span>${names[idx]}</span><span>Total : ${st.totals[idx]}</span></div>`).join("")}
+      ${isHost ? "<button class=\"flip7-next-btn\" onclick=\"selectBoardGame('flip7')\">🔄 Nouvelle partie</button>" : ''}
     </div>`;
   }
 
-  const logHtml = (st.log||[]).slice(-6).map(l=>`<div class="flip7-log-row">${l}</div>`).join("");
+  const logHtml = (st.log || []).slice(-6).map(l => `<div class="flip7-log-row">${l}</div>`).join("");
 
   wrap.innerHTML = `
     <div class="flip7-header">
@@ -394,9 +603,9 @@ function renderFlip7(wrap, isHost) {
       <span class="flip7-target">Objectif : ${st.targetScore} pts</span>
     </div>
     ${actionHtml}
-    <div class="flip7-players-grid">${playersHtml}</div>
+    ${tableHtml}
     ${summaryHtml}
     <div class="flip7-log">${logHtml}</div>
-    ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Quitter la partie</button>':''}
+    ${isHost ? '<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Quitter la partie</button>' : ''}
   `;
 }
