@@ -306,24 +306,24 @@ async function flip7StartNewRound() {
 // construire le HTML. Le moteur de jeu (transactions Firestore, calcul
 // des scores, tour par tour…) reste strictement inchangé au-dessus.
 //
-// ── Choix de mise en page (v2) ──
-// L'ancienne version plaçait tous les sièges en cercle avec des tailles
-// en `vw`, sans aucune gestion de collision : dès que le nombre de
-// joueurs ou la largeur d'écran variait un peu, les sièges et le texte
-// se chevauchaient. La disposition est donc revue ainsi :
-//   - les ADVERSAIRES sont dans une rangée flex qui "wrap" (retour à la
-//     ligne automatique) en haut de la table : impossible de se
-//     chevaucher, quel que soit leur nombre (2 à 8).
-//   - "MOI" a sa propre bannière pleine largeur sous la table, avec des
-//     cartes plus grandes : plus de conflit d'espace avec les adversaires.
+// ── Choix de mise en page (v3) ──
+// Retour à l'idée d'une vraie table ronde (tous les joueurs assis en
+// cercle, "moi" en bas, en plus grand). Pour éviter les chevauchements
+// qu'on avait avant : la taille des sièges/cartes et le rayon du cercle
+// sont calculés en fonction du nombre de joueurs (flip7TableGeometry),
+// au lieu d'une taille fixe en vw. Plus il y a de joueurs, plus la table
+// est haute (aspect-ratio) et plus les sièges sont compacts, ce qui
+// garantit toujours assez d'espace entre deux sièges voisins.
 //
 // « Composants » réutilisables (façon composants UI, en vanilla JS) :
-//   - flip7PlayingCard(card)       → une carte individuelle
-//   - flip7PlayerHand(cards)       → la pile/éventail de cartes d'un joueur
-//   - flip7StatusBadge(...)        → le badge d'état (brûlé/gelé/en jeu…)
-//   - flip7PlayerSeat(...)         → le siège d'un adversaire (rangée du haut)
-//   - flip7MePanel(...)            → la bannière du joueur local (bas)
-//   - flip7GameTable(...)          → assemble la table complète
+//   - flip7TableGeometry(n)     → tailles/rayon adaptés au nb de joueurs
+//   - flip7DisplayOrder(...)    → réordonne pour que "moi" soit en 1er
+//   - flip7SeatPositions(n)     → positions (%) des sièges autour du cercle
+//   - flip7PlayingCard(card)    → une carte individuelle
+//   - flip7PlayerHand(cards)    → la main d'un joueur
+//   - flip7StatusBadge(...)     → badge d'état (brûlé/gelé/en jeu…)
+//   - flip7PlayerSeat(...)      → un siège complet (avatar + main + score)
+//   - flip7GameTable(...)       → assemble la table ronde complète
 // ══════════════════════════════════════════════════════════
 
 // Mémorise, entre deux rendus, le nombre de cartes déjà affichées pour
@@ -334,56 +334,114 @@ let flip7PrevCardCounts = {};
 // ── injection unique des styles de la scène de jeu ──
 function flip7InjectStyles() {
   const existing = document.getElementById("flip7-scene-styles");
-  if (existing) existing.remove(); // permet de recharger les styles proprement si le script est réinjecté
+  if (existing) existing.remove(); // permet de recharger proprement si le script est réinjecté
   const style = document.createElement("style");
   style.id = "flip7-scene-styles";
   style.textContent = `
     .f7-scene{margin-bottom:14px}
-    .f7-table-rim{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:18px;padding:clamp(6px,2vw,12px);box-shadow:0 12px 28px #4f46e540}
-    .f7-table{position:relative;border-radius:14px;display:flex;flex-direction:column;gap:12px;padding:12px 10px 16px;
-      background:radial-gradient(ellipse at 50% 20%,#1c8a4f 0%,#146a3c 55%,#0d4b2a 100%);
-      box-shadow:inset 0 10px 34px #00000060, inset 0 -6px 16px #ffffff1f}
 
-    /* ── rangée des adversaires : wrap = jamais de chevauchement ── */
-    .f7-opponents-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:clamp(8px,2.5vw,18px)}
-    .f7-seat{display:flex;flex-direction:column;align-items:center;width:clamp(64px,22vw,104px);flex:0 0 auto;transition:filter .2s}
-    .f7-seat-info{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:5px;max-width:100%}
-    .f7-seat .avatar.f7-avatar{width:clamp(26px,7vw,36px)!important;height:clamp(26px,7vw,36px)!important;font-size:clamp(.6rem,2.8vw,.8rem)!important;border:2px solid #ffffffdd;box-shadow:0 2px 6px #00000040}
-    .f7-seat-name{font-size:clamp(.56rem,2.2vw,.7rem);font-weight:800;color:#fff;text-shadow:0 1px 3px #00000090;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .f7-seat-badge{margin-top:1px;min-height:1.1em}
-    .f7-seat-score{font-size:clamp(.52rem,2vw,.64rem);font-weight:800;color:#eafff0;margin-top:4px;background:#00000045;padding:1px 7px;border-radius:8px;white-space:nowrap}
-    .f7-seat--active{filter:drop-shadow(0 0 9px #fde047cc)}
-    .f7-seat--active .avatar.f7-avatar{animation:f7pulse 1.4s ease-in-out infinite}
-    @keyframes f7pulse{0%,100%{box-shadow:0 0 0 3px #fde047,0 0 12px 3px #fde04799}50%{box-shadow:0 0 0 5px #fde047,0 0 20px 7px #fde047cc}}
+    /* ── cadre doré + feutre vert texturé ── */
+    .f7-table-rim{background:linear-gradient(135deg,#c9971f,#f0d375 35%,#a97c1a 70%,#c9971f);
+      padding:clamp(6px,1.8vw,10px);border-radius:24px;box-shadow:0 14px 34px #00000055}
+    .f7-table-inner-rim{background:linear-gradient(135deg,#241a3d,#31234f);border-radius:19px;padding:clamp(4px,1.2vw,7px)}
+    .f7-table{position:relative;border-radius:16px;overflow:hidden;
+      background:
+        radial-gradient(circle at 22% 18%, #ffffff10 0 2px, transparent 3px) 0 0/30px 30px,
+        radial-gradient(circle at 65% 62%, #ffffff0c 0 2px, transparent 3px) 0 0/38px 38px,
+        radial-gradient(circle at 50% 40%, #1f8f52 0%, #146a3c 48%, #0a3d24 100%);
+      box-shadow:inset 0 14px 44px #00000075, inset 0 -10px 22px #ffffff14}
+    .f7-table::after{content:"";position:absolute;inset:0;pointer-events:none;
+      background:radial-gradient(ellipse at 50% 12%, #ffffff1c, transparent 55%)}
 
-    /* ── pioche / défausse, au centre, en flux normal (jamais superposées) ── */
-    .f7-center-piles{display:flex;justify-content:center;align-items:flex-start;gap:clamp(16px,5vw,32px);padding:2px 0 4px}
-    .f7-pile{position:relative;display:flex;flex-direction:column;align-items:center;opacity:.92}
-    .f7-pile-label{font-size:clamp(.5rem,2vw,.6rem);color:#ffffffcc;font-weight:800;margin-top:4px;text-transform:uppercase;letter-spacing:.05em;text-shadow:0 1px 2px #00000080}
-    .f7-card-back{background:repeating-linear-gradient(45deg,#4f46e5,#4f46e5 6px,#7c3aed 6px,#7c3aed 12px);width:clamp(24px,7vw,34px);height:clamp(34px,10vw,48px);border-radius:5px;border:1.5px solid #ffffff55;box-shadow:0 3px 8px #00000050}
-    .f7-pile-count{position:absolute;bottom:-6px;right:-6px;background:#1e293b;color:#fff;font-size:.6rem;font-weight:800;border-radius:8px;padding:1px 6px;box-shadow:0 1px 4px #00000040}
+    .f7-table-watermark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      font-size:clamp(2.4rem,11vw,4.2rem);opacity:.06;pointer-events:none;user-select:none;z-index:0}
 
-    /* ── main de cartes : wrap pour ne jamais déborder du siège ── */
-    .f7-hand{display:flex;flex-wrap:wrap;justify-content:center;row-gap:6px;max-width:100%}
-    .f7-card{width:clamp(18px,5.5vw,28px);height:clamp(26px,7.8vw,40px);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-weight:900;font-size:clamp(.52rem,2.2vw,.72rem);margin-left:-9px;box-shadow:0 2px 5px #00000045;border:1.5px solid #ffffff50;position:relative}
+    /* ── pioche / défausse au centre, en pile 3D ── */
+    .f7-center-piles{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      display:flex;gap:clamp(16px,4.5vw,28px);z-index:1}
+    .f7-pile{display:flex;flex-direction:column;align-items:center}
+    .f7-pile-stack{position:relative;width:var(--f7-card-w);height:var(--f7-card-h)}
+    .f7-card-back{position:absolute;inset:0;border-radius:6px;
+      background:repeating-linear-gradient(45deg,#4f46e5,#4f46e5 5px,#6d28d9 5px,#6d28d9 10px);
+      border:1.5px solid #ffffff55;box-shadow:0 3px 8px #00000055}
+    .f7-card-back--b2{transform:translate(2px,-2px)}
+    .f7-card-back--b1{transform:translate(4px,-4px)}
+    .f7-pile-count{position:absolute;bottom:-8px;right:-9px;background:#1e1330;color:#fff;
+      font-size:.62rem;font-weight:800;border-radius:9px;padding:1px 7px;
+      box-shadow:0 1px 4px #00000060;border:1px solid #ffffff30;z-index:1}
+    .f7-pile-label{margin-top:9px;font-size:clamp(.5rem,2vw,.62rem);color:#ffffffcc;font-weight:800;
+      text-transform:uppercase;letter-spacing:.08em;text-shadow:0 1px 2px #00000090}
+
+    /* ── sièges positionnés autour du cercle ── */
+    .f7-seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+      align-items:center;z-index:2;transition:filter .25s}
+    .f7-seat--me{z-index:5}
+    .f7-seat--active{z-index:4;filter:drop-shadow(0 0 8px #fde04799)}
+
+    .f7-seat-avatar-wrap{position:relative;margin-bottom:4px}
+    .f7-seat .avatar.f7-avatar{width:var(--f7-avatar)!important;height:var(--f7-avatar)!important;
+      border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
+      border:2.5px solid #ffffffe6;box-shadow:0 3px 9px #00000055}
+    .f7-seat--active .f7-seat-avatar-wrap::before{content:"";position:absolute;inset:-5px;border-radius:50%;
+      border:2px solid #fde047;box-shadow:0 0 12px 2px #fde047b0;animation:f7ringpulse 1.35s ease-in-out infinite}
+    @keyframes f7ringpulse{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.1)}}
+
+    .f7-seat-name{font-size:clamp(.55rem,2.1vw,.72rem);font-weight:800;color:#fff;
+      text-shadow:0 1px 3px #000000a5;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .f7-me-tag{display:inline-block;font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#2b1e00;
+      background:linear-gradient(135deg,#fde047,#f0b90b);padding:1px 7px;border-radius:7px;margin-top:2px;
+      box-shadow:0 1px 3px #00000045}
+    .f7-seat-badge{min-height:1.15em;margin-top:2px}
+    .f7-seat-score{margin-top:5px;font-size:clamp(.5rem,1.9vw,.63rem);font-weight:800;color:#eafff0;
+      background:#00000055;padding:2px 8px;border-radius:9px;white-space:nowrap;border:1px solid #ffffff1f}
+
+    /* ── main de cartes en éventail, "glossy" ── */
+    .f7-hand{display:flex;flex-wrap:wrap;justify-content:center;row-gap:5px;max-width:100%;margin-top:2px}
+    .f7-card{width:var(--f7-card-w);height:var(--f7-card-h);border-radius:6px;display:flex;align-items:center;
+      justify-content:center;flex-direction:column;color:#fff;font-weight:900;
+      font-size:calc(var(--f7-card-w) * 0.42);margin-left:calc(var(--f7-fan, 9px) * -1);
+      box-shadow:0 2px 6px #00000055;border:1.5px solid #ffffff55;position:relative;overflow:hidden}
     .f7-card:first-child{margin-left:0}
-    .f7-card-label{font-size:.48em;font-weight:700;opacity:.88;margin-top:1px;letter-spacing:.02em}
-    .f7-card-empty{color:#ffffffb0;font-size:.65rem;font-weight:700;background:none;box-shadow:none;border:1.5px dashed #ffffff40;width:auto;height:auto;padding:4px 10px;margin-left:0}
+    .f7-card::after{content:"";position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(135deg,#ffffff3a 0%,transparent 38%)}
+    .f7-card-label{font-size:.42em;font-weight:700;opacity:.9;margin-top:1px;letter-spacing:.03em}
+    .f7-card-empty{color:#ffffffac;font-size:.62rem;font-weight:700;background:none;box-shadow:none;
+      border:1.5px dashed #ffffff48;width:auto;height:auto;padding:4px 10px;margin-left:0}
 
-    /* ── bannière "moi", pleine largeur, sous la table ── */
-    .f7-me-panel{margin-top:10px;background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:14px;padding:10px 12px 12px;box-shadow:0 8px 20px #00000040;transition:box-shadow .2s}
-    .f7-me-panel--active{box-shadow:0 0 0 3px #fde047,0 8px 20px #00000040}
-    .f7-me-header{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:9px}
-    .f7-me-header .avatar.f7-avatar{width:34px!important;height:34px!important;font-size:.85rem!important;border:2px solid #ffffffdd}
-    .f7-me-name{font-size:.85rem;font-weight:800;color:#fff}
-    .f7-me-score{margin-left:auto;font-size:.72rem;font-weight:800;color:#eafff0;background:#ffffff1a;padding:3px 9px;border-radius:9px;white-space:nowrap}
-    .f7-me-panel .f7-card{width:clamp(30px,9vw,44px);height:clamp(42px,12.5vw,62px);font-size:clamp(.68rem,2.8vw,.95rem);margin-left:-12px}
-    .f7-me-panel .f7-card:first-child{margin-left:0}
-
-    @keyframes f7deal{from{opacity:0;transform:translateY(-20px) scale(.4) rotate(var(--f7rot,0deg))}to{opacity:1;transform:translateY(0) scale(1) rotate(var(--f7rot,0deg))}}
+    @keyframes f7deal{from{opacity:0;transform:translateY(-20px) scale(.4) rotate(var(--f7rot,0deg))}
+      to{opacity:1;transform:translateY(0) scale(1) rotate(var(--f7rot,0deg))}}
     .f7-card--new{animation:f7deal .5s cubic-bezier(.34,1.56,.64,1) both}
   `;
   document.head.appendChild(style);
+}
+
+// ── géométrie de la table selon le nombre de joueurs ──
+// Plus n grandit, plus le rayon du cercle augmente légèrement et plus les
+// sièges/cartes rétrécissent : ça garde toujours un écart de sécurité
+// entre deux sièges voisins, quel que soit le nombre de joueurs (2 à 8).
+function flip7TableGeometry(n) {
+  if (n <= 2) return { rx:32, ry:32, aspectH:0.9,  seatW:116, avatar:46, cardW:32, cardH:45, fan:11 };
+  if (n === 3) return { rx:37, ry:35, aspectH:0.96, seatW:102, avatar:40, cardW:28, cardH:39, fan:10 };
+  if (n === 4) return { rx:41, ry:38, aspectH:1.05, seatW:90,  avatar:36, cardW:25, cardH:35, fan:10 };
+  if (n <= 6) return  { rx:43, ry:41, aspectH:1.15, seatW:78,  avatar:32, cardW:22, cardH:31, fan:9  };
+  return              { rx:45, ry:43, aspectH:1.28, seatW:68,  avatar:28, cardW:19, cardH:27, fan:9  };
+}
+
+// ── positions (%) des sièges répartis sur le cercle, "moi" en bas (i=0) ──
+function flip7SeatPositions(n, geo) {
+  const positions = [];
+  for (let i=0;i<n;i++){
+    const theta = (90 + (i*360)/n) * (Math.PI/180);
+    positions.push({ left: 50 + geo.rx*Math.cos(theta), top: 50 + geo.ry*Math.sin(theta) });
+  }
+  return positions;
+}
+
+// ── réordonne la liste des joueurs pour que "moi" soit en premier (bas de table) ──
+function flip7DisplayOrder(order, me) {
+  const meIdx = order.indexOf(me);
+  if (meIdx <= 0) return order.slice();
+  return order.slice(meIdx).concat(order.slice(0, meIdx));
 }
 
 // ── palette des cartes (façon "vraies cartes" du jeu physique) ──
@@ -458,86 +516,88 @@ function flip7StatusBadge(hand, idx, currentTurnIdx, forcedIdx, choosingIdx) {
   return "";
 }
 
-// ── composant : le siège d'un adversaire (rangée du haut, jamais de chevauchement grâce au wrap) ──
-function flip7PlayerSeat(idx, opts) {
-  const { hand, score, total, isActive, statusBadge } = opts;
+// ── composant : un siège complet (avatar + main + score), placé sur le cercle ──
+// "moi" est affiché ~30% plus grand que les autres pour rester bien lisible.
+function flip7PlayerSeat(idx, pos, opts) {
+  const { hand, score, total, isMe, isActive, statusBadge, geo } = opts;
   const initial = (names[idx] || "?")[0]?.toUpperCase() || "?";
-  const seatClasses = `f7-seat${isActive ? " f7-seat--active" : ""}`;
-  return `<div class="${seatClasses}">
-    <div class="f7-seat-info">
+  const seatClasses = `f7-seat${isMe ? " f7-seat--me" : ""}${isActive ? " f7-seat--active" : ""}`;
+
+  const seatW = isMe ? Math.round(geo.seatW * 1.32) : geo.seatW;
+  const avatar = isMe ? Math.round(geo.avatar * 1.2) : geo.avatar;
+  const cardW = isMe ? Math.round(geo.cardW * 1.25) : geo.cardW;
+  const cardH = isMe ? Math.round(geo.cardH * 1.25) : geo.cardH;
+  const scaleVars = isMe ? `--f7-avatar:${avatar}px;--f7-card-w:${cardW}px;--f7-card-h:${cardH}px;` : "";
+  const style = `left:${pos.left}%;top:${pos.top}%;width:${seatW}px;${scaleVars}`;
+
+  return `<div class="${seatClasses}" style="${style}">
+    <div class="f7-seat-avatar-wrap">
       <div class="avatar f7-avatar" style="background:${playerColor(idx)}">${initial}</div>
-      <span class="f7-seat-name">${names[idx]}</span>
-      <span class="f7-seat-badge">${statusBadge || ""}</span>
     </div>
+    <span class="f7-seat-name">${names[idx]}</span>
+    ${isMe ? '<span class="f7-me-tag">TOI</span>' : ""}
+    <span class="f7-seat-badge">${statusBadge || ""}</span>
     ${flip7PlayerHand(idx, hand)}
-    <div class="f7-seat-score">${score} pts <span style="opacity:.75">· total ${total}</span></div>
+    <div class="f7-seat-score">${score} pts <span style="opacity:.7">· ${total}</span></div>
   </div>`;
 }
 
-// ── composant : la bannière du joueur local, pleine largeur, sous la table ──
-function flip7MePanel(idx, opts) {
-  const { hand, score, total, isActive, statusBadge } = opts;
-  const initial = (names[idx] || "?")[0]?.toUpperCase() || "?";
-  const panelClass = `f7-me-panel${isActive ? " f7-me-panel--active" : ""}`;
-  return `<div class="${panelClass}">
-    <div class="f7-me-header">
-      <div class="avatar f7-avatar" style="background:${playerColor(idx)}">${initial}</div>
-      <span class="f7-me-name">${names[idx]} (toi)</span>
-      ${statusBadge || ""}
-      <span class="f7-me-score">${score} pts · total ${total}</span>
-    </div>
-    ${flip7PlayerHand(idx, hand)}
-  </div>`;
-}
-
-// ── composant : la table complète (adversaires en haut + pioche/défausse + "moi" en bas) ──
+// ── composant : la table ronde complète, avec tous les sièges + pioche/défausse au centre ──
 function flip7GameTable(st, me) {
+  const order = flip7DisplayOrder(st.order, me);
+  const n = order.length;
+  const geo = flip7TableGeometry(n);
+  const positions = flip7SeatPositions(n, geo);
+
   const currentTurnIdx = (st.status === "playing" && !st.pendingTarget && (st.forcedPlayer === null || st.forcedPlayer === undefined))
     ? st.order[st.turnIndex]
     : null;
   const forcedIdx = (st.forcedPlayer !== null && st.forcedPlayer !== undefined) ? st.forcedPlayer : null;
   const choosingIdx = st.pendingTarget ? st.pendingTarget.chooser : null;
 
-  const others = st.order.filter(idx => idx !== me);
-
-  const opponentsHtml = others.map(idx => {
+  const seatsHtml = order.map((idx, i) => {
     const hand = st.hands[idx];
     const score = hand.busted ? 0 : flip7ComputeScore(hand);
     const statusBadge = flip7StatusBadge(hand, idx, currentTurnIdx, forcedIdx, choosingIdx);
     const isActive = idx === currentTurnIdx || idx === forcedIdx || idx === choosingIdx;
-    return flip7PlayerSeat(idx, { hand, score, total: st.totals[idx] || 0, isActive, statusBadge });
+    return flip7PlayerSeat(idx, positions[i], {
+      hand, score, total: st.totals[idx] || 0,
+      isMe: idx === me, isActive, statusBadge, geo
+    });
   }).join("");
 
-  const centerHtml = `<div class="f7-center-piles">
+  const tableStyle = `aspect-ratio:1 / ${geo.aspectH};--f7-avatar:${geo.avatar}px;--f7-card-w:${geo.cardW}px;--f7-card-h:${geo.cardH}px;--f7-fan:${geo.fan}px;`;
+
+  const centerHtml = `<div class="f7-table-watermark">🃏</div><div class="f7-center-piles">
     <div class="f7-pile">
-      <div class="f7-card-back"></div>
-      <span class="f7-pile-count">${st.deck.length}</span>
+      <div class="f7-pile-stack">
+        <div class="f7-card-back f7-card-back--b3"></div>
+        <div class="f7-card-back f7-card-back--b2"></div>
+        <div class="f7-card-back f7-card-back--b1"></div>
+        <span class="f7-pile-count">${st.deck.length}</span>
+      </div>
       <span class="f7-pile-label">Pioche</span>
     </div>
     <div class="f7-pile">
-      <div class="f7-card-back" style="opacity:.6"></div>
-      <span class="f7-pile-count">${st.discard.length}</span>
+      <div class="f7-pile-stack" style="opacity:.65">
+        <div class="f7-card-back f7-card-back--b3"></div>
+        <div class="f7-card-back f7-card-back--b2"></div>
+        <div class="f7-card-back f7-card-back--b1"></div>
+        <span class="f7-pile-count">${st.discard.length}</span>
+      </div>
       <span class="f7-pile-label">Défausse</span>
     </div>
   </div>`;
 
-  let meHtml = "";
-  const meHand = st.hands[me];
-  if (meHand) {
-    const meScore = meHand.busted ? 0 : flip7ComputeScore(meHand);
-    const meBadge = flip7StatusBadge(meHand, me, currentTurnIdx, forcedIdx, choosingIdx);
-    const isActiveMe = me === currentTurnIdx || me === forcedIdx || me === choosingIdx;
-    meHtml = flip7MePanel(me, { hand: meHand, score: meScore, total: st.totals[me] || 0, isActive: isActiveMe, statusBadge: meBadge });
-  }
-
   return `<div class="f7-scene">
     <div class="f7-table-rim">
-      <div class="f7-table">
-        ${opponentsHtml ? `<div class="f7-opponents-row">${opponentsHtml}</div>` : ""}
-        ${centerHtml}
+      <div class="f7-table-inner-rim">
+        <div class="f7-table" style="${tableStyle}">
+          ${centerHtml}
+          ${seatsHtml}
+        </div>
       </div>
     </div>
-    ${meHtml}
   </div>`;
 }
 
