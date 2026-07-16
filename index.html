@@ -972,9 +972,76 @@ function listenValidated() {
     (err) => { console.error(err); setConnStatus(false); }
   );
 }
+
+// ─── rattrapage automatique pour les jours passés non joués ─────────────
+// Quand la journée de midi bascule (TODAY change de jour), tout joueur qui
+// n'a PAS de score enregistré pour un jour désormais "passé" reçoit un score
+// de rattrapage corrélé à la moyenne du jour (mais toujours inférieur à ce
+// qu'un vrai score aurait rapporté). Jamais 0 : si le calcul donne 0 (ou s'il
+// n'y a aucun score ce jour-là pour calculer une moyenne), on ne rattrape
+// simplement pas ce jour — on ne veut surtout pas planter un 0 dans les stats.
+const CATCHUP_RATIO = 0.7; // 70% de la moyenne du jour : toujours < un vrai score joué
+
+function computeCatchupScore(dayScores) {
+  const vals = Object.values(dayScores).filter(v => typeof v === "number" && !isNaN(v));
+  if (vals.length === 0) return 0; // pas de moyenne calculable -> pas de rattrapage
+  const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+  const catchup = Math.round((avg * CATCHUP_RATIO) / 10) * 10; // arrondi à la dizaine
+  return catchup;
+}
+
+async function backfillPastDay(day) {
+  const stateRef = db.collection(COLLECTION).doc("state");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(stateRef);
+      const data = snap.exists ? snap.data() : {};
+      const currentScores = data.scores || {};
+      const currentNames = (data.names && data.names.length) ? data.names : names;
+      const originalDay = { ...(currentScores[day] || {}) };
+
+      const missing = [];
+      for (let i=0; i<currentNames.length; i++) {
+        if (originalDay[i] === undefined) missing.push(i);
+      }
+      if (missing.length === 0) return; // tout le monde a déjà un score, rien à faire
+
+      const catchup = computeCatchupScore(originalDay);
+      // Jamais de score à 0 : si le rattrapage calculé est nul (ou aucune donnée
+      // pour établir une moyenne ce jour-là), on n'écrit rien pour ce jour.
+      if (catchup <= 0) return;
+
+      const updatedDay = { ...originalDay };
+      missing.forEach(i => { updatedDay[i] = catchup; });
+
+      tx.set(stateRef, {
+        ...data,
+        names: currentNames,
+        scores: { ...currentScores, [day]: updatedDay },
+        bonus: data.bonus || {},
+        malus: data.malus || {}
+      }, { merge:true });
+    });
+  } catch(e) {
+    console.error("Erreur de rattrapage pour "+day, e);
+  }
+}
+
+async function backfillPastDays() {
+  // Ne concerne que les jours strictement avant TODAY : la journée active
+  // (TODAY) reste ouverte à la saisie normale et n'est jamais backfillée.
+  const pastDays = WORKING_DAYS.filter(d => d < TODAY);
+  for (const day of pastDays) {
+    const dayScores = scores[day] || {};
+    const hasMissing = names.some((_,i) => dayScores[i] === undefined);
+    if (hasMissing) await backfillPastDay(day);
+  }
+}
+
 function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
+    backfillPastDays();
     if (myPlayerIdx!==null) tdfMyIdx = myPlayerIdx;
     switchTab(currentTab);
     renderWhoamiTag();
