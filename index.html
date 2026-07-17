@@ -438,7 +438,6 @@
 </div>
 
 <script src="flip7.js"></script>
-<script src="impostor.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
 // ⚠️ CONFIGURATION FIREBASE — À REMPLIR AVEC VOS PROPRES CLÉS
@@ -2221,7 +2220,7 @@ function renderPanel5() {
 // qui est l'hôte, la liste des joueurs présents, si les joueurs sont verrouillés
 // ("locked") et le jeu choisi ("selectedGame"). Une fois verrouillée, l'hôte
 // passe à un écran de choix du jeu. Le jeu lui-même vit dans son propre
-// document ("flip7_game", "diamant_game" ou "impostor_game").
+// document ("flip7_game" ou "diamant_game").
 let bgSession = null;
 
 function listenBoardGame() {
@@ -2283,7 +2282,6 @@ async function leaveBoardGameSession() {
       await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
       await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
       await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
-      await db.collection(COLLECTION).doc("impostor_game").set({ status:"idle" }, { merge:true });
     } else {
       await db.collection(COLLECTION).doc("boardgame_session").set({ players: remaining });
     }
@@ -2300,7 +2298,6 @@ async function cancelBoardGameSession() {
     await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
     await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
     await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
-    await db.collection(COLLECTION).doc("impostor_game").set({ status:"idle" }, { merge:true });
   } catch(e) {
     console.error("Erreur d'annulation de session", e);
     alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
@@ -2326,7 +2323,6 @@ async function unlockBoardGamePlayers() {
     await db.collection(COLLECTION).doc("boardgame_session").set({ locked:false, selectedGame:null }, { merge:true });
     await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
     await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
-    await db.collection(COLLECTION).doc("impostor_game").set({ status:"idle" }, { merge:true });
   } catch(e) {
     console.error("Erreur de déverrouillage", e);
     alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
@@ -2353,15 +2349,6 @@ async function selectBoardGame(gameKey) {
       await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant_config" }, { merge:true });
     } catch(e) {
       console.error("Erreur de sélection Diamant", e);
-      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
-    }
-  } else if (gameKey==="impostor") {
-    const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
-    if (order.length<3) { alert("Il faut au moins 3 joueurs pour lancer l'Imposteur."); return; }
-    try {
-      await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"impostor_config" }, { merge:true });
-    } catch(e) {
-      console.error("Erreur de sélection Imposteur", e);
       alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
     }
   }
@@ -2662,11 +2649,6 @@ function renderPanel6() {
           <span class="game-option-name">Diamant</span>
           <span class="game-option-desc">Explore la mine, sors avant le danger !</span>
         </button>
-        <button class="game-option" ${isHost?`onclick="selectBoardGame('impostor')"`:'disabled'}>
-          <span class="game-option-emoji">🎭</span>
-          <span class="game-option-name">L'Imposteur</span>
-          <span class="game-option-desc">Trouve qui bluffe sans connaître le mot !</span>
-        </button>
       </div>
       ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Retour au salon</button>':''}`;
     return;
@@ -2677,19 +2659,11 @@ function renderPanel6() {
     return;
   }
 
-  if (bgSession.selectedGame==="impostor_config") {
-    renderImpostorConfig(wrap, isHost);
-    return;
-  }
-
   if (bgSession.selectedGame==="flip7") {
     renderFlip7(wrap, isHost);
   }
   if (bgSession.selectedGame==="diamant") {
     renderDiamant(wrap, isHost);
-  }
-  if (bgSession.selectedGame==="impostor") {
-    renderImpostor(wrap, isHost);
   }
 }
 
@@ -2842,7 +2816,6 @@ function startLeagueData() {
   listenBoardGame();
   listenFlip7();
   listenDiamant();
-  listenImpostor();
 }
 
 listenLeaguesRegistry();
