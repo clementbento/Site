@@ -382,6 +382,7 @@
       <button id="save-names-btn" onclick="saveNames()">Sauvegarder les noms</button>
     </div>
     <p id="edit-hint">Cliquez sur une cellule pour modifier sa valeur (scores, bonus, malus)</p>
+    <p style="text-align:center;font-size:.7rem;color:#334155;font-weight:700;margin-bottom:10px">⬛ Score en noir = ajouté automatiquement (rattrapage, la personne n'a pas joué)</p>
     <div class="table-wrap">
       <table id="db-table">
         <thead id="db-head"></thead>
@@ -568,6 +569,7 @@ let scores   = {};
 let bonus    = {};
 let malus    = {};
 let validated = {};
+let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a joué)
 
 let adminUnlocked = false;
 let editCell = null;
@@ -923,7 +925,7 @@ function setConnStatus(ok) {
 
 async function persist() {
   try {
-    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus });
+    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores });
     setConnStatus(true);
     return true;
   } catch (e) {
@@ -954,6 +956,7 @@ function listenState() {
         if (d.scores) scores = d.scores;
         if (d.bonus)  bonus  = d.bonus;
         if (d.malus)  malus  = d.malus;
+        if (d.autoScores) autoScores = d.autoScores;
       }
       if (!stateReady) { stateReady = true; maybeReady(); }
       else if (dataReady) rerenderAll();
@@ -1014,12 +1017,17 @@ async function backfillPastDay(day) {
       const updatedDay = { ...originalDay };
       missing.forEach(i => { updatedDay[i] = catchup; });
 
+      const currentAuto = data.autoScores || {};
+      const updatedAutoDay = { ...(currentAuto[day] || {}) };
+      missing.forEach(i => { updatedAutoDay[i] = true; });
+
       tx.set(stateRef, {
         ...data,
         names: currentNames,
         scores: { ...currentScores, [day]: updatedDay },
         bonus: data.bonus || {},
-        malus: data.malus || {}
+        malus: data.malus || {},
+        autoScores: { ...currentAuto, [day]: updatedAutoDay }
       }, { merge:true });
     });
   } catch(e) {
@@ -1276,8 +1284,11 @@ function renderDbBody() {
         setTimeout(()=>inp.focus(),10);
         td.appendChild(inp);
       } else {
+        const isAuto = val!==undefined && autoScores[day] && autoScores[day][i];
         td.textContent=val!==undefined?val:"—";
-        td.style.color=val!==undefined?playerColor(i):"#cbd5e1";
+        td.style.color=val!==undefined?(isAuto?"#000000":playerColor(i)):"#cbd5e1";
+        td.style.fontWeight=isAuto?"900":"600";
+        if(isAuto) td.title="Score ajouté automatiquement (rattrapage) — la personne n'a pas joué ce jour-là";
         if(adminUnlocked&&!isFuture) td.onclick=()=>startEdit("day",day,i);
       }
       tr.appendChild(td);
@@ -1404,6 +1415,11 @@ async function commitEdit() {
   let needValidatedSave = false;
   if(type==="day"){
     if(!scores[date]) scores[date]={};
+    // Toute modification manuelle (même pour re-vider) fait perdre le statut "rattrapage automatique"
+    if(autoScores[date] && autoScores[date][idx]!==undefined){
+      delete autoScores[date][idx];
+      if(Object.keys(autoScores[date]).length===0) delete autoScores[date];
+    }
     if(isEmpty){
       delete scores[date][idx];
       if(date===TODAY){
