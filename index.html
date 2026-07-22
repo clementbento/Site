@@ -177,31 +177,6 @@
   .item-toast.legendary{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
   .item-toast.mythic{background:linear-gradient(135deg,#0f172a,#334155)}
 
-  /* ── panel 5 – Tour de France ── */
-  #tdf-wrap{position:relative;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#8ec9f0 0%,#bfe3ff 38%,#dff0e0 38%,#a9d68c 100%);box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9;height:min(56vh,440px);touch-action:none}
-  #tdf-scene{position:absolute;inset:0;cursor:pointer}
-  #tdf-hud{position:absolute;top:0;left:0;right:0;padding:12px;text-align:center;pointer-events:none;z-index:5;display:flex;flex-direction:column;align-items:center;gap:6px}
-  #tdf-jersey-tag{display:inline-flex;align-items:center;gap:6px;background:#ffffffcc;backdrop-filter:blur(4px);border-radius:20px;padding:5px 14px;font-size:.76rem;font-weight:800;color:#334155;box-shadow:0 2px 8px #0000001a}
-  #tdf-dist-tag{background:#0f172acc;color:white;border-radius:20px;padding:4px 12px;font-size:.72rem;font-weight:800;letter-spacing:.02em}
-  #tdf-hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:.68rem;color:#334155cc;font-weight:700;pointer-events:none;z-index:5;text-shadow:0 1px 2px #ffffff88}
-  #tdf-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#94a3b8;background:#f8fafc;z-index:6}
-
-  #tdf-pedal-btn{display:block;width:100%;margin-top:10px;border:none;border-radius:16px;padding:14px;background:linear-gradient(135deg,#f59e0b,#dc2626);color:white;font-size:.95rem;font-weight:900;letter-spacing:.02em;box-shadow:0 4px 14px #dc262640;cursor:pointer;transition:transform .08s}
-  #tdf-pedal-btn:active:not(:disabled){transform:scale(.96)}
-  #tdf-pedal-btn:disabled{background:#e2e8f0;color:#94a3b8;box-shadow:none;cursor:default}
-
-  #tdf-credits-tag{text-align:center;font-size:.72rem;font-weight:700;color:#7c2d12;margin-top:8px}
-  #tdf-credits-tag .bar-wrap{width:100%;height:6px;background:#fde68a;border-radius:4px;overflow:hidden;margin-top:4px}
-  #tdf-credits-tag .bar-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#dc2626);border-radius:4px;transition:width .3s}
-
-  .tdf-overtake-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);opacity:0;background:linear-gradient(135deg,#16a34a,#15803d);color:white;padding:10px 18px;border-radius:14px;font-size:.85rem;font-weight:900;box-shadow:0 6px 18px #00000030;z-index:10;pointer-events:none;transition:all .3s ease;white-space:nowrap;text-align:center}
-  .tdf-overtake-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-
-  .tdf-name-tag{position:absolute;transform:translate(-50%,-100%);background:#ffffffdd;border-radius:8px;padding:2px 6px;font-size:.62rem;font-weight:800;color:#334155;pointer-events:none;white-space:nowrap;box-shadow:0 1px 4px #0000001a}
-
-  #tdf-reset-btn{display:none;width:100%;margin-top:4px;border:none;border-radius:14px;padding:12px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:white;font-size:.82rem;font-weight:900;letter-spacing:.02em;box-shadow:0 4px 14px #ef444440;cursor:pointer;transition:transform .08s}
-  #tdf-reset-btn:active{transform:scale(.96)}
-
   /* ── panel 6 – Board Game ── */
   #bg-wrap{background:white;border-radius:20px;padding:28px 18px;box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9;text-align:center}
   #bg-icon{font-size:2.4rem;margin-bottom:10px}
@@ -343,8 +318,7 @@
   <button class="tab-btn" onclick="switchTab(1)">🏆 Classement</button>
   <button class="tab-btn" onclick="switchTab(2)">🗂️ Base de données</button>
   <button class="tab-btn" onclick="switchTab(3)">🍅 Bouuuu le nul</button>
-  <button class="tab-btn" onclick="switchTab(4)">🚴 Tour de France</button>
-  <button class="tab-btn" onclick="switchTab(5)">🎲 Board Game</button>
+  <button class="tab-btn" onclick="switchTab(4)">🎲 Board Game</button>
 </div>
 
 <div id="app">
@@ -406,32 +380,8 @@
     </div>
   </div>
 
-  <!-- PANEL 5 -->
-  <div class="panel" id="panel-4">
-    <p class="section-title">Le Tour de France</p>
-
-    <div id="tdf-wrap">
-      <div id="tdf-loading">⏳ Chargement de l'étape…</div>
-      <div id="tdf-hud">
-        <div id="tdf-jersey-tag">—</div>
-        <div id="tdf-dist-tag"></div>
-      </div>
-      <div id="tdf-scene"></div>
-      <p id="tdf-hint">👆 Touche l'écran pour pédaler</p>
-    </div>
-    <button id="tdf-pedal-btn" onclick="pedalTdf()" disabled>🚴 PÉDALER !</button>
-    <div id="tdf-credits-tag" style="display:none">
-      <span id="tdf-credits-text">—</span>
-      <div class="bar-wrap"><div class="bar-fill" id="tdf-credits-bar" style="width:0%"></div></div>
-    </div>
-
-    <p class="section-title" style="margin-top:18px">Classement de l'étape (mètres)</p>
-    <div id="tdf-rank-list" class="rank-list"></div>
-    <button id="tdf-reset-btn" onclick="resetTdfAll()">🗑️ Réinitialiser mètres &amp; clics de tout le monde</button>
-  </div>
-
   <!-- PANEL 6 -->
-  <div class="panel" id="panel-5">
+  <div class="panel" id="panel-4">
     <p class="section-title">Board Game</p>
     <div id="bg-wrap"></div>
   </div>
@@ -508,13 +458,6 @@ const ITEM_TYPES = [
   { key:"oeuf",     label:"Œuf",      emoji:"🥚", prob:1/50,  color:0xfff7e6, splatColor:0xfacc15, size:.15, rarity:"rare" },
   { key:"tomate",   label:"Tomate",   emoji:"🍅", prob:1 - (1/300 + 1/100 + 1/50), color:0xdc2626, splatColor:0xb91c1c, size:.16, rarity:"commun" }
 ];
-const TDF_JERSEYS = {
-  jaune: { key:"jaune", label:"🟡 Maillot Jaune", bg:"#FFD700", accent:"#ffffff", text:"#78350f", desc:"Leader du classement général" },
-  vert:  { key:"vert",  label:"🟢 Maillot Vert",  bg:"#16a34a", accent:"#ffffff", text:"#ffffff", desc:"Meilleur score du jour (sprint)" },
-  pois:  { key:"pois",  label:"⚪ Maillot à Pois", bg:"#fdf2f2", accent:"#dc2626", text:"#7c2d12", desc:"A le plus pédalé aujourd'hui (grimpeur)", dots:true },
-  blanc: { key:"blanc", label:"⚪ Maillot Blanc",  bg:"#f8fafc", accent:"#334155", text:"#334155", desc:"Dernier du classement général" }
-};
-
 function pickItem() {
   const r = Math.random();
   let cum = 0;
@@ -776,17 +719,10 @@ function applyIdentity(i) {
   try { localStorage.setItem(LOGIN_KEY, String(i)); } catch(e) { console.error("localStorage indisponible", e); }
   closeLoginOverlay();
   renderWhoamiTag();
-  tdfMyIdx = i;
-  tdfLastSign = {};
-  if (dataReady && currentTab===4) {
-    if (tdfInited) { buildMyTdfRider(); refreshTdfOtherRiders(); }
-    renderTdfHud(); renderTdfRankList(); renderTdfCredits();
-  }
   if (dataReady && currentTab===0) renderPanel1();
   if (dataReady && currentTab===1) renderPanel2();
   if (dataReady && currentTab===2) renderPanel3();
-  if (dataReady && currentTab===4) renderTdfResetBtn();
-  if (dataReady && currentTab===5) renderPanel6();
+  if (dataReady && currentTab===4) renderPanel6();
 }
 
 function showNewPlayerForm() {
@@ -1050,7 +986,6 @@ function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
     backfillPastDays();
-    if (myPlayerIdx!==null) tdfMyIdx = myPlayerIdx;
     switchTab(currentTab);
     renderWhoamiTag();
     if (myPlayerIdx===null) openLoginOverlay(false);
@@ -1061,8 +996,7 @@ function rerenderAll() {
   if (currentTab===1) renderPanel2();
   if (currentTab===2) renderPanel3();
   if (currentTab===3) refreshTomatoLoser();
-  if (currentTab===4) { renderTdfHud(); renderTdfRankList(); }
-  if (currentTab===5) renderPanel6();
+  if (currentTab===4) renderPanel6();
 }
 
 // ─── derived ─────────────────────────────────────────────
@@ -1741,496 +1675,6 @@ function renderPanel4() {
   refreshTomatoLoser();
 }
 
-// ─── panel 5 : Le Tour de France ────────────────────────────
-const TDF_SCALE = 0.15;
-const TDF_TREE_SPAN = 208;
-const TDF_MARK_SPAN = 288;
-
-let tdfMeters = {};
-let tdfMyIdx = null;
-let tdfJerseyAssignments = {};
-let tdfLastSign = {};
-
-let tdfScene, tdfCamera, tdfRenderer, tdfInited = false;
-let tdfMyRiderGroup = null;
-let tdfOtherRiders = {};
-let tdfTrees = [], tdfKmMarkers = [];
-let tdfDisplayDistance = 0;
-
-function computeTdfJerseys() {
-  const ranking = getRanking();
-  const assigned = {};
-  const used = new Set();
-
-  const leaderIdx = ranking[0].idx;
-  assigned[leaderIdx] = TDF_JERSEYS.jaune;
-  used.add(leaderIdx);
-
-  const todayScores = scores[TODAY] || {};
-  let sprinterIdx = -1, sprinterVal = -1;
-  for (let i=0;i<N;i++){
-    if (used.has(i)) continue;
-    const v = todayScores[i];
-    if (v!==undefined && v>sprinterVal){ sprinterVal=v; sprinterIdx=i; }
-  }
-  if (sprinterIdx>=0){ assigned[sprinterIdx]=TDF_JERSEYS.vert; used.add(sprinterIdx); }
-
-  let climberIdx=-1, climberVal=-1;
-  for (let i=0;i<N;i++){
-    if (used.has(i)) continue;
-    const v = tdfMeters[i];
-    if (v!==undefined && v>climberVal){ climberVal=v; climberIdx=i; }
-  }
-  if (climberIdx>=0 && climberVal>0){ assigned[climberIdx]=TDF_JERSEYS.pois; used.add(climberIdx); }
-
-  const lastIdx = ranking[N-1].idx;
-  if (!used.has(lastIdx)) assigned[lastIdx]=TDF_JERSEYS.blanc;
-
-  return assigned;
-}
-
-function listenTdf() {
-  db.collection(COLLECTION).doc("tdf_"+TODAY).onSnapshot(
-    (doc) => {
-      tdfMeters = doc.exists ? doc.data() : {};
-      if (currentTab===4 && dataReady) { renderTdfHud(); renderTdfRankList(); }
-    },
-    (err) => console.error("Erreur Tour de France", err)
-  );
-}
-
-function renderTdfHud() {
-  tdfJerseyAssignments = computeTdfJerseys();
-  const tag = document.getElementById("tdf-jersey-tag");
-  const dist = document.getElementById("tdf-dist-tag");
-  if (tdfMyIdx===null || tdfMyIdx===undefined) {
-    if (tag) tag.textContent = "🚴 Sélectionne un coureur";
-    if (dist) dist.textContent = "";
-    return;
-  }
-  const jersey = tdfJerseyAssignments[tdfMyIdx];
-  if (tag) tag.textContent = jersey ? `${jersey.label} — ${names[tdfMyIdx]}` : `👕 Maillot d'équipe — ${names[tdfMyIdx]}`;
-  const m = tdfMeters[tdfMyIdx]||0;
-  if (dist) dist.textContent = `📏 ${m.toLocaleString("fr-FR")} m aujourd'hui`;
-}
-
-function renderTdfRankList() {
-  tdfJerseyAssignments = computeTdfJerseys();
-  const list = document.getElementById("tdf-rank-list");
-  if (!list) return;
-  const ranking = Array.from({length:N},(_,i)=>({idx:i,name:names[i],m:tdfMeters[i]||0}))
-    .sort((a,b)=>b.m-a.m);
-  list.innerHTML = "";
-  ranking.forEach((r,pos)=>{
-    const jersey = tdfJerseyAssignments[r.idx];
-    const row = document.createElement("div");
-    row.className = "rank-row";
-    row.innerHTML = `
-      <span class="rank-pos" style="color:${pos<3?'#4f46e5':'#94a3b8'}">${pos<3?MEDAL[pos]:`${pos+1}.`}</span>
-      <div class="rank-dot" style="background:${jersey?jersey.bg:playerColor(r.idx)};border:${jersey?'1px solid #cbd5e1':'none'}"></div>
-      <span class="rank-name">${r.name}${r.idx===tdfMyIdx?' (toi)':''}</span>
-      <span class="rank-total" style="color:${playerColor(r.idx)}">${r.m.toLocaleString("fr-FR")} m</span>`;
-    list.appendChild(row);
-  });
-}
-
-function renderTdfResetBtn() {
-  const btn = document.getElementById("tdf-reset-btn");
-  if (!btn) return;
-  const isClement = myPlayerIdx!==null && (names[myPlayerIdx]||"").trim().toLowerCase()==="clément";
-  btn.style.display = isClement ? "block" : "none";
-}
-
-async function resetTdfAll() {
-  const isClement = myPlayerIdx!==null && (names[myPlayerIdx]||"").trim().toLowerCase()==="clément";
-  if (!isClement) return;
-  const sure = confirm("Es-tu sûr de vouloir réinitialiser les mètres et les clics disponibles de tout le monde ?");
-  if (!sure) return;
-
-  const btn = document.getElementById("tdf-reset-btn");
-  if (btn) { btn.disabled = true; btn.textContent = "Réinitialisation…"; }
-
-  tdfMeters = {};
-  tdfCredits = {};
-  tdfDisplayDistance = 0;
-  tdfLastSign = {};
-
-  try {
-    await db.collection(COLLECTION).doc("tdf_"+TODAY).set({});
-    await db.collection(COLLECTION).doc("tdf_credits_"+TODAY).set({});
-  } catch(e) {
-    console.error("Erreur de réinitialisation Tour de France", e);
-    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
-  }
-
-  if (btn) { btn.disabled = false; btn.textContent = "🗑️ Réinitialiser mètres & clics de tout le monde"; }
-  renderTdfHud();
-  renderTdfRankList();
-  renderTdfCredits();
-}
-
-const TDF_CLICKS_PER_DAY = 200;
-
-let tdfCredits = {};
-
-function listenTdfCredits() {
-  db.collection(COLLECTION).doc("tdf_credits_"+TODAY).onSnapshot(
-    (doc) => {
-      tdfCredits = doc.exists ? doc.data() : {};
-      if (currentTab===4 && dataReady) renderTdfCredits();
-    },
-    (err) => console.error("Erreur crédits Tour de France", err)
-  );
-}
-
-function getAvailableTdfCredits(idx) {
-  const rec = tdfCredits[idx];
-  return rec!==undefined ? rec : TDF_CLICKS_PER_DAY;
-}
-
-function renderTdfCredits() {
-  const wrap = document.getElementById("tdf-credits-tag");
-  const txt = document.getElementById("tdf-credits-text");
-  const bar = document.getElementById("tdf-credits-bar");
-  const btn = document.getElementById("tdf-pedal-btn");
-  if (!wrap) return;
-  if (tdfMyIdx===null || tdfMyIdx===undefined) {
-    wrap.style.display = "none";
-    if (btn) btn.disabled = true;
-    return;
-  }
-  wrap.style.display = "block";
-  const available = getAvailableTdfCredits(tdfMyIdx);
-  if (available >= 1) {
-    txt.textContent = `🔋 ${available} clic${available>1?'s':''} disponible${available>1?'s':''} aujourd'hui (sur ${TDF_CLICKS_PER_DAY})`;
-    if (btn) btn.disabled = false;
-  } else {
-    txt.textContent = `⏳ Plus de clics aujourd'hui — nouvelle réserve à la mise à jour de midi`;
-    if (btn) btn.disabled = true;
-  }
-  bar.style.width = Math.min(100, (available/TDF_CLICKS_PER_DAY)*100) + "%";
-}
-
-async function pedalTdf() {
-  if (tdfMyIdx===null || tdfMyIdx===undefined) {
-    const hint = document.getElementById("tdf-hint");
-    if (hint) hint.textContent = "⚠️ Choisis d'abord ton coureur ci-dessus";
-    return;
-  }
-
-  if (getAvailableTdfCredits(tdfMyIdx) < 1) {
-    renderTdfCredits();
-    return;
-  }
-
-  let gain = Math.round(14 + Math.random()*22);
-  let breakaway = false;
-  if (Math.random() < 1/40) { gain = Math.round(90 + Math.random()*60); breakaway = true; }
-
-  const idx = tdfMyIdx;
-  const creditsRef = db.collection(COLLECTION).doc("tdf_credits_"+TODAY);
-  const metersRef  = db.collection(COLLECTION).doc("tdf_"+TODAY);
-
-  let newCredits;
-  try {
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(creditsRef);
-      const data = snap.exists ? snap.data() : {};
-      const current = data[idx]!==undefined ? data[idx] : TDF_CLICKS_PER_DAY;
-      if (current < 1) throw new Error("TDF_NO_CREDITS");
-      newCredits = current - 1;
-      tx.set(creditsRef, { [idx]: newCredits }, { merge:true });
-      tx.set(metersRef, { [idx]: firebase.firestore.FieldValue.increment(gain) }, { merge:true });
-    });
-  } catch(e) {
-    if (e.message === "TDF_NO_CREDITS") {
-      renderTdfCredits();
-    } else {
-      console.error("Erreur d'enregistrement Tour de France", e);
-    }
-    return;
-  }
-
-  tdfCredits[idx] = newCredits;
-  tdfMeters[idx] = (tdfMeters[idx]||0) + gain;
-  renderTdfHud();
-  renderTdfRankList();
-  renderTdfCredits();
-  bumpTdfPedalBtn();
-  if (breakaway) showTdfToast(`⚡ Échappée ! +${gain} m`);
-}
-
-function bumpTdfPedalBtn() {
-  const btn = document.getElementById("tdf-pedal-btn");
-  if (!btn) return;
-  btn.style.transform = "scale(.94)";
-  setTimeout(()=>{ btn.style.transform = "scale(1)"; }, 90);
-}
-
-function showTdfToast(text) {
-  const wrap = document.getElementById("tdf-wrap");
-  if (!wrap) return;
-  const toast = document.createElement("div");
-  toast.className = "tdf-overtake-toast";
-  toast.textContent = text;
-  wrap.appendChild(toast);
-  requestAnimationFrame(()=>toast.classList.add("show"));
-  setTimeout(()=>{
-    toast.classList.remove("show");
-    setTimeout(()=>toast.remove(),300);
-  }, 1800);
-}
-
-function tdfJerseyTexture(jersey, letter, fallbackColor) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const ctx = c.getContext("2d");
-  if (jersey) {
-    ctx.fillStyle = jersey.bg; ctx.fillRect(0,0,128,128);
-    if (jersey.dots) {
-      ctx.fillStyle = jersey.accent;
-      for (let y=14; y<128; y+=26) {
-        for (let x = (Math.round(y/26)%2 ? 12 : 26); x<128; x+=28) {
-          ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fill();
-        }
-      }
-    } else {
-      ctx.fillStyle = jersey.accent;
-      ctx.fillRect(0,94,128,12);
-    }
-    ctx.fillStyle = jersey.text;
-  } else {
-    ctx.fillStyle = fallbackColor; ctx.fillRect(0,0,128,128);
-    ctx.fillStyle = "#ffffff"; ctx.fillRect(0,94,128,12);
-    ctx.fillStyle = "#ffffff";
-  }
-  ctx.font = "900 46px -apple-system,sans-serif";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(letter, 64, 62);
-  return new THREE.CanvasTexture(c);
-}
-
-function buildTdfRider(idx) {
-  const group = new THREE.Group();
-  const letter = (names[idx]||"?")[0]?.toUpperCase() || "?";
-  const jersey = tdfJerseyAssignments[idx];
-  const tex = tdfJerseyTexture(jersey, letter, playerColor(idx));
-  const frameColor = jersey ? jersey.accent : playerColor(idx);
-
-  const wheelMat = new THREE.MeshStandardMaterial({ color:0x1e293b, roughness:.7 });
-  const wheelGeo = new THREE.TorusGeometry(.32,.045,8,20);
-  const backWheel = new THREE.Mesh(wheelGeo, wheelMat);
-  backWheel.position.set(0,.32,.45); backWheel.rotation.y = Math.PI/2;
-  const frontWheel = backWheel.clone(); frontWheel.position.z = -.45;
-  group.add(backWheel, frontWheel);
-
-  const frameMat = new THREE.MeshStandardMaterial({ color:frameColor });
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.85), frameMat);
-  frame.position.set(0,.5,0);
-  group.add(frame);
-  const seatPost = new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.35,6), frameMat);
-  seatPost.position.set(0,.68,.32); seatPost.rotation.x = .3;
-  group.add(seatPost);
-  const forkPost = new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5,6), frameMat);
-  forkPost.position.set(0,.58,-.42); forkPost.rotation.x = -.35;
-  group.add(forkPost);
-  const handlebar = new THREE.Mesh(new THREE.BoxGeometry(.34,.03,.03), frameMat);
-  handlebar.position.set(0,.82,-.55);
-  group.add(handlebar);
-
-  const torso = new THREE.Mesh(
-    THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.2,.5,4,10) : new THREE.CylinderGeometry(.2,.24,.7,12),
-    new THREE.MeshStandardMaterial({ map: tex })
-  );
-  torso.position.set(0,.95,.05);
-  torso.rotation.x = 1.05;
-  torso.castShadow = true;
-  group.add(torso);
-
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(.16,20,20),
-    new THREE.MeshStandardMaterial({ color:0xfbcfa0 })
-  );
-  head.position.set(0,1.18,-.32);
-  group.add(head);
-
-  const helmet = new THREE.Mesh(
-    new THREE.SphereGeometry(.18,16,16,0,Math.PI*2,0,Math.PI*.6),
-    new THREE.MeshStandardMaterial({ color: jersey ? jersey.bg : playerColor(idx) })
-  );
-  helmet.position.set(0,1.22,-.32);
-  helmet.rotation.x = -.3;
-  group.add(helmet);
-
-  group.userData.idx = idx;
-  return group;
-}
-
-function buildTree() {
-  const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,.6,6), new THREE.MeshStandardMaterial({color:0x92603c}));
-  trunk.position.y = .3;
-  g.add(trunk);
-  const leaves = new THREE.Mesh(new THREE.ConeGeometry(.5,1.1,8), new THREE.MeshStandardMaterial({color:0x2f7a3d}));
-  leaves.position.y = 1.05;
-  leaves.castShadow = true;
-  g.add(leaves);
-  return g;
-}
-
-function buildKmMarker() {
-  const g = new THREE.Group();
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.1,6), new THREE.MeshStandardMaterial({color:0xf8fafc}));
-  pole.position.y = .55;
-  g.add(pole);
-  const stripe = new THREE.Mesh(new THREE.CylinderGeometry(.052,.052,.25,6), new THREE.MeshStandardMaterial({color:0xdc2626}));
-  stripe.position.y = .85;
-  g.add(stripe);
-  g.position.x = 2.6;
-  return g;
-}
-
-function wrapZ(base, distance, span) {
-  const effective = ((base - distance) % span + span) % span;
-  return 12 - effective;
-}
-
-function initTdfScene() {
-  const wrap = document.getElementById("tdf-wrap");
-  const container = document.getElementById("tdf-scene");
-  const w = wrap.clientWidth, h = wrap.clientHeight;
-
-  tdfScene = new THREE.Scene();
-  tdfScene.fog = new THREE.Fog(0xbfe3ff, 30, 130);
-
-  tdfCamera = new THREE.PerspectiveCamera(52, w/h, .1, 300);
-
-  tdfRenderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-  tdfRenderer.setSize(w,h);
-  tdfRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  tdfRenderer.shadowMap.enabled = true;
-  container.appendChild(tdfRenderer.domElement);
-
-  tdfScene.add(new THREE.AmbientLight(0xffffff,.78));
-  const dir = new THREE.DirectionalLight(0xffffff,.85);
-  dir.position.set(5,10,5); dir.castShadow = true;
-  tdfScene.add(dir);
-
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60,400), new THREE.MeshStandardMaterial({color:0x9fd67f}));
-  ground.rotation.x = -Math.PI/2; ground.position.set(0,0,-100); ground.receiveShadow = true;
-  tdfScene.add(ground);
-
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(4.2,400), new THREE.MeshStandardMaterial({color:0x475569}));
-  road.rotation.x = -Math.PI/2; road.position.set(0,.01,-100);
-  tdfScene.add(road);
-
-  tdfTrees = [];
-  for (let i=0;i<26;i++){
-    const side = i%2===0 ? -1 : 1;
-    const base = Math.floor(i/2) * 16 + 6;
-    const tree = buildTree();
-    tree.position.x = side*3.4;
-    tree.userData.base = base;
-    tdfScene.add(tree);
-    tdfTrees.push(tree);
-  }
-  tdfKmMarkers = [];
-  for (let i=0;i<12;i++){
-    const base = i*24 + 10;
-    const marker = buildKmMarker();
-    marker.userData.base = base;
-    tdfScene.add(marker);
-    tdfKmMarkers.push(marker);
-  }
-
-  container.addEventListener("pointerdown", pedalTdf);
-  addEventListener("resize", resizeTdfScene);
-
-  tdfInited = true;
-  document.getElementById("tdf-loading").style.display = "none";
-  animateTdf();
-}
-
-function resizeTdfScene() {
-  if (!tdfInited) return;
-  const wrap = document.getElementById("tdf-wrap");
-  const w = wrap.clientWidth, h = wrap.clientHeight;
-  tdfCamera.aspect = w/h; tdfCamera.updateProjectionMatrix();
-  tdfRenderer.setSize(w,h);
-}
-
-function buildMyTdfRider() {
-  if (tdfMyRiderGroup) { tdfScene.remove(tdfMyRiderGroup); tdfMyRiderGroup = null; }
-  if (tdfMyIdx===null || tdfMyIdx===undefined) return;
-  tdfMyRiderGroup = buildTdfRider(tdfMyIdx);
-  tdfMyRiderGroup.position.set(0,0,0);
-  tdfScene.add(tdfMyRiderGroup);
-}
-
-function refreshTdfOtherRiders() {
-  Object.values(tdfOtherRiders).forEach(g=>tdfScene.remove(g));
-  tdfOtherRiders = {};
-  if (tdfMyIdx===null || tdfMyIdx===undefined) return;
-  for (let i=0;i<N;i++){
-    if (i===tdfMyIdx) continue;
-    const g = buildTdfRider(i);
-    tdfScene.add(g);
-    tdfOtherRiders[i] = g;
-  }
-}
-
-function animateTdf() {
-  if (!tdfInited) return;
-  requestAnimationFrame(animateTdf);
-
-  const hasRider = tdfMyIdx!==null && tdfMyIdx!==undefined;
-  const targetDistance = (hasRider ? (tdfMeters[tdfMyIdx]||0) : 0) * TDF_SCALE;
-  tdfDisplayDistance += (targetDistance - tdfDisplayDistance) * 0.09;
-
-  tdfTrees.forEach(t => { t.position.z = wrapZ(t.userData.base, tdfDisplayDistance, TDF_TREE_SPAN); });
-  tdfKmMarkers.forEach(m => { m.position.z = wrapZ(m.userData.base, tdfDisplayDistance, TDF_MARK_SPAN); });
-
-  if (tdfMyRiderGroup) {
-    const moving = Math.abs(targetDistance - tdfDisplayDistance) > 0.02;
-    tdfMyRiderGroup.position.y = moving ? Math.abs(Math.sin(Date.now()*.02))*.05 : 0;
-  }
-
-  for (const idxStr in tdfOtherRiders) {
-    const idx = parseInt(idxStr);
-    const g = tdfOtherRiders[idx];
-    const otherDist = (tdfMeters[idx]||0) * TDF_SCALE;
-    const diff = otherDist - tdfDisplayDistance;
-    g.position.z = -diff;
-    g.position.x = ((idx % 4) - 1.5) * 0.9;
-    g.visible = Math.abs(diff) < 60;
-
-    if (hasRider) {
-      const sign = diff > 0.15 ? 1 : (diff < -0.15 ? -1 : 0);
-      const prev = tdfLastSign[idx];
-      if (prev===1 && sign<=0) showTdfToast(`🚴 Tu doubles ${names[idx]} !`);
-      else if (prev===-1 && sign>=1) showTdfToast(`💨 ${names[idx]} te double !`);
-      if (sign!==0) tdfLastSign[idx] = sign;
-    }
-  }
-
-  tdfCamera.position.set(0, 1.55, 3.1);
-  tdfCamera.lookAt(0, 1.15, -8);
-
-  tdfRenderer.render(tdfScene, tdfCamera);
-}
-
-function renderPanel5() {
-  tdfJerseyAssignments = computeTdfJerseys();
-  if (!tdfInited) initTdfScene();
-  else resizeTdfScene();
-  buildMyTdfRider();
-  refreshTdfOtherRiders();
-  renderTdfHud();
-  renderTdfRankList();
-  renderTdfCredits();
-  renderTdfResetBtn();
-}
-
 // ─── panel 6 : Board Game (session d'attente + choix du jeu + Flip Seven) ──
 // Une session est un simple document Firestore ("boardgame_session") contenant
 // qui est l'hôte, la liste des joueurs présents, si les joueurs sont verrouillés
@@ -2243,7 +1687,7 @@ function listenBoardGame() {
   db.collection(COLLECTION).doc("boardgame_session").onSnapshot(
     (doc) => {
       bgSession = doc.exists ? doc.data() : null;
-      if (currentTab===5 && dataReady) renderPanel6();
+      if (currentTab===4 && dataReady) renderPanel6();
     },
     (err) => console.error("Erreur session Board Game", err)
   );
@@ -2389,7 +1833,7 @@ function listenDiamant() {
   db.collection(COLLECTION).doc("diamant_game").onSnapshot(
     (doc) => {
       diamantState = doc.exists ? doc.data() : null;
-      if (currentTab===5 && dataReady) renderPanel6();
+      if (currentTab===4 && dataReady) renderPanel6();
     },
     (err) => console.error("Erreur Diamant (listen)", err)
   );
@@ -2815,8 +2259,7 @@ function switchTab(i) {
   if(i===1) renderPanel2();
   if(i===2) renderPanel3();
   if(i===3) renderPanel4();
-  if(i===4) renderPanel5();
-  if(i===5) renderPanel6();
+  if(i===4) renderPanel6();
 }
 
 // ─── init ────────────────────────────────────────────────
@@ -2827,8 +2270,6 @@ function startLeagueData() {
   loadMyIdentity();
   listenState();
   listenValidated();
-  listenTdf();
-  listenTdfCredits();
   listenBoardGame();
   listenFlip7();
   listenDiamant();
