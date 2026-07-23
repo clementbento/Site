@@ -265,6 +265,24 @@
   .diamant-stat-val{font-size:1.1rem;font-weight:900;color:#1e293b}
   .diamant-stat-label{font-size:.62rem;color:#94a3b8;font-weight:700;text-transform:uppercase}
   .diamant-config-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
+
+  /* ── panel 7 – Défis / Affiches ── */
+  .period-card{background:white;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9}
+  .period-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .period-card-title{font-size:.82rem;font-weight:900;color:#1e293b}
+  .period-card-dates{font-size:.68rem;color:#94a3b8;font-weight:700}
+  .period-podium-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #f8fafc}
+  .period-podium-row:first-child{border-top:none}
+  .period-medal{width:22px;text-align:center;font-size:.95rem}
+  .period-name{flex:1;font-size:.8rem;font-weight:700;color:#334155}
+  .period-pts{font-size:.8rem;font-weight:900;color:#4f46e5}
+  .period-loser-tag{font-size:.62rem;font-weight:800;color:#dc2626;background:#fef2f2;border-radius:8px;padding:2px 6px;margin-left:4px}
+  .period-winner-tag{font-size:.62rem;font-weight:800;color:#d97706;background:#fffbeb;border-radius:8px;padding:2px 6px;margin-left:4px}
+  .poster-btn{width:100%;margin-top:10px;border:none;border-radius:12px;padding:11px;font-size:.8rem;font-weight:900;color:white;cursor:pointer;background:linear-gradient(135deg,#6366f1,#7c3aed);box-shadow:0 4px 12px #6366f140}
+  .poster-btn:active{transform:scale(.97)}
+  .period-current-banner{background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:2px dashed #c7d2fe;border-radius:16px;padding:14px;text-align:center;margin-bottom:14px}
+  .period-current-banner b{color:#4f46e5}
+  #periods-empty{text-align:center;padding:30px;color:#cbd5e1;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -319,6 +337,7 @@
   <button class="tab-btn" onclick="switchTab(2)">🗂️ Base de données</button>
   <button class="tab-btn" onclick="switchTab(3)">🍅 Bouuuu le nul</button>
   <button class="tab-btn" onclick="switchTab(4)">🎲 Board Game</button>
+  <button class="tab-btn" onclick="switchTab(5)">🏅 Défis</button>
 </div>
 
 <div id="app">
@@ -332,11 +351,11 @@
 
   <!-- PANEL 2 -->
   <div class="panel" id="panel-1">
-    <p class="section-title">Classement du mois</p>
+    <p class="section-title" id="p2-title">Classement de la quinzaine</p>
     <div id="podium-wrap"></div>
     <div id="rank-list" class="rank-list"></div>
     <div id="chart-box">
-      <h3>Scores cumulés sur le mois</h3>
+      <h3>Scores cumulés sur la quinzaine</h3>
       <div id="chart-empty" style="display:none">📊 Aucun score encore enregistré</div>
       <canvas id="myChart" height="180"></canvas>
     </div>
@@ -386,9 +405,16 @@
     <div id="bg-wrap"></div>
   </div>
 
+  <!-- PANEL 7 -->
+  <div class="panel" id="panel-5">
+    <p class="section-title">Défis (2 semaines / 10 quizz)</p>
+    <div id="periods-wrap"></div>
+  </div>
+
 </div>
 
 <script src="flip7.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
 // ⚠️ CONFIGURATION FIREBASE — À REMPLIR AVEC VOS PROPRES CLÉS
@@ -723,6 +749,7 @@ function applyIdentity(i) {
   if (dataReady && currentTab===1) renderPanel2();
   if (dataReady && currentTab===2) renderPanel3();
   if (dataReady && currentTab===4) renderPanel6();
+  if (dataReady && currentTab===5) renderPanel7();
 }
 
 function showNewPlayerForm() {
@@ -822,6 +849,7 @@ function toISO(d) {
   return `${y}-${m}-${dd}`;
 }
 function dispDate(s) { const [,m,d]=s.split("-"); return `${d}/${m}`; }
+function dispDateFull(s) { const [y,m,d]=s.split("-"); return `${d}/${m}/${y}`; }
 function dayLabel(s) {
   const [y,m,d]=s.split("-").map(Number);
   return FR_DAYS[new Date(y,m-1,d).getDay()];
@@ -844,12 +872,64 @@ function getActiveQuizDay() {
   return toISO(ref);
 }
 
+// ─── périodes du défi (2 semaines / 10 quizz) ─────────────
+// Le défi se joue par blocs de 2 semaines calendaires (10 jours ouvrés).
+// Chaque lundi à 8h (toutes les 2 semaines), le classement de la période
+// écoulée est figé, un·e vainqueur·e et un·e dernier·e (qui ramène le petit
+// déj) sont désigné·e·s, et une affiche est disponible au téléchargement.
+const PERIOD_LENGTH_DAYS = 10; // 10 quizz = 2 semaines ouvrées
+const PERIOD_ROLLOVER_HOUR = 8; // bascule le lundi à 8h
+
+function mondayOf(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay();
+  const diff = day===0 ? -6 : 1-day;
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+// Lundi de référence (période 0). Choisi dans le passé pour que les
+// périodes s'alignent proprement sur des semaines paires/impaires.
+const EPOCH_MONDAY = mondayOf(new Date(2025,0,6));
+
+function getEffectiveNowForPeriod() {
+  const n = new Date();
+  // Tant qu'on n'a pas atteint le lundi 8h, on reste "dans" la période précédente
+  if (n.getDay()===1 && n.getHours() < PERIOD_ROLLOVER_HOUR) {
+    const d = new Date(n);
+    d.setDate(d.getDate()-1);
+    return d;
+  }
+  return n;
+}
+function getPeriodIndex(date) {
+  const monday = mondayOf(date);
+  const diffDays = Math.round((monday - EPOCH_MONDAY) / 86400000);
+  return Math.floor(diffDays / 14);
+}
+function getPeriodBounds(periodIndex) {
+  const start = new Date(EPOCH_MONDAY);
+  start.setDate(start.getDate() + periodIndex*14);
+  const days = [];
+  const d = new Date(start);
+  while (days.length < PERIOD_LENGTH_DAYS) {
+    if (isWeekday(d)) days.push(toISO(d));
+    d.setDate(d.getDate()+1);
+  }
+  return days;
+}
+function periodLabel(periodIndex) {
+  const days = getPeriodBounds(periodIndex);
+  return `Du ${dispDate(days[0])} au ${dispDate(days[days.length-1])}`;
+}
+
 const now   = new Date();
 const YEAR  = now.getFullYear();
 const MONTH = now.getMonth();
-const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
+const EFFECTIVE_NOW_FOR_PERIOD = getEffectiveNowForPeriod();
+const CURRENT_PERIOD_INDEX = getPeriodIndex(EFFECTIVE_NOW_FOR_PERIOD);
+const WORKING_DAYS = getPeriodBounds(CURRENT_PERIOD_INDEX);
 let TODAY = getActiveQuizDay();
-if (TODAY < WORKING_DAYS[0]) TODAY = toISO(now);
+if (TODAY < WORKING_DAYS[0] || TODAY > WORKING_DAYS[WORKING_DAYS.length-1]) TODAY = toISO(EFFECTIVE_NOW_FOR_PERIOD);
 
 // ─── Firestore persistence ──
 function setConnStatus(ok) {
@@ -986,6 +1066,7 @@ function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
     backfillPastDays();
+    archiveCompletedPeriodsIfNeeded();
     switchTab(currentTab);
     renderWhoamiTag();
     if (myPlayerIdx===null) openLoginOverlay(false);
@@ -997,6 +1078,7 @@ function rerenderAll() {
   if (currentTab===2) renderPanel3();
   if (currentTab===3) refreshTomatoLoser();
   if (currentTab===4) renderPanel6();
+  if (currentTab===5) renderPanel7();
 }
 
 // ─── derived ─────────────────────────────────────────────
@@ -1028,6 +1110,21 @@ function getCumData() {
     data.push({ date:dispDate(d), vals:[...run] });
   }
   return data;
+}
+
+// ─── classement figé d'une période passée (à partir des scores bruts) ───
+// On ne prend en compte que les scores des quizz (pas les bonus/malus, qui
+// ne sont pas datés) pour déterminer le vainqueur et le dernier de chaque
+// période archivée.
+function computePeriodRanking(periodIndex) {
+  const days = getPeriodBounds(periodIndex);
+  const totals = Array(N).fill(0);
+  for (const d of days) {
+    const ds = scores[d]||{};
+    for (let i=0;i<N;i++) totals[i]+=(ds[i]??0);
+  }
+  return Array.from({length:N},(_,i)=>({ name:names[i], idx:i, total:totals[i] }))
+    .sort((a,b)=>b.total-a.total);
 }
 
 // ─── panel 1 ─────────────────────────────────────────────
@@ -1089,6 +1186,8 @@ async function doValidate(i) {
 
 // ─── panel 2 ─────────────────────────────────────────────
 function renderPanel2() {
+  const titleEl = document.getElementById("p2-title");
+  if (titleEl) titleEl.textContent = `Classement de la quinzaine — ${periodLabel(CURRENT_PERIOD_INDEX)}`;
   renderPodium();
   renderRankList();
   renderChart();
@@ -2249,6 +2348,210 @@ function renderDiamant(wrap, isHost) {
   `;
 }
 
+// ══════════════════════════════════════════════════════════
+// Panel 7 — Défis passés & affiches PDF (vainqueur / dernier)
+// ══════════════════════════════════════════════════════════
+// Chaque période archivée est stockée dans le doc Firestore "periodsArchive",
+// sous forme { [periodIndex]: { periodIndex, days:[...], ranking:[{idx,name,total}], winnerIdx, loserIdx, generatedAt } }
+// afin que tous les appareils de la ligue voient les mêmes résultats et
+// puissent régénérer la même affiche à tout moment.
+let periodsArchive = {};
+let periodsArchiveReady = false;
+
+function listenPeriodsArchive() {
+  db.collection(COLLECTION).doc("periodsArchive").onSnapshot(
+    (doc) => {
+      periodsArchive = doc.exists ? (doc.data().periods || {}) : {};
+      periodsArchiveReady = true;
+      if (currentTab===5 && dataReady) renderPanel7();
+      // Une fois l'archive connue, on vérifie si la période précédente doit être archivée.
+      if (dataReady) archiveCompletedPeriodsIfNeeded();
+    },
+    (err) => console.error("Erreur archive des défis", err)
+  );
+}
+
+// Archive (si besoin) la période juste avant la période courante, dès que
+// celle-ci est terminée (on est passé au lundi 8h suivant). N'écrase jamais
+// une période déjà archivée : idempotent et sûr même si plusieurs appareils
+// tentent l'opération en même temps.
+async function archiveCompletedPeriodsIfNeeded() {
+  const prevIndex = CURRENT_PERIOD_INDEX - 1;
+  if (prevIndex < 0) return;
+  if (periodsArchive && periodsArchive[String(prevIndex)]) return; // déjà archivée
+  const ranking = computePeriodRanking(prevIndex);
+  if (ranking.every(r=>r.total===0)) return; // rien n'a été joué cette période-là, on n'archive pas
+  const days = getPeriodBounds(prevIndex);
+  const entry = {
+    periodIndex: prevIndex,
+    days,
+    ranking: ranking.map(r=>({ idx:r.idx, name:r.name, total:r.total })),
+    winnerIdx: ranking[0].idx,
+    loserIdx: ranking[ranking.length-1].idx,
+    generatedAt: Date.now()
+  };
+  const ref = db.collection(COLLECTION).doc("periodsArchive");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.exists ? snap.data() : { periods:{} };
+      const periods = data.periods || {};
+      if (periods[String(prevIndex)]) return; // déjà archivée entre-temps
+      periods[String(prevIndex)] = entry;
+      tx.set(ref, { periods });
+    });
+  } catch(e) {
+    console.error("Erreur d'archivage de la période "+prevIndex, e);
+  }
+}
+
+function renderPanel7() {
+  const wrap = document.getElementById("periods-wrap");
+  if (!wrap) return;
+
+  const liveRanking = getRanking();
+  const currentBanner = `
+    <div class="period-current-banner">
+      🕹️ Défi en cours — <b>${periodLabel(CURRENT_PERIOD_INDEX)}</b><br/>
+      Le classement final et l'affiche seront disponibles le lundi suivant à 8h.
+    </div>`;
+
+  const archived = Object.values(periodsArchive||{}).sort((a,b)=>b.periodIndex-a.periodIndex);
+
+  if (archived.length===0) {
+    wrap.innerHTML = currentBanner + `<div id="periods-empty">🏅 Aucun défi terminé pour l'instant.</div>`;
+    return;
+  }
+
+  const cards = archived.map(entry=>{
+    const days = entry.days || getPeriodBounds(entry.periodIndex);
+    const label = `Du ${dispDate(days[0])} au ${dispDate(days[days.length-1])}`;
+    const rows = entry.ranking.map((r,pos)=>{
+      const tag = r.idx===entry.winnerIdx ? '<span class="period-winner-tag">🏆 Vainqueur</span>'
+                : r.idx===entry.loserIdx ? '<span class="period-loser-tag">☕ Petit-déj</span>' : '';
+      return `<div class="period-podium-row">
+        <span class="period-medal">${pos<3?MEDAL[pos]:(pos+1)+"."}</span>
+        <span class="period-name">${r.name}${tag}</span>
+        <span class="period-pts">${r.total} pts</span>
+      </div>`;
+    }).join("");
+    return `<div class="period-card">
+      <div class="period-card-head">
+        <span class="period-card-title">Défi #${entry.periodIndex+1}</span>
+        <span class="period-card-dates">${label}</span>
+      </div>
+      ${rows}
+      <button class="poster-btn" onclick="downloadPeriodPoster(${entry.periodIndex})">🖼️ Télécharger l'affiche</button>
+    </div>`;
+  }).join("");
+
+  wrap.innerHTML = currentBanner + cards;
+}
+
+// ── génération de l'affiche PDF (jsPDF, vectoriel, sans emoji pour rester net à l'impression) ──
+function downloadPeriodPoster(periodIndex) {
+  const entry = periodsArchive[String(periodIndex)];
+  if (!entry) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"mm", format:"a4", orientation:"portrait" });
+  const W = 210, H = 297;
+
+  const winner = entry.ranking.find(r=>r.idx===entry.winnerIdx);
+  const loser  = entry.ranking.find(r=>r.idx===entry.loserIdx);
+  const days = entry.days || getPeriodBounds(entry.periodIndex);
+  const dateLabel = `Du ${dispDateFull(days[0])} au ${dispDateFull(days[days.length-1])}`;
+
+  // fond
+  doc.setFillColor(247,248,255);
+  doc.rect(0,0,W,H,"F");
+
+  // bandeau haut (dégradé simulé par bandes)
+  const steps = 40;
+  for (let i=0;i<steps;i++){
+    const t = i/(steps-1);
+    const r = Math.round(79 + t*(124-79));
+    const g = Math.round(70 + t*(58-70));
+    const b = Math.round(229 + t*(237-229));
+    doc.setFillColor(r,g,b);
+    doc.rect(0, i*(70/steps), W, 70/steps + 0.5, "F");
+  }
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(28);
+  doc.text("DEFI QUIZ", W/2, 30, { align:"center" });
+  doc.setFontSize(13);
+  doc.setFont("helvetica","normal");
+  doc.text(`Resultats du defi n${periodIndex+1}`, W/2, 42, { align:"center" });
+  doc.setFontSize(10);
+  doc.text(dateLabel, W/2, 52, { align:"center" });
+
+  // médaillon vainqueur
+  const cy = 105;
+  doc.setFillColor(250,204,21);
+  doc.circle(W/2, cy, 26, "F");
+  doc.setFillColor(255,255,255);
+  doc.circle(W/2, cy, 20, "F");
+  doc.setTextColor(180,83,9);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(26);
+  doc.text((winner.name[0]||"?").toUpperCase(), W/2, cy+9, { align:"center" });
+
+  doc.setTextColor(30,41,59);
+  doc.setFontSize(11);
+  doc.setFont("helvetica","normal");
+  doc.text("VAINQUEUR DE LA QUINZAINE", W/2, cy+38, { align:"center" });
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(24);
+  doc.text(winner.name, W/2, cy+50, { align:"center" });
+  doc.setFontSize(13);
+  doc.setTextColor(79,70,229);
+  doc.text(`${winner.total} points`, W/2, cy+59, { align:"center" });
+
+  // bandeau "dernier" / petit-déj
+  const by = cy + 78;
+  doc.setFillColor(254,242,242);
+  doc.roundedRect(20, by, W-40, 38, 4, 4, "F");
+  doc.setDrawColor(252,165,165);
+  doc.roundedRect(20, by, W-40, 38, 4, 4, "S");
+  doc.setTextColor(185,28,28);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(14);
+  doc.text(`${loser.name} est dernier !`, W/2, by+16, { align:"center" });
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(11);
+  doc.text("Petit dejeuner obligatoire au bureau lundi matin ;)", W/2, by+27, { align:"center" });
+
+  // classement complet
+  let ty = by + 55;
+  doc.setTextColor(100,116,139);
+  doc.setFontSize(10);
+  doc.setFont("helvetica","bold");
+  doc.text("CLASSEMENT COMPLET", 25, ty);
+  ty += 8;
+  entry.ranking.forEach((r,pos)=>{
+    if (ty > H-25) return;
+    doc.setDrawColor(241,245,249);
+    doc.line(25, ty+4, W-25, ty+4);
+    doc.setTextColor(71,85,105);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(11);
+    doc.text(`${pos+1}.`, 27, ty);
+    doc.setFont("helvetica","normal");
+    doc.text(r.name, 38, ty);
+    doc.setFont("helvetica","bold");
+    doc.text(`${r.total} pts`, W-27, ty, { align:"right" });
+    ty += 9;
+  });
+
+  // pied de page
+  doc.setTextColor(148,163,184);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(8);
+  doc.text("Genere automatiquement par Qui qui est le moins con ?", W/2, H-12, { align:"center" });
+
+  doc.save(`affiche_defi_${periodIndex+1}.pdf`);
+}
+
 // ─── tabs ─────────────────────────────────────────────────
 function switchTab(i) {
   currentTab=i;
@@ -2260,6 +2563,7 @@ function switchTab(i) {
   if(i===2) renderPanel3();
   if(i===3) renderPanel4();
   if(i===4) renderPanel6();
+  if(i===5) renderPanel7();
 }
 
 // ─── init ────────────────────────────────────────────────
@@ -2273,6 +2577,7 @@ function startLeagueData() {
   listenBoardGame();
   listenFlip7();
   listenDiamant();
+  listenPeriodsArchive();
 }
 
 listenLeaguesRegistry();
