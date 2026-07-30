@@ -101,6 +101,7 @@
   .validate-btn:disabled{background:#e2e8f0!important;color:#94a3b8;cursor:default}
   .validate-btn:active:not(:disabled){transform:scale(.88)}
   .hint{text-align:center;font-size:.7rem;color:#cbd5e1;margin-top:12px}
+  .empty-state{text-align:center;padding:34px 16px;background:white;border-radius:16px;border:1px dashed #c7d2fe;color:#64748b;font-size:.82rem;font-weight:600}
 
   /* ── panel 2 – podium ── */
   #podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:8px;height:200px;background:white;border-radius:20px;padding:12px 8px 0;margin-bottom:14px;box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9}
@@ -364,7 +365,14 @@ function leagueColor(slug) {
 
 // ─── constants ───────────────────────────────────────────
 const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
-let N = DEFAULT_NAMES.length;
+// NOTE: `names` et `N` sont initialisés vides ici. Ils ne sont peuplés
+// qu'après connaissance de la ligue active, dans listenState() :
+//  - la ligue par défaut ("ics") récupère les 8 joueurs historiques
+//    si aucun document Firestore n'existe encore pour elle ;
+//  - toute NOUVELLE ligue démarre avec une liste de joueurs VIDE,
+//    ce qui force la création d'un premier joueur via l'overlay de connexion.
+let names = [];
+let N = names.length;
 const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0ea5e9","#f97316","#14b8a6","#a855f7","#eab308","#f43f5e","#22c55e","#3b82f6","#d946ef","#84cc16"];
 function playerColor(i) {
   if (COLORS[i]) return COLORS[i];
@@ -434,13 +442,11 @@ function buildItemMesh(item) {
 }
 
 // ─── state ───────────────────────────────────────────────
-let names    = [...DEFAULT_NAMES];
-N = names.length;
 let scores   = {};
 let bonus    = {};
 let malus    = {};
 let validated = {};
-let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a joué)
+let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a pas joué)
 let codes = {}; // { [idx]: "123456" } — code à 6 chiffres de chaque compte
 
 let adminUnlocked = false;
@@ -631,10 +637,12 @@ function openLoginOverlay(isChange) {
   const sub = document.querySelector("#login-card p");
   if (closeBtn) closeBtn.style.display = isChange ? "flex" : "none";
   if (title) title.textContent = isChange ? "🔄 Changer d'identité" : "👋 Qui es-tu ?";
-  if (sub) sub.textContent = isChange
-    ? "Choisis ton prénom puis entre ton code à 6 chiffres."
+  if (sub) sub.textContent = (!isChange && names.length===0)
+    ? "Cette ligue est toute neuve : crée le premier joueur !"
     : "Choisis ton prénom puis entre ton code à 6 chiffres.";
   if (overlay) overlay.style.display = "flex";
+  // Ligue vide : on saute directement au formulaire de création du 1er joueur.
+  if (names.length===0) showNewPlayerForm();
 }
 function closeLoginOverlay() {
   if (myPlayerIdx===null) return;
@@ -758,6 +766,9 @@ function showNewPlayerForm() {
   if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
 }
 function hideNewPlayerForm() {
+  // Si la ligue est encore vide, il n'y a pas de liste à afficher : on reste
+  // sur le formulaire de création (impossible d'annuler tant qu'il n'y a personne).
+  if (names.length===0) return;
   const grid = document.getElementById("login-grid");
   const form = document.getElementById("login-newplayer-form");
   if (form) form.style.display = "none";
@@ -931,6 +942,19 @@ function listenState() {
         if (d.malus)  malus  = d.malus;
         if (d.autoScores) autoScores = d.autoScores;
         if (d.codes) codes = d.codes;
+      } else {
+        // Aucun document Firestore pour cette ligue : c'est une ligue toute neuve.
+        // Seule la ligue par défaut ("ics") récupère les 8 joueurs historiques ;
+        // toute autre ligue démarre totalement vide, ce qui force la création
+        // d'un premier joueur via l'overlay de connexion.
+        if (myLeagueId === DEFAULT_LEAGUE_SLUG) {
+          names = [...DEFAULT_NAMES];
+          N = names.length;
+        } else {
+          names = [];
+          N = 0;
+        }
+        scores = {}; bonus = {}; malus = {}; autoScores = {}; codes = {};
       }
       if (!stateReady) { stateReady = true; maybeReady(); }
       else if (dataReady) rerenderAll();
@@ -1023,10 +1047,13 @@ async function backfillPastDays() {
 function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
-    backfillPastDays();
+    if (names.length > 0) backfillPastDays();
     switchTab(currentTab);
     renderWhoamiTag();
-    if (myPlayerIdx===null) openLoginOverlay(false);
+    // Ligue vide, ou joueur pas encore identifié sur cet appareil : on ouvre
+    // l'overlay de connexion (elle bascule automatiquement sur la création
+    // du 1er joueur si names.length===0, voir openLoginOverlay).
+    if (myPlayerIdx===null || names.length===0) openLoginOverlay(false);
   }
 }
 function rerenderAll() {
@@ -1069,10 +1096,15 @@ function getCumData() {
 
 // ─── panel 1 ─────────────────────────────────────────────
 function renderPanel1() {
+  const list = document.getElementById("players-list");
+  if (N === 0) {
+    document.getElementById("p1-title").textContent = "Saisie du jour";
+    list.innerHTML = `<div class="empty-state">👋 Cette ligue n'a encore aucun joueur.<br>Crée le premier via le bouton en haut de l'écran.</div>`;
+    return;
+  }
   document.getElementById("p1-title").textContent =
     `Saisie du ${dispDate(TODAY)} — ${dayLabel(TODAY)}`;
   const todayScores = scores[TODAY]||{};
-  const list = document.getElementById("players-list");
   list.innerHTML = "";
   for (let i=0;i<N;i++) {
     const locked = validated[i]!==undefined && todayScores[i]!==undefined;
@@ -1126,6 +1158,13 @@ async function doValidate(i) {
 
 // ─── panel 2 ─────────────────────────────────────────────
 function renderPanel2() {
+  if (N === 0) {
+    document.getElementById("podium-wrap").innerHTML = "";
+    document.getElementById("rank-list").innerHTML = `<div class="empty-state">Aucun joueur pour l'instant.</div>`;
+    document.getElementById("myChart").style.display = "none";
+    document.getElementById("chart-empty").style.display = "block";
+    return;
+  }
   renderPodium();
   renderRankList();
   renderChart();
@@ -1133,11 +1172,32 @@ function renderPanel2() {
 
 function renderPodium() {
   const ranking = getRanking();
+  const wrap = document.getElementById("podium-wrap");
+  wrap.innerHTML = "";
+  if (N < 3) {
+    // Pas assez de joueurs pour un podium à 3 places : on affiche un
+    // simple classement en colonnes plutôt que de risquer des cases undefined.
+    const heights = [118, 80, 58];
+    const bgColors = ["#facc15","#cbd5e1","#d97706"];
+    ranking.forEach((r,rank)=>{
+      const col = document.createElement("div");
+      col.className = "podium-col";
+      const crown = rank===0 ? `<div class="crown">👑</div>` : "";
+      col.innerHTML = `
+        ${crown}
+        <div class="podium-avatar${rank===0?' first':''}" style="background:${playerColor(r.idx)};box-shadow:0 4px 12px ${playerColor(r.idx)}55">
+          ${r.name[0]?.toUpperCase()}
+        </div>
+        <div class="podium-pname">${r.name}</div>
+        <div class="podium-pts" style="color:${playerColor(r.idx)}">${r.total} pts</div>
+        <div class="podium-block" style="height:${heights[rank]}px;background:${bgColors[rank]}">${MEDAL[rank]}</div>`;
+      wrap.appendChild(col);
+    });
+    return;
+  }
   const order = [ranking[1], ranking[0], ranking[2]];
   const heights = [80, 118, 58];
   const bgColors = ["#cbd5e1","#facc15","#d97706"];
-  const wrap = document.getElementById("podium-wrap");
-  wrap.innerHTML = "";
   order.forEach((r,pos) => {
     const rank = pos===1?0:pos===0?1:2;
     const col = document.createElement("div");
@@ -1592,6 +1652,7 @@ function animateTomato() {
 }
 
 function throwTomato() {
+  if (N === 0) return;
   const item = pickItem();
   const mesh = buildItemMesh(item);
   const startX = (Math.random()-.5)*1.2;
@@ -1681,6 +1742,13 @@ function shakeTomato(item) {
 }
 
 function refreshTomatoLoser() {
+  if (N === 0) {
+    const tag = document.getElementById("tomato-loser-tag");
+    if(tag) tag.textContent = "Pas encore de joueur";
+    const ctag = document.getElementById("tomato-count-tag");
+    if(ctag) ctag.textContent = "";
+    return;
+  }
   const ranking = getRanking();
   const l = ranking[N-1].idx;
   const tag = document.getElementById("tomato-loser-tag");
