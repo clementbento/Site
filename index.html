@@ -65,15 +65,6 @@
   .login-newplayer-submit{background:linear-gradient(135deg,#6366f1,#4f46e5);color:white}
   .login-newplayer-submit:disabled{opacity:.6;cursor:default}
 
-  /* ── code PIN à 6 chiffres ── */
-  .login-code-input{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;font-size:1.15rem;font-weight:800;outline:none;transition:border-color .15s;text-align:center;letter-spacing:.4em}
-  .login-code-input:focus{border-color:#6366f1}
-  .login-code-hint{font-size:.68rem;color:#94a3b8;font-weight:600;text-align:center;margin:-4px 0 0}
-  #login-entercode-form{display:none;flex-direction:column;gap:10px;text-align:left}
-  #login-entercode-title{font-size:.85rem;font-weight:800;color:#1e293b;text-align:center}
-  #login-entercode-title span{color:#4f46e5}
-  #login-entercode-err{display:none;color:#dc2626;font-size:.72rem;font-weight:700;text-align:center;margin:0}
-
   /* ── tabs ── */
   #tabs{display:flex;background:white;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px #0000000d;overflow-x:auto}
   .tab-btn{flex:1;padding:12px 4px;font-size:.72rem;font-weight:700;border:none;border-bottom:2.5px solid transparent;background:white;cursor:pointer;color:#94a3b8;transition:all .15s;white-space:nowrap}
@@ -101,7 +92,6 @@
   .validate-btn:disabled{background:#e2e8f0!important;color:#94a3b8;cursor:default}
   .validate-btn:active:not(:disabled){transform:scale(.88)}
   .hint{text-align:center;font-size:.7rem;color:#cbd5e1;margin-top:12px}
-  .empty-state{text-align:center;padding:34px 16px;background:white;border-radius:16px;border:1px dashed #c7d2fe;color:#64748b;font-size:.82rem;font-weight:600}
 
   /* ── panel 2 – podium ── */
   #podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:8px;height:200px;background:white;border-radius:20px;padding:12px 8px 0;margin-bottom:14px;box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9}
@@ -186,6 +176,95 @@
   .item-toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
   .item-toast.legendary{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
   .item-toast.mythic{background:linear-gradient(135deg,#0f172a,#334155)}
+
+  /* ── panel 6 – Board Game ── */
+  #bg-wrap{background:white;border-radius:20px;padding:28px 18px;box-shadow:0 2px 8px #0000000d;border:1px solid #f1f5f9;text-align:center}
+  #bg-icon{font-size:2.4rem;margin-bottom:10px}
+  #bg-subtitle{font-size:.8rem;color:#64748b;margin-bottom:18px}
+  #bg-start-btn,#bg-join-btn{border:none;border-radius:16px;padding:16px 24px;font-size:1rem;font-weight:900;letter-spacing:.02em;color:white;cursor:pointer;box-shadow:0 4px 14px #6366f140;transition:transform .08s}
+  #bg-start-btn{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+  #bg-join-btn{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px #10b98140}
+  #bg-start-btn:active,#bg-join-btn:active{transform:scale(.96)}
+  #bg-waiting-title{font-size:1rem;font-weight:900;color:#1e293b;margin-bottom:4px}
+  #bg-waiting-sub{font-size:.76rem;color:#94a3b8;margin-bottom:16px}
+  .bg-player-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;text-align:left}
+  .bg-player-row{display:flex;align-items:center;gap:10px;background:#f8fafc;border-radius:12px;padding:9px 12px;border:1px solid #f1f5f9}
+  .bg-player-row .avatar{width:32px;height:32px;font-size:.8rem}
+  .bg-player-name{flex:1;font-weight:700;font-size:.85rem;color:#334155}
+  .bg-host-badge{font-size:.6rem;font-weight:800;color:#d97706;background:#fffbeb;border-radius:8px;padding:2px 6px}
+  .bg-spinner{display:inline-block;width:14px;height:14px;border:2.5px solid #e2e8f0;border-top-color:#6366f1;border-radius:50%;animation:bg-spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+  @keyframes bg-spin{to{transform:rotate(360deg)}}
+  #bg-leave-btn,#bg-cancel-btn{border:none;border-radius:12px;padding:10px 16px;font-size:.8rem;font-weight:800;cursor:pointer;margin:4px}
+  #bg-leave-btn{background:#f1f5f9;color:#64748b}
+  #bg-cancel-btn{background:#fef2f2;color:#dc2626}
+  #bg-lock-btn{border:none;border-radius:12px;padding:10px 16px;font-size:.8rem;font-weight:800;cursor:pointer;margin:4px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:white}
+
+  /* ── choix du jeu ── */
+  .game-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .game-option{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid #e2e8f0;border-radius:16px;padding:16px 10px;background:white;cursor:pointer;transition:all .15s;font-weight:700;color:#334155}
+  .game-option:not(:disabled):hover{border-color:#c7d2fe;background:#f5f3ff}
+  .game-option:not(:disabled):active{transform:scale(.96)}
+  .game-option:disabled{opacity:.5;cursor:default}
+  .game-option-emoji{font-size:1.8rem}
+  .game-option-name{font-size:.85rem;font-weight:800}
+  .game-option-desc{font-size:.68rem;color:#94a3b8;font-weight:600;text-align:center}
+  .game-option-soon{border-style:dashed}
+
+  /* ── Flip Seven ── */
+  .flip7-header{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:14px;padding:10px 14px;font-size:.85rem;font-weight:800;margin-bottom:12px}
+  .flip7-target{font-size:.7rem;font-weight:700;color:#e0e7ff}
+  .flip7-prompt{text-align:center;font-size:.85rem;font-weight:800;color:#1e293b;background:#eef2ff;border-radius:12px;padding:10px;margin-bottom:10px}
+  .flip7-waiting{text-align:center;font-size:.78rem;font-weight:700;color:#94a3b8;padding:10px;margin-bottom:10px}
+  .flip7-actions{display:flex;gap:8px;margin-bottom:12px}
+  .flip7-draw-btn,.flip7-stay-btn,.flip7-next-btn{flex:1;border:none;border-radius:14px;padding:13px;font-size:.88rem;font-weight:900;cursor:pointer;transition:transform .08s;color:white}
+  .flip7-draw-btn{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+  .flip7-stay-btn{background:linear-gradient(135deg,#10b981,#059669)}
+  .flip7-next-btn{background:linear-gradient(135deg,#f59e0b,#d97706);width:100%;margin-top:10px}
+  .flip7-draw-btn:active,.flip7-stay-btn:active,.flip7-next-btn:active{transform:scale(.96)}
+  .flip7-target-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px}
+  .flip7-target-btn{border:none;border-radius:12px;padding:9px 14px;font-size:.8rem;font-weight:800;color:white;cursor:pointer}
+  .flip7-players-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .flip7-player-card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:10px;box-shadow:0 1px 4px #0000000a}
+  .flip7-player-card.is-me{border-color:#6366f1;box-shadow:0 0 0 2px #6366f1}
+  .flip7-player-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+  .flip7-player-head .avatar{width:26px;height:26px;font-size:.7rem}
+  .flip7-player-name{font-size:.75rem;font-weight:700;color:#334155;flex:1}
+  .flip7-badge{font-size:.6rem;font-weight:800;border-radius:8px;padding:2px 6px}
+  .flip7-badge-bust{background:#fef2f2;color:#dc2626}
+  .flip7-badge-frozen{background:#eff6ff;color:#2563eb}
+  .flip7-badge-stayed{background:#f0fdf4;color:#16a34a}
+  .flip7-badge-turn{background:#fffbeb;color:#d97706}
+  .flip7-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;min-height:22px}
+  .flip7-chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:6px;font-size:.68rem;font-weight:800;padding:0 5px;color:white;background:#94a3b8}
+  .flip7-chip-num{background:#6366f1}
+  .flip7-chip-bonus{background:#10b981}
+  .flip7-chip-x2{background:#f59e0b}
+  .flip7-chip-sc{background:#0ea5e9}
+  .flip7-chip-empty{color:#cbd5e1;font-size:.7rem;font-weight:600}
+  .flip7-score{font-size:.78rem;font-weight:800;color:#1e293b}
+  .flip7-total{font-size:.68rem;color:#94a3b8;font-weight:600}
+  .flip7-summary{background:#fffbeb;border:2px solid #fcd34d;border-radius:16px;padding:14px;margin-bottom:12px}
+  .flip7-summary h4{font-size:.8rem;font-weight:900;color:#92400e;margin-bottom:8px;text-align:center}
+  .flip7-summary-row{display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;color:#78350f;padding:4px 2px;border-bottom:1px solid #fde68a}
+  .flip7-gameover{background:#eef2ff;border-color:#c7d2fe}
+  .flip7-gameover h4{color:#3730a3}
+  .flip7-winner{text-align:center;font-size:.82rem;font-weight:800;color:#4f46e5;margin-bottom:8px}
+  .flip7-log{background:#f8fafc;border-radius:12px;padding:10px 12px;margin-bottom:10px;max-height:120px;overflow-y:auto}
+  .flip7-log-row{font-size:.68rem;color:#64748b;font-weight:600;padding:2px 0}
+
+  /* ── Diamant ── */
+  .diamant-card{background:white;border:2px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px;text-align:center}
+  .diamant-card.hazard{border-color:#fca5a5;background:#fef2f2}
+  .diamant-card.treasure{border-color:#fde68a;background:#fffbeb}
+  .diamant-card.relic{border-color:#c7d2fe;background:#eef2ff}
+  .diamant-card-emoji{font-size:2rem;margin-bottom:4px}
+  .diamant-card-label{font-size:.85rem;font-weight:800;color:#1e293b}
+  .diamant-card-sub{font-size:.72rem;color:#64748b;margin-top:2px}
+  .diamant-stats{display:flex;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .diamant-stat{background:white;border:1px solid #f1f5f9;border-radius:12px;padding:8px 14px;text-align:center;box-shadow:0 1px 4px #0000000a}
+  .diamant-stat-val{font-size:1.1rem;font-weight:900;color:#1e293b}
+  .diamant-stat-label{font-size:.62rem;color:#94a3b8;font-weight:700;text-transform:uppercase}
+  .diamant-config-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
 </style>
 </head>
 <body>
@@ -220,31 +299,15 @@
   <div id="login-card">
     <button id="login-close" onclick="closeLoginOverlay()">✕</button>
     <h2>👋 Qui es-tu ?</h2>
-    <p>Choisis ton prénom puis entre ton code à 6 chiffres.</p>
+    <p>Choisis ton prénom, on s'en souviendra sur cet appareil.</p>
     <div id="login-grid"></div>
     <div id="login-newplayer-form">
       <input id="login-newplayer-input" type="text" placeholder="Ton prénom" maxlength="24"
-        onkeydown="if(event.key==='Enter')document.getElementById('login-newplayer-code').focus()"/>
-      <input id="login-newplayer-code" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Code à 6 chiffres" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"
         onkeydown="if(event.key==='Enter')submitNewPlayer()"/>
-      <p class="login-code-hint">Ce code te servira à te reconnecter, choisis-le bien !</p>
       <p id="login-newplayer-err"></p>
       <div class="login-newplayer-actions">
         <button class="login-newplayer-cancel" onclick="hideNewPlayerForm()">Annuler</button>
         <button id="login-newplayer-submit" class="login-newplayer-submit" onclick="submitNewPlayer()">Créer</button>
-      </div>
-    </div>
-    <div id="login-entercode-form">
-      <p id="login-entercode-title">Code de <span id="login-entercode-name"></span></p>
-      <p class="login-code-hint" id="login-entercode-hint">Entre ton code à 6 chiffres.</p>
-      <input id="login-entercode-input" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"
-        onkeydown="if(event.key==='Enter')submitEnterCode()"/>
-      <p id="login-entercode-err"></p>
-      <div class="login-newplayer-actions">
-        <button class="login-newplayer-cancel" onclick="hideEnterCodeForm()">Annuler</button>
-        <button id="login-entercode-submit" class="login-newplayer-submit" onclick="submitEnterCode()">Valider</button>
       </div>
     </div>
   </div>
@@ -255,6 +318,7 @@
   <button class="tab-btn" onclick="switchTab(1)">🏆 Classement</button>
   <button class="tab-btn" onclick="switchTab(2)">🗂️ Base de données</button>
   <button class="tab-btn" onclick="switchTab(3)">🍅 Bouuuu le nul</button>
+  <button class="tab-btn" onclick="switchTab(4)">🎲 Board Game</button>
 </div>
 
 <div id="app">
@@ -268,11 +332,11 @@
 
   <!-- PANEL 2 -->
   <div class="panel" id="panel-1">
-    <p class="section-title">Classement du défi (10 jours)</p>
+    <p class="section-title">Classement du mois</p>
     <div id="podium-wrap"></div>
     <div id="rank-list" class="rank-list"></div>
     <div id="chart-box">
-      <h3>Scores cumulés sur le défi</h3>
+      <h3>Scores cumulés sur le mois</h3>
       <div id="chart-empty" style="display:none">📊 Aucun score encore enregistré</div>
       <canvas id="myChart" height="180"></canvas>
     </div>
@@ -316,8 +380,15 @@
     </div>
   </div>
 
+  <!-- PANEL 6 -->
+  <div class="panel" id="panel-4">
+    <p class="section-title">Board Game</p>
+    <div id="bg-wrap"></div>
+  </div>
+
 </div>
 
+<script src="flip7.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
 // ⚠️ CONFIGURATION FIREBASE — À REMPLIR AVEC VOS PROPRES CLÉS
@@ -365,14 +436,7 @@ function leagueColor(slug) {
 
 // ─── constants ───────────────────────────────────────────
 const DEFAULT_NAMES = ["Clément","Alex","Thibault","Halim","Grégoire","Lilian","Nazih","Léo"];
-// NOTE: `names` et `N` sont initialisés vides ici. Ils ne sont peuplés
-// qu'après connaissance de la ligue active, dans listenState() :
-//  - la ligue par défaut ("ics") récupère les 8 joueurs historiques
-//    si aucun document Firestore n'existe encore pour elle ;
-//  - toute NOUVELLE ligue démarre avec une liste de joueurs VIDE,
-//    ce qui force la création d'un premier joueur via l'overlay de connexion.
-let names = [];
-let N = names.length;
+let N = DEFAULT_NAMES.length;
 const COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#ec4899","#0ea5e9","#f97316","#14b8a6","#a855f7","#eab308","#f43f5e","#22c55e","#3b82f6","#d946ef","#84cc16"];
 function playerColor(i) {
   if (COLORS[i]) return COLORS[i];
@@ -442,12 +506,13 @@ function buildItemMesh(item) {
 }
 
 // ─── state ───────────────────────────────────────────────
+let names    = [...DEFAULT_NAMES];
+N = names.length;
 let scores   = {};
 let bonus    = {};
 let malus    = {};
 let validated = {};
-let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a pas joué)
-let codes = {}; // { [idx]: "123456" } — code à 6 chiffres de chaque compte
+let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a joué)
 
 let adminUnlocked = false;
 let editCell = null;
@@ -617,7 +682,7 @@ function renderLoginGrid() {
   const grid = document.getElementById("login-grid");
   if (!grid) return;
   grid.innerHTML = names.map((n,i)=>`
-    <button class="login-opt" onclick="promptCode(${i})">
+    <button class="login-opt" onclick="chooseIdentity(${i})">
       <span class="login-avatar" style="background:${playerColor(i)}">${n[0]?.toUpperCase()||"?"}</span>
       ${n}
     </button>`).join("") + `
@@ -629,7 +694,6 @@ function renderLoginGrid() {
 
 function openLoginOverlay(isChange) {
   hideNewPlayerForm();
-  hideEnterCodeForm();
   renderLoginGrid();
   const overlay = document.getElementById("login-overlay");
   const closeBtn = document.getElementById("login-close");
@@ -637,110 +701,18 @@ function openLoginOverlay(isChange) {
   const sub = document.querySelector("#login-card p");
   if (closeBtn) closeBtn.style.display = isChange ? "flex" : "none";
   if (title) title.textContent = isChange ? "🔄 Changer d'identité" : "👋 Qui es-tu ?";
-  if (sub) sub.textContent = (!isChange && names.length===0)
-    ? "Cette ligue est toute neuve : crée le premier joueur !"
-    : "Choisis ton prénom puis entre ton code à 6 chiffres.";
+  if (sub) sub.textContent = isChange
+    ? "Choisis ton prénom pour cet appareil."
+    : "Choisis ton prénom, on s'en souviendra sur cet appareil.";
   if (overlay) overlay.style.display = "flex";
-  // Ligue vide : on saute directement au formulaire de création du 1er joueur.
-  if (names.length===0) showNewPlayerForm();
 }
 function closeLoginOverlay() {
   if (myPlayerIdx===null) return;
   const overlay = document.getElementById("login-overlay");
   if (overlay) overlay.style.display = "none";
 }
-
-// ─── saisie du code à 6 chiffres pour se connecter ─────────
-let pendingCodeIdx = null;
-
-function promptCode(i) {
-  pendingCodeIdx = i;
-  const grid = document.getElementById("login-grid");
-  const newform = document.getElementById("login-newplayer-form");
-  const codeform = document.getElementById("login-entercode-form");
-  if (grid) grid.style.display = "none";
-  if (newform) newform.style.display = "none";
-  if (codeform) codeform.style.display = "flex";
-  const nameSpan = document.getElementById("login-entercode-name");
-  if (nameSpan) nameSpan.textContent = names[i];
-  const hint = document.getElementById("login-entercode-hint");
-  const hasCode = codes[i] !== undefined;
-  if (hint) hint.textContent = hasCode
-    ? "Entre ton code à 6 chiffres."
-    : "Ce compte n'a pas encore de code : choisis-en un maintenant (6 chiffres).";
-  const err = document.getElementById("login-entercode-err");
-  if (err) err.style.display = "none";
-  const input = document.getElementById("login-entercode-input");
-  if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
-}
-function hideEnterCodeForm() {
-  pendingCodeIdx = null;
-  const grid = document.getElementById("login-grid");
-  const codeform = document.getElementById("login-entercode-form");
-  if (codeform) codeform.style.display = "none";
-  if (grid) grid.style.display = "grid";
-}
-
-async function setAccountCode(idx, code) {
-  const stateRef = db.collection(COLLECTION).doc("state");
-  try {
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(stateRef);
-      const data = snap.exists ? snap.data() : {};
-      const currentCodes = data.codes || {};
-      if (currentCodes[idx] !== undefined) throw new Error("TDF_ALREADY_SET");
-      tx.set(stateRef, { ...data, codes: { ...currentCodes, [idx]: code } }, { merge:true });
-    });
-    return { ok:true };
-  } catch(e) {
-    if (e.message === "TDF_ALREADY_SET") return { ok:false, reason:"already" };
-    console.error("Erreur d'enregistrement du code", e);
-    return { ok:false, reason:"error" };
-  }
-}
-
-async function submitEnterCode() {
-  const input = document.getElementById("login-entercode-input");
-  const err = document.getElementById("login-entercode-err");
-  const btn = document.getElementById("login-entercode-submit");
-  if (!input || pendingCodeIdx===null) return;
-  const idx = pendingCodeIdx;
-  const v = input.value.trim();
-  if (err) err.style.display = "none";
-  if (!/^\d{6}$/.test(v)) {
-    if (err) { err.textContent = "Le code doit contenir exactement 6 chiffres."; err.style.display = "block"; }
-    return;
-  }
-
-  const hasCode = codes[idx] !== undefined;
-  if (hasCode) {
-    if (v !== codes[idx]) {
-      if (err) { err.textContent = "Code incorrect."; err.style.display = "block"; }
-      return;
-    }
-    hideEnterCodeForm();
-    applyIdentity(idx);
-    return;
-  }
-
-  // Compte existant sans code (ancien compte V1) : on en définit un maintenant
-  if (btn) { btn.disabled = true; btn.textContent = "Enregistrement…"; }
-  const result = await setAccountCode(idx, v);
-  if (btn) { btn.disabled = false; btn.textContent = "Valider"; }
-
-  if (!result.ok) {
-    if (result.reason === "already") {
-      // quelqu'un d'autre vient de définir un code entre-temps : on relit et on redemande
-      codes[idx] = codes[idx] !== undefined ? codes[idx] : "________";
-      if (err) { err.textContent = "Un code vient d'être défini pour ce compte. Entre-le."; err.style.display = "block"; }
-    } else {
-      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
-    }
-    return;
-  }
-  codes[idx] = v;
-  hideEnterCodeForm();
-  applyIdentity(idx);
+function chooseIdentity(i) {
+  applyIdentity(i);
 }
 function applyIdentity(i) {
   myPlayerIdx = i;
@@ -750,10 +722,10 @@ function applyIdentity(i) {
   if (dataReady && currentTab===0) renderPanel1();
   if (dataReady && currentTab===1) renderPanel2();
   if (dataReady && currentTab===2) renderPanel3();
+  if (dataReady && currentTab===4) renderPanel6();
 }
 
 function showNewPlayerForm() {
-  hideEnterCodeForm();
   const grid = document.getElementById("login-grid");
   const form = document.getElementById("login-newplayer-form");
   const err = document.getElementById("login-newplayer-err");
@@ -761,24 +733,18 @@ function showNewPlayerForm() {
   if (form) form.style.display = "flex";
   if (err) err.style.display = "none";
   const input = document.getElementById("login-newplayer-input");
-  const codeInput = document.getElementById("login-newplayer-code");
-  if (codeInput) codeInput.value = "";
   if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
 }
 function hideNewPlayerForm() {
-  // Si la ligue est encore vide, il n'y a pas de liste à afficher : on reste
-  // sur le formulaire de création (impossible d'annuler tant qu'il n'y a personne).
-  if (names.length===0) return;
   const grid = document.getElementById("login-grid");
   const form = document.getElementById("login-newplayer-form");
   if (form) form.style.display = "none";
   if (grid) grid.style.display = "grid";
 }
 
-async function createNewPlayer(rawName, code) {
+async function createNewPlayer(rawName) {
   const trimmed = (rawName||"").trim();
   if (!trimmed) return { ok:false, reason:"empty" };
-  if (!/^\d{6}$/.test(code||"")) return { ok:false, reason:"badcode" };
   const stateRef = db.collection(COLLECTION).doc("state");
   let newIdx = -1;
   try {
@@ -786,20 +752,15 @@ async function createNewPlayer(rawName, code) {
       const snap = await tx.get(stateRef);
       const data = snap.exists ? snap.data() : {};
       const currentNames = (data.names && data.names.length) ? data.names : names;
-      // Le prénom ne doit pas déjà exister, insensible à la casse/aux accents
       const dup = currentNames.some(n => (n||"").trim().toLowerCase() === trimmed.toLowerCase());
       if (dup) throw new Error("TDF_DUP_NAME");
       const updatedNames = [...currentNames, trimmed];
       newIdx = updatedNames.length - 1;
-      const currentCodes = data.codes || {};
-      const updatedCodes = { ...currentCodes, [newIdx]: code };
       tx.set(stateRef, {
         names: updatedNames,
         scores: data.scores || {},
         bonus: data.bonus || {},
-        malus: data.malus || {},
-        autoScores: data.autoScores || {},
-        codes: updatedCodes
+        malus: data.malus || {}
       });
     });
   } catch(e) {
@@ -812,32 +773,24 @@ async function createNewPlayer(rawName, code) {
 
 async function submitNewPlayer() {
   const input = document.getElementById("login-newplayer-input");
-  const codeInput = document.getElementById("login-newplayer-code");
   const err = document.getElementById("login-newplayer-err");
-  if (!input || !codeInput) return;
+  if (!input) return;
   const trimmed = input.value.trim();
-  const code = codeInput.value.trim();
   if (err) err.style.display = "none";
   if (!trimmed) {
     if (err) { err.textContent = "Entre un prénom."; err.style.display = "block"; }
     return;
   }
-  if (!/^\d{6}$/.test(code)) {
-    if (err) { err.textContent = "Choisis un code à exactement 6 chiffres."; err.style.display = "block"; }
-    return;
-  }
   const btn = document.getElementById("login-newplayer-submit");
   if (btn) { btn.disabled = true; btn.textContent = "Création…"; }
 
-  const result = await createNewPlayer(trimmed, code);
+  const result = await createNewPlayer(trimmed);
 
   if (btn) { btn.disabled = false; btn.textContent = "Créer"; }
 
   if (!result.ok) {
     if (result.reason === "duplicate") {
       alert(`Le prénom "${trimmed}" est déjà utilisé. Choisis un autre prénom, ou sélectionne ce joueur dans la liste.`);
-    } else if (result.reason === "badcode") {
-      if (err) { err.textContent = "Choisis un code à exactement 6 chiffres."; err.style.display = "block"; }
     } else {
       alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
     }
@@ -846,7 +799,6 @@ async function submitNewPlayer() {
 
   names.push(trimmed);
   N = names.length;
-  codes[result.idx] = code;
   hideNewPlayerForm();
   applyIdentity(result.idx);
 }
@@ -892,27 +844,12 @@ function getActiveQuizDay() {
   return toISO(ref);
 }
 
-const now = new Date();
-
-// ─── défi 2 semaines (lundi → vendredi × 2 = 10 tests) ─────
-// Remplace l'ancien système "mois civil" : classement, podium, graphique
-// et tableau ne portent QUE sur ces 10 jours, sans possibilité de continuer après.
-const CHALLENGE_START = "2026-08-03"; // premier lundi du défi
-const CHALLENGE_LENGTH = 10;
-function getChallengeDays(startISO, count) {
-  const [y,m,d] = startISO.split("-").map(Number);
-  const cur = new Date(y, m-1, d);
-  const days = [];
-  while (days.length < count) {
-    if (isWeekday(cur)) days.push(toISO(cur));
-    cur.setDate(cur.getDate()+1);
-  }
-  return days;
-}
-const WORKING_DAYS = getChallengeDays(CHALLENGE_START, CHALLENGE_LENGTH);
+const now   = new Date();
+const YEAR  = now.getFullYear();
+const MONTH = now.getMonth();
+const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
 let TODAY = getActiveQuizDay();
-if (TODAY < WORKING_DAYS[0]) TODAY = WORKING_DAYS[0];
-if (TODAY > WORKING_DAYS[WORKING_DAYS.length-1]) TODAY = WORKING_DAYS[WORKING_DAYS.length-1];
+if (TODAY < WORKING_DAYS[0]) TODAY = toISO(now);
 
 // ─── Firestore persistence ──
 function setConnStatus(ok) {
@@ -924,7 +861,7 @@ function setConnStatus(ok) {
 
 async function persist() {
   try {
-    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, codes });
+    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores });
     setConnStatus(true);
     return true;
   } catch (e) {
@@ -956,20 +893,6 @@ function listenState() {
         if (d.bonus)  bonus  = d.bonus;
         if (d.malus)  malus  = d.malus;
         if (d.autoScores) autoScores = d.autoScores;
-        if (d.codes) codes = d.codes;
-      } else {
-        // Aucun document Firestore pour cette ligue : c'est une ligue toute neuve.
-        // Seule la ligue par défaut ("ics") récupère les 8 joueurs historiques ;
-        // toute autre ligue démarre totalement vide, ce qui force la création
-        // d'un premier joueur via l'overlay de connexion.
-        if (myLeagueId === DEFAULT_LEAGUE_SLUG) {
-          names = [...DEFAULT_NAMES];
-          N = names.length;
-        } else {
-          names = [];
-          N = 0;
-        }
-        scores = {}; bonus = {}; malus = {}; autoScores = {}; codes = {};
       }
       if (!stateReady) { stateReady = true; maybeReady(); }
       else if (dataReady) rerenderAll();
@@ -1062,13 +985,10 @@ async function backfillPastDays() {
 function maybeReady() {
   if (stateReady && validatedReady && !dataReady) {
     dataReady = true;
-    if (names.length > 0) backfillPastDays();
+    backfillPastDays();
     switchTab(currentTab);
     renderWhoamiTag();
-    // Ligue vide, ou joueur pas encore identifié sur cet appareil : on ouvre
-    // l'overlay de connexion (elle bascule automatiquement sur la création
-    // du 1er joueur si names.length===0, voir openLoginOverlay).
-    if (myPlayerIdx===null || names.length===0) openLoginOverlay(false);
+    if (myPlayerIdx===null) openLoginOverlay(false);
   }
 }
 function rerenderAll() {
@@ -1076,6 +996,7 @@ function rerenderAll() {
   if (currentTab===1) renderPanel2();
   if (currentTab===2) renderPanel3();
   if (currentTab===3) refreshTomatoLoser();
+  if (currentTab===4) renderPanel6();
 }
 
 // ─── derived ─────────────────────────────────────────────
@@ -1111,16 +1032,10 @@ function getCumData() {
 
 // ─── panel 1 ─────────────────────────────────────────────
 function renderPanel1() {
-  const list = document.getElementById("players-list");
-  if (N === 0) {
-    document.getElementById("p1-title").textContent = "Saisie du jour";
-    list.innerHTML = `<div class="empty-state">👋 Cette ligue n'a encore aucun joueur.<br>Crée le premier via le bouton en haut de l'écran.</div>`;
-    return;
-  }
-  const challengeDayNum = WORKING_DAYS.indexOf(TODAY) + 1;
   document.getElementById("p1-title").textContent =
-    `Saisie du ${dispDate(TODAY)} — ${dayLabel(TODAY)} (Jour ${challengeDayNum}/${CHALLENGE_LENGTH})`;
+    `Saisie du ${dispDate(TODAY)} — ${dayLabel(TODAY)}`;
   const todayScores = scores[TODAY]||{};
+  const list = document.getElementById("players-list");
   list.innerHTML = "";
   for (let i=0;i<N;i++) {
     const locked = validated[i]!==undefined && todayScores[i]!==undefined;
@@ -1174,13 +1089,6 @@ async function doValidate(i) {
 
 // ─── panel 2 ─────────────────────────────────────────────
 function renderPanel2() {
-  if (N === 0) {
-    document.getElementById("podium-wrap").innerHTML = "";
-    document.getElementById("rank-list").innerHTML = `<div class="empty-state">Aucun joueur pour l'instant.</div>`;
-    document.getElementById("myChart").style.display = "none";
-    document.getElementById("chart-empty").style.display = "block";
-    return;
-  }
   renderPodium();
   renderRankList();
   renderChart();
@@ -1188,32 +1096,11 @@ function renderPanel2() {
 
 function renderPodium() {
   const ranking = getRanking();
-  const wrap = document.getElementById("podium-wrap");
-  wrap.innerHTML = "";
-  if (N < 3) {
-    // Pas assez de joueurs pour un podium à 3 places : on affiche un
-    // simple classement en colonnes plutôt que de risquer des cases undefined.
-    const heights = [118, 80, 58];
-    const bgColors = ["#facc15","#cbd5e1","#d97706"];
-    ranking.forEach((r,rank)=>{
-      const col = document.createElement("div");
-      col.className = "podium-col";
-      const crown = rank===0 ? `<div class="crown">👑</div>` : "";
-      col.innerHTML = `
-        ${crown}
-        <div class="podium-avatar${rank===0?' first':''}" style="background:${playerColor(r.idx)};box-shadow:0 4px 12px ${playerColor(r.idx)}55">
-          ${r.name[0]?.toUpperCase()}
-        </div>
-        <div class="podium-pname">${r.name}</div>
-        <div class="podium-pts" style="color:${playerColor(r.idx)}">${r.total} pts</div>
-        <div class="podium-block" style="height:${heights[rank]}px;background:${bgColors[rank]}">${MEDAL[rank]}</div>`;
-      wrap.appendChild(col);
-    });
-    return;
-  }
   const order = [ranking[1], ranking[0], ranking[2]];
   const heights = [80, 118, 58];
   const bgColors = ["#cbd5e1","#facc15","#d97706"];
+  const wrap = document.getElementById("podium-wrap");
+  wrap.innerHTML = "";
   order.forEach((r,pos) => {
     const rank = pos===1?0:pos===0?1:2;
     const col = document.createElement("div");
@@ -1668,7 +1555,6 @@ function animateTomato() {
 }
 
 function throwTomato() {
-  if (N === 0) return;
   const item = pickItem();
   const mesh = buildItemMesh(item);
   const startX = (Math.random()-.5)*1.2;
@@ -1758,13 +1644,6 @@ function shakeTomato(item) {
 }
 
 function refreshTomatoLoser() {
-  if (N === 0) {
-    const tag = document.getElementById("tomato-loser-tag");
-    if(tag) tag.textContent = "Pas encore de joueur";
-    const ctag = document.getElementById("tomato-count-tag");
-    if(ctag) ctag.textContent = "";
-    return;
-  }
   const ranking = getRanking();
   const l = ranking[N-1].idx;
   const tag = document.getElementById("tomato-loser-tag");
@@ -1796,6 +1675,580 @@ function renderPanel4() {
   refreshTomatoLoser();
 }
 
+// ─── panel 6 : Board Game (session d'attente + choix du jeu + Flip Seven) ──
+// Une session est un simple document Firestore ("boardgame_session") contenant
+// qui est l'hôte, la liste des joueurs présents, si les joueurs sont verrouillés
+// ("locked") et le jeu choisi ("selectedGame"). Une fois verrouillée, l'hôte
+// passe à un écran de choix du jeu. Le jeu lui-même vit dans son propre
+// document ("flip7_game" ou "diamant_game").
+let bgSession = null;
+
+function listenBoardGame() {
+  db.collection(COLLECTION).doc("boardgame_session").onSnapshot(
+    (doc) => {
+      bgSession = doc.exists ? doc.data() : null;
+      if (currentTab===4 && dataReady) renderPanel6();
+    },
+    (err) => console.error("Erreur session Board Game", err)
+  );
+}
+
+function bgIsInSession() {
+  return !!(bgSession && bgSession.active && myPlayerIdx!==null &&
+    bgSession.players && bgSession.players[myPlayerIdx]!==undefined);
+}
+
+async function startBoardGameSession() {
+  if (myPlayerIdx===null) { openLoginOverlay(false); return; }
+  const btn = document.getElementById("bg-start-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Création…"; }
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({
+      active: true,
+      hostIdx: myPlayerIdx,
+      players: { [myPlayerIdx]: names[myPlayerIdx] },
+      locked: false,
+      selectedGame: null
+    });
+  } catch(e) {
+    console.error("Erreur de création de session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+async function joinBoardGameSession() {
+  if (myPlayerIdx===null) { openLoginOverlay(false); return; }
+  const btn = document.getElementById("bg-join-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Connexion…"; }
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set(
+      { players: { [myPlayerIdx]: names[myPlayerIdx] } }, { merge:true }
+    );
+  } catch(e) {
+    console.error("Erreur pour rejoindre la session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+async function leaveBoardGameSession() {
+  if (!bgSession || myPlayerIdx === null) return;
+  const remaining = { ...(bgSession.players||{}) };
+  delete remaining[myPlayerIdx];
+  const stillHasPlayers = Object.keys(remaining).length > 0;
+  try {
+    if (!stillHasPlayers || myPlayerIdx===bgSession.hostIdx) {
+      await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
+      await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+      await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
+    } else {
+      await db.collection(COLLECTION).doc("boardgame_session").set({ players: remaining });
+    }
+  } catch(e) {
+    console.error("Erreur pour quitter la session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+async function cancelBoardGameSession() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({ active:false, hostIdx:null, players:{}, locked:false, selectedGame:null });
+    await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+    await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur d'annulation de session", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+  renderPanel6();
+}
+
+// ── verrouiller / déverrouiller la liste des joueurs ──
+async function lockBoardGamePlayers() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  const count = Object.keys(bgSession.players||{}).length;
+  if (count < 2) { alert("Il faut au moins 2 joueurs pour verrouiller."); return; }
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({ locked:true, selectedGame:null }, { merge:true });
+  } catch(e) {
+    console.error("Erreur de verrouillage", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+async function unlockBoardGamePlayers() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  try {
+    await db.collection(COLLECTION).doc("boardgame_session").set({ locked:false, selectedGame:null }, { merge:true });
+    await db.collection(COLLECTION).doc("flip7_game").set({ status:"idle" }, { merge:true });
+    await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur de déverrouillage", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+
+// ── lancement d'une partie (hôte) ──
+async function selectBoardGame(gameKey) {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  if (gameKey==="flip7") {
+    const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
+    if (order.length<2) { alert("Il faut au moins 2 joueurs pour lancer Flip Seven."); return; }
+    try {
+      await startFlip7Game(order);
+      await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"flip7" }, { merge:true });
+    } catch(e) {
+      console.error("Erreur de lancement Flip Seven", e);
+      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    }
+  } else if (gameKey==="diamant") {
+    const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
+    if (order.length<2) { alert("Il faut au moins 2 joueurs pour lancer Diamant."); return; }
+    try {
+      await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant_config" }, { merge:true });
+    } catch(e) {
+      console.error("Erreur de sélection Diamant", e);
+      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// Diamant — moteur de jeu (état partagé via Firestore)
+// ══════════════════════════════════════════════════════════
+let diamantState = null;
+
+const DIAMANT_HAZARDS = [
+  { key:"serpent",     label:"Serpents",    emoji:"🐍" },
+  { key:"araignee",    label:"Araignées",   emoji:"🕷️" },
+  { key:"feu",         label:"Feu",         emoji:"🔥" },
+  { key:"momie",       label:"Momie",       emoji:"💀" },
+  { key:"eboulement",  label:"Éboulement",  emoji:"🪨" }
+];
+const DIAMANT_TREASURE_VALUES = [1,2,3,4,5,5,7,8,9,10,11,12,13,14,15];
+const DIAMANT_RELIC_POOL = [5,6,7,8,9,10,11,12,13];
+
+function listenDiamant() {
+  db.collection(COLLECTION).doc("diamant_game").onSnapshot(
+    (doc) => {
+      diamantState = doc.exists ? doc.data() : null;
+      if (currentTab===4 && dataReady) renderPanel6();
+    },
+    (err) => console.error("Erreur Diamant (listen)", err)
+  );
+}
+
+function buildDiamantTreasureDeck() {
+  return DIAMANT_TREASURE_VALUES.map(v=>({ type:"treasure", value:v }));
+}
+function buildDiamantHazardDeck() {
+  const deck = [];
+  DIAMANT_HAZARDS.forEach(h=>{
+    for (let i=0;i<3;i++) deck.push({ type:"hazard", key:h.key, label:h.label, emoji:h.emoji });
+  });
+  return deck;
+}
+function buildDiamantExpeditionDeck(pendingRelics, newRelicValue) {
+  const cards = [...buildDiamantTreasureDeck(), ...buildDiamantHazardDeck()];
+  (pendingRelics||[]).forEach(v=>cards.push({ type:"relic", value:v }));
+  if (newRelicValue!==null && newRelicValue!==undefined) cards.push({ type:"relic", value:newRelicValue });
+  return shuffleFlip7(cards);
+}
+
+function diamantRevealCard(state) {
+  if (state.deck.length===0) {
+    state.deck = shuffleFlip7(state.discard);
+    state.discard = [];
+  }
+  const card = state.deck.pop();
+  state.discard.push(card);
+  state.currentCard = card;
+  const log = (state.log||[]).slice(-11);
+
+  if (card.type==="treasure") {
+    const activeIdx = state.order.filter(idx=>state.inMine[idx]);
+    const n = activeIdx.length;
+    if (n>0) {
+      const share = Math.floor(card.value/n);
+      const remainder = card.value - share*n;
+      activeIdx.forEach(idx=>{ state.handTreasure[idx] = (state.handTreasure[idx]||0) + share; });
+      state.pathGems = (state.pathGems||0) + remainder;
+      log.push(`💰 Trésor de ${card.value} : +${share} chacun (reste ${remainder} au sol).`);
+    }
+    state.phase = "deciding";
+    state.decisions = {};
+  } else if (card.type==="relic") {
+    state.currentRelic = { value: card.value };
+    log.push(`🏺 Une relique (${card.value} pts) apparaît dans la mine !`);
+    state.phase = "deciding";
+    state.decisions = {};
+  } else if (card.type==="hazard") {
+    state.hazardsSeen[card.key] = (state.hazardsSeen[card.key]||0) + 1;
+    if (state.hazardsSeen[card.key] >= 2) {
+      log.push(`💀 ${card.label} apparaît une 2e fois ! Tous les explorateurs encore dans la mine perdent leurs trésors de l'expédition.`);
+      state.order.forEach(idx=>{ if (state.inMine[idx]) state.handTreasure[idx]=0; });
+      state.log = log;
+      finalizeDiamantExpedition(state);
+      return;
+    } else {
+      log.push(`${card.emoji} ${card.label} apparaît (1ère fois), rien ne se passe pour l'instant.`);
+      state.phase = "deciding";
+      state.decisions = {};
+    }
+  }
+  state.log = log;
+}
+
+function diamantResolveDecisions(state) {
+  const activeIdx = state.order.filter(idx=>state.inMine[idx]);
+  const leavers = activeIdx.filter(idx=>state.decisions[idx]==="leave");
+  const log = (state.log||[]).slice(-11);
+
+  if (leavers.length>0) {
+    const n = leavers.length;
+    const share = Math.floor((state.pathGems||0)/n);
+    const remainder = (state.pathGems||0) - share*n;
+    leavers.forEach(idx=>{
+      const secured = (state.handTreasure[idx]||0) + share;
+      state.totals[idx] = (state.totals[idx]||0) + secured;
+      state.handTreasure[idx] = 0;
+      state.inMine[idx] = false;
+    });
+    state.pathGems = remainder;
+    log.push(`🚪 ${leavers.map(i=>names[i]).join(", ")} quitte${leavers.length>1?"nt":""} la mine avec son trésor.`);
+
+    if (state.currentRelic && leavers.length===1) {
+      const idx = leavers[0];
+      state.totals[idx] = (state.totals[idx]||0) + state.currentRelic.value;
+      log.push(`🏺 ${names[idx]} récupère la relique (+${state.currentRelic.value} pts) !`);
+      state.currentRelic = null;
+    }
+  }
+  state.log = log;
+  state.decisions = {};
+
+  const stillIn = state.order.filter(idx=>state.inMine[idx]);
+  if (stillIn.length===0) {
+    const log2 = (state.log||[]).slice(-11);
+    log2.push("⛏️ Tout le monde a quitté la mine, fin de l'expédition.");
+    state.log = log2;
+    finalizeDiamantExpedition(state);
+  } else {
+    diamantRevealCard(state);
+  }
+}
+
+function finalizeDiamantExpedition(state) {
+  if (state.currentRelic) {
+    state.pendingRelics = [...(state.pendingRelics||[]), state.currentRelic.value];
+    state.currentRelic = null;
+  }
+  state.expeditionGains = {};
+  state.order.forEach(idx=>{
+    state.expeditionGains[idx] = (state.totals[idx]||0) - (state.expeditionStartTotals[idx]||0);
+  });
+  if (state.expeditionIndex >= state.numExpeditions) {
+    state.status = "game_over";
+    state.winner = state.order.reduce((best,idx)=>(state.totals[idx]>state.totals[best]?idx:best), state.order[0]);
+  } else {
+    state.status = "expedition_summary";
+  }
+}
+
+async function startDiamantGame(numExpeditions) {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  const order = Object.keys(bgSession.players||{}).map(Number).sort((a,b)=>a-b);
+  if (order.length<2) { alert("Il faut au moins 2 joueurs pour lancer Diamant."); return; }
+  const totals = {};
+  order.forEach(idx=>{ totals[idx]=0; });
+  const relicSchedule = shuffleFlip7(DIAMANT_RELIC_POOL).slice(0, numExpeditions);
+  const state = {
+    status:"playing", numExpeditions, expeditionIndex:1, order, totals,
+    relicSchedule, pendingRelics:[], currentRelic:null,
+    inMine:{}, handTreasure:{}, pathGems:0, hazardsSeen:{}, decisions:{}, phase:"deciding",
+    deck:[], discard:[], currentCard:null,
+    log:["🎉 La partie de Diamant commence !"],
+    winner:null, expeditionGains:null, expeditionStartTotals:{}
+  };
+  order.forEach(idx=>{ state.inMine[idx]=true; state.handTreasure[idx]=0; });
+  state.expeditionStartTotals = { ...totals };
+  state.deck = buildDiamantExpeditionDeck([], relicSchedule[0]);
+  diamantRevealCard(state);
+  try {
+    await db.collection(COLLECTION).doc("diamant_game").set(state);
+    await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur de lancement Diamant", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+
+async function diamantSubmitDecision(playerIdx, choice) {
+  const ref = db.collection(COLLECTION).doc("diamant_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status!=="playing") throw new Error("NOT_PLAYING");
+      if (state.phase!=="deciding") throw new Error("NOT_DECIDING");
+      if (!state.inMine[playerIdx]) throw new Error("NOT_IN_MINE");
+      if (state.decisions[playerIdx]!==undefined) throw new Error("ALREADY_DECIDED");
+      state.decisions[playerIdx] = choice;
+      const activeIdx = state.order.filter(idx=>state.inMine[idx]);
+      const allDecided = activeIdx.every(idx=>state.decisions[idx]!==undefined);
+      if (allDecided) diamantResolveDecisions(state);
+      tx.set(ref, state);
+    });
+  } catch(e) {
+    if (!["ALREADY_DECIDED","NOT_DECIDING","NOT_IN_MINE"].includes(e.message)) console.error("Erreur Diamant (décision)", e);
+  }
+}
+
+async function diamantStartNewExpedition() {
+  const ref = db.collection(COLLECTION).doc("diamant_game");
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("NO_GAME");
+      const state = snap.data();
+      if (state.status!=="expedition_summary") throw new Error("NOT_SUMMARY");
+      state.expeditionIndex += 1;
+      state.order.forEach(idx=>{ state.inMine[idx]=true; state.handTreasure[idx]=0; });
+      state.pathGems = 0;
+      state.hazardsSeen = {};
+      state.decisions = {};
+      state.expeditionStartTotals = { ...state.totals };
+      const newRelic = state.relicSchedule[state.expeditionIndex-1] ?? null;
+      state.deck = buildDiamantExpeditionDeck(state.pendingRelics, newRelic);
+      state.pendingRelics = [];
+      state.discard = [];
+      const log = (state.log||[]).slice(-11).concat([`— Expédition ${state.expeditionIndex} —`]);
+      state.log = log;
+      state.status = "playing";
+      diamantRevealCard(state);
+      tx.set(ref, state);
+    });
+  } catch(e) { console.error("Erreur Diamant (nouvelle expédition)", e); }
+}
+
+async function diamantRestart() {
+  if (!bgSession || myPlayerIdx!==bgSession.hostIdx) return;
+  try {
+    await db.collection(COLLECTION).doc("diamant_game").set({ status:"idle" }, { merge:true });
+    await db.collection(COLLECTION).doc("boardgame_session").set({ selectedGame:"diamant_config" }, { merge:true });
+  } catch(e) {
+    console.error("Erreur redémarrage Diamant", e);
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+  }
+}
+
+// ── rendu ──
+function renderPanel6() {
+  const wrap = document.getElementById("bg-wrap");
+  if (!wrap) return;
+
+  const active = bgSession && bgSession.active && bgSession.players && Object.keys(bgSession.players).length>0;
+
+  if (!active) {
+    wrap.innerHTML = `
+      <div id="bg-icon">🎲</div>
+      <div id="bg-subtitle">Aucune session en cours. Lance-en une pour que les autres puissent te rejoindre.</div>
+      <button id="bg-start-btn" onclick="startBoardGameSession()">🎲 Commencer Session de Jeu</button>`;
+    return;
+  }
+
+  if (!bgIsInSession()) {
+    const count = Object.keys(bgSession.players||{}).length;
+    wrap.innerHTML = `
+      <div id="bg-icon">🎲</div>
+      <div id="bg-subtitle">Une session est en cours (${count} joueur${count>1?'s':''}). Rejoins-la !</div>
+      <button id="bg-join-btn" onclick="joinBoardGameSession()">🙋 Rejoindre Session</button>`;
+    return;
+  }
+
+  const isHost = myPlayerIdx===bgSession.hostIdx;
+
+  if (!bgSession.locked) {
+    const players = bgSession.players || {};
+    const count = Object.keys(players).length;
+    const rows = Object.keys(players).map(idxStr=>{
+      const idx = parseInt(idxStr);
+      const isPHost = idx===bgSession.hostIdx;
+      return `
+        <div class="bg-player-row">
+          <div class="avatar" style="background:${playerColor(idx)}">${(players[idxStr]||"?")[0]?.toUpperCase()}</div>
+          <span class="bg-player-name">${players[idxStr]}${idx===myPlayerIdx?' (toi)':''}</span>
+          ${isPHost?'<span class="bg-host-badge">Hôte</span>':''}
+        </div>`;
+    }).join("");
+    wrap.innerHTML = `
+      <div id="bg-waiting-title"><span class="bg-spinner"></span>En attente des joueurs…</div>
+      <div id="bg-waiting-sub">${count} joueur${count>1?'s':''} présent${count>1?'s':''}</div>
+      <div class="bg-player-list">${rows}</div>
+      ${isHost && count>=2 ? '<button id="bg-lock-btn" onclick="lockBoardGamePlayers()">🔒 Verrouiller joueurs</button>' : ''}
+      <button id="bg-leave-btn" onclick="leaveBoardGameSession()">Quitter la session</button>
+      ${isHost?'<button id="bg-cancel-btn" onclick="cancelBoardGameSession()">Annuler la session</button>':''}`;
+    return;
+  }
+
+  if (!bgSession.selectedGame) {
+    wrap.innerHTML = `
+      <div id="bg-icon">🎲</div>
+      <div id="bg-waiting-title">Choix du Board Game</div>
+      <div id="bg-waiting-sub">${isHost? "Choisis le jeu auquel vous allez jouer." : "En attente que l'hôte choisisse un jeu…"}</div>
+      <div class="game-select-grid">
+        <button class="game-option" ${isHost?`onclick="selectBoardGame('flip7')"`:'disabled'}>
+          <span class="game-option-emoji">🃏</span>
+          <span class="game-option-name">Flip Seven</span>
+          <span class="game-option-desc">Retourne des cartes, évite les doublons !</span>
+        </button>
+        <button class="game-option" ${isHost?`onclick="selectBoardGame('diamant')"`:'disabled'}>
+          <span class="game-option-emoji">💎</span>
+          <span class="game-option-name">Diamant</span>
+          <span class="game-option-desc">Explore la mine, sors avant le danger !</span>
+        </button>
+      </div>
+      ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Retour au salon</button>':''}`;
+    return;
+  }
+
+  if (bgSession.selectedGame==="diamant_config") {
+    renderDiamantConfig(wrap, isHost);
+    return;
+  }
+
+  if (bgSession.selectedGame==="flip7") {
+    renderFlip7(wrap, isHost);
+  }
+  if (bgSession.selectedGame==="diamant") {
+    renderDiamant(wrap, isHost);
+  }
+}
+
+function renderDiamantConfig(wrap, isHost) {
+  wrap.innerHTML = `
+    <div id="bg-icon">💎</div>
+    <div id="bg-waiting-title">Configuration de Diamant</div>
+    <div id="bg-waiting-sub">${isHost ? "Choisis le nombre d'expéditions." : "En attente que l'hôte configure la partie…"}</div>
+    ${isHost ? `
+    <div class="diamant-config-grid">
+      <button class="flip7-target-btn" style="background:#6366f1" onclick="startDiamantGame(3)">3 expéditions</button>
+      <button class="flip7-target-btn" style="background:#f59e0b" onclick="startDiamantGame(5)">5 expéditions</button>
+      <button class="flip7-target-btn" style="background:#10b981" onclick="startDiamantGame(7)">7 expéditions</button>
+    </div>
+    <button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Retour au salon</button>` : ""}
+  `;
+}
+
+function renderDiamant(wrap, isHost) {
+  const st = diamantState;
+  if (!st || st.status==="idle") {
+    wrap.innerHTML = `<div id="bg-icon">💎</div><div id="bg-waiting-sub">⏳ Préparation de la partie…</div>`;
+    return;
+  }
+  const me = myPlayerIdx;
+
+  let cardHtml = "";
+  const card = st.currentCard;
+  if (card) {
+    if (card.type==="treasure") {
+      cardHtml = `<div class="diamant-card treasure"><div class="diamant-card-emoji">💰</div>
+        <div class="diamant-card-label">Trésor : ${card.value} gemmes</div>
+        <div class="diamant-card-sub">Partagées entre les explorateurs encore dans la mine</div></div>`;
+    } else if (card.type==="relic") {
+      cardHtml = `<div class="diamant-card relic"><div class="diamant-card-emoji">🏺</div>
+        <div class="diamant-card-label">Relique : ${card.value} points</div>
+        <div class="diamant-card-sub">Un seul explorateur doit sortir ce tour pour la récupérer</div></div>`;
+    } else if (card.type==="hazard") {
+      const count = (st.hazardsSeen && st.hazardsSeen[card.key]) || 0;
+      cardHtml = `<div class="diamant-card hazard"><div class="diamant-card-emoji">${card.emoji}</div>
+        <div class="diamant-card-label">${card.label} ${count>=2?"(2e fois !)":"(1ère fois)"}</div>
+        <div class="diamant-card-sub">${count>=2 ? "Expédition terminée, trésors non sécurisés perdus" : "Rien ne se passe pour l'instant"}</div></div>`;
+    }
+  }
+
+  const hazardTrack = DIAMANT_HAZARDS.map(h=>{
+    const seen = (st.hazardsSeen && st.hazardsSeen[h.key]) || 0;
+    const color = seen>=2 ? "#dc2626" : seen===1 ? "#d97706" : "#cbd5e1";
+    return `<span style="margin:0 6px;font-size:.9rem">${h.emoji}<span style="font-size:.62rem;font-weight:800;color:${color}"> ${seen}/2</span></span>`;
+  }).join("");
+
+  const statsHtml = `
+    <div class="diamant-stats">
+      <div class="diamant-stat"><div class="diamant-stat-val">${st.expeditionIndex}/${st.numExpeditions}</div><div class="diamant-stat-label">Expédition</div></div>
+      <div class="diamant-stat"><div class="diamant-stat-val">${st.pathGems||0}</div><div class="diamant-stat-label">Gemmes au sol</div></div>
+      <div class="diamant-stat"><div class="diamant-stat-val">${st.currentRelic ? st.currentRelic.value : "—"}</div><div class="diamant-stat-label">Relique dispo</div></div>
+    </div>
+    <div style="text-align:center;margin-bottom:12px">${hazardTrack}</div>`;
+
+  let actionHtml = "";
+  if (st.status==="playing") {
+    const iAmIn = st.inMine[me];
+    if (!iAmIn) {
+      actionHtml = `<p class="flip7-waiting">🏖️ Tu es en sécurité hors de la mine. En attente des autres explorateurs…</p>`;
+    } else if (st.decisions[me]!==undefined) {
+      actionHtml = `<p class="flip7-waiting">✅ Choix enregistré. En attente des autres explorateurs…</p>`;
+    } else {
+      actionHtml = `<p class="flip7-prompt">⛏️ Que fais-tu ? (${st.handTreasure[me]||0} gemmes en poche)</p>
+        <div class="flip7-actions">
+          <button class="flip7-draw-btn" onclick="diamantSubmitDecision(${me},'continue')">➡️ Continuer</button>
+          <button class="flip7-stay-btn" onclick="diamantSubmitDecision(${me},'leave')">🚪 Sortir</button>
+        </div>`;
+    }
+  }
+
+  const playersHtml = st.order.map(idx=>{
+    const inMine = st.inMine[idx];
+    const decided = st.decisions[idx]!==undefined;
+    let badge = "";
+    if (!inMine) badge = `<span class="flip7-badge flip7-badge-stayed">🏖️ Sorti</span>`;
+    else if (decided) badge = `<span class="flip7-badge flip7-badge-frozen">✅ Décidé</span>`;
+    else if (st.status==="playing") badge = `<span class="flip7-badge flip7-badge-turn">⛏️ En mine</span>`;
+    return `<div class="flip7-player-card${idx===me?' is-me':''}">
+      <div class="flip7-player-head">
+        <div class="avatar" style="background:${playerColor(idx)}">${(names[idx]||"?")[0]?.toUpperCase()}</div>
+        <span class="flip7-player-name">${names[idx]}${idx===me?' (toi)':''}</span>
+        ${badge}
+      </div>
+      <div class="flip7-score">${inMine ? (st.handTreasure[idx]||0)+" gemmes en poche" : "en sécurité"} <span class="flip7-total">(total ${st.totals[idx]||0})</span></div>
+    </div>`;
+  }).join("");
+
+  let summaryHtml = "";
+  if (st.status==="expedition_summary") {
+    summaryHtml = `<div class="flip7-summary">
+      <h4>📋 Résultats de l'expédition ${st.expeditionIndex}</h4>
+      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>+${(st.expeditionGains&&st.expeditionGains[idx])||0} pts</span><span>Total : ${st.totals[idx]||0}</span></div>`).join("")}
+      ${isHost?'<button class="flip7-next-btn" onclick="diamantStartNewExpedition()">▶️ Expédition suivante</button>':"<p class=\"flip7-waiting\">⏳ En attente que l'hôte lance l'expédition suivante…</p>"}
+    </div>`;
+  }
+  if (st.status==="game_over") {
+    summaryHtml = `<div class="flip7-summary flip7-gameover">
+      <h4>🏆 Partie terminée !</h4>
+      <p class="flip7-winner">${names[st.winner]} remporte la partie avec ${st.totals[st.winner]} points !</p>
+      ${st.order.map(idx=>`<div class="flip7-summary-row"><span>${names[idx]}</span><span>Total : ${st.totals[idx]||0}</span></div>`).join("")}
+      ${isHost?'<button class="flip7-next-btn" onclick="diamantRestart()">🔄 Nouvelle partie</button>':''}
+    </div>`;
+  }
+
+  const logHtml = (st.log||[]).slice(-6).map(l=>`<div class="flip7-log-row">${l}</div>`).join("");
+
+  wrap.innerHTML = `
+    <div class="flip7-header">
+      <span>💎 Diamant — Expédition ${st.expeditionIndex}/${st.numExpeditions}</span>
+    </div>
+    ${statsHtml}
+    ${cardHtml}
+    ${actionHtml}
+    <div class="flip7-players-grid">${playersHtml}</div>
+    ${summaryHtml}
+    <div class="flip7-log">${logHtml}</div>
+    ${isHost?'<button id="bg-leave-btn" onclick="unlockBoardGamePlayers()">↩️ Quitter la partie</button>':''}
+  `;
+}
+
 // ─── tabs ─────────────────────────────────────────────────
 function switchTab(i) {
   currentTab=i;
@@ -1806,6 +2259,7 @@ function switchTab(i) {
   if(i===1) renderPanel2();
   if(i===2) renderPanel3();
   if(i===3) renderPanel4();
+  if(i===4) renderPanel6();
 }
 
 // ─── init ────────────────────────────────────────────────
@@ -1816,6 +2270,9 @@ function startLeagueData() {
   loadMyIdentity();
   listenState();
   listenValidated();
+  listenBoardGame();
+  listenFlip7();
+  listenDiamant();
 }
 
 listenLeaguesRegistry();
