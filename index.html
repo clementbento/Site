@@ -268,11 +268,11 @@
 
   <!-- PANEL 2 -->
   <div class="panel" id="panel-1">
-    <p class="section-title">Classement du mois</p>
+    <p class="section-title">Classement du défi (10 jours)</p>
     <div id="podium-wrap"></div>
     <div id="rank-list" class="rank-list"></div>
     <div id="chart-box">
-      <h3>Scores cumulés sur le mois</h3>
+      <h3>Scores cumulés sur le défi</h3>
       <div id="chart-empty" style="display:none">📊 Aucun score encore enregistré</div>
       <canvas id="myChart" height="180"></canvas>
     </div>
@@ -892,12 +892,27 @@ function getActiveQuizDay() {
   return toISO(ref);
 }
 
-const now   = new Date();
-const YEAR  = now.getFullYear();
-const MONTH = now.getMonth();
-const WORKING_DAYS = getWorkingDays(YEAR, MONTH);
+const now = new Date();
+
+// ─── défi 2 semaines (lundi → vendredi × 2 = 10 tests) ─────
+// Remplace l'ancien système "mois civil" : classement, podium, graphique
+// et tableau ne portent QUE sur ces 10 jours, sans possibilité de continuer après.
+const CHALLENGE_START = "2026-08-03"; // premier lundi du défi
+const CHALLENGE_LENGTH = 10;
+function getChallengeDays(startISO, count) {
+  const [y,m,d] = startISO.split("-").map(Number);
+  const cur = new Date(y, m-1, d);
+  const days = [];
+  while (days.length < count) {
+    if (isWeekday(cur)) days.push(toISO(cur));
+    cur.setDate(cur.getDate()+1);
+  }
+  return days;
+}
+const WORKING_DAYS = getChallengeDays(CHALLENGE_START, CHALLENGE_LENGTH);
 let TODAY = getActiveQuizDay();
-if (TODAY < WORKING_DAYS[0]) TODAY = toISO(now);
+if (TODAY < WORKING_DAYS[0]) TODAY = WORKING_DAYS[0];
+if (TODAY > WORKING_DAYS[WORKING_DAYS.length-1]) TODAY = WORKING_DAYS[WORKING_DAYS.length-1];
 
 // ─── Firestore persistence ──
 function setConnStatus(ok) {
@@ -1102,8 +1117,9 @@ function renderPanel1() {
     list.innerHTML = `<div class="empty-state">👋 Cette ligue n'a encore aucun joueur.<br>Crée le premier via le bouton en haut de l'écran.</div>`;
     return;
   }
+  const challengeDayNum = WORKING_DAYS.indexOf(TODAY) + 1;
   document.getElementById("p1-title").textContent =
-    `Saisie du ${dispDate(TODAY)} — ${dayLabel(TODAY)}`;
+    `Saisie du ${dispDate(TODAY)} — ${dayLabel(TODAY)} (Jour ${challengeDayNum}/${CHALLENGE_LENGTH})`;
   const todayScores = scores[TODAY]||{};
   list.innerHTML = "";
   for (let i=0;i<N;i++) {
