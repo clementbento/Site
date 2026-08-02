@@ -136,6 +136,13 @@
   .crown{font-size:1.3rem;margin-bottom:2px;animation:bounce 1s infinite alternate}
   @keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-4px)}}
 
+  /* duo mode toggle */
+  #duo-toggle-bar{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:12px}
+  .duo-toggle-btn{border:2px solid #e2e8f0;border-radius:20px;padding:7px 18px;font-size:.78rem;font-weight:800;background:white;color:#334155;cursor:pointer;transition:all .15s}
+  .duo-toggle-btn.on{background:linear-gradient(135deg,#6366f1,#4f46e5);border-color:#4f46e5;color:white}
+  .duo-toggle-btn:disabled{opacity:.45;cursor:default}
+  .duo-hint{font-size:.68rem;color:#94a3b8;font-weight:600;text-align:center}
+
   /* ranking list */
   .rank-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
   .rank-row{display:flex;align-items:center;gap:10px;background:white;border-radius:12px;padding:9px 12px;box-shadow:0 1px 4px #0000000a;border:1px solid #f1f5f9}
@@ -167,6 +174,12 @@
   .name-input:focus{border-color:#f59e0b}
   #save-names-btn{background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:10px;padding:7px 16px;font-size:.75rem;font-weight:900;cursor:pointer}
   #edit-hint{text-align:center;font-size:.72rem;color:#6366f1;font-weight:600;margin-bottom:8px;display:none}
+
+  #session-archive{background:#eef2ff;border:2px solid #c7d2fe;border-radius:16px;padding:14px;margin-bottom:12px;display:none}
+  #session-archive h4{font-size:.72rem;font-weight:900;color:#4338ca;margin-bottom:8px}
+  #session-archive p{font-size:.72rem;color:#4338ca;margin-bottom:10px}
+  #archive-session-btn{background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border:none;border-radius:10px;padding:7px 16px;font-size:.75rem;font-weight:900;cursor:pointer}
+  #archive-session-btn:disabled{opacity:.6;cursor:default}
 
   /* table */
   .table-wrap{border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px #0000000d;overflow-x:auto}
@@ -339,6 +352,7 @@
   <!-- PANEL 2 -->
   <div class="panel" id="panel-1">
     <p class="section-title">Classement du défi (10 jours)</p>
+    <div id="duo-toggle-bar"></div>
     <div id="podium-wrap"></div>
     <div id="rank-list" class="rank-list"></div>
     <div id="chart-box">
@@ -360,6 +374,11 @@
       <h4>✏️ Modifier les noms des joueurs</h4>
       <div class="names-grid" id="names-grid"></div>
       <button id="save-names-btn" onclick="saveNames()">Sauvegarder les noms</button>
+    </div>
+    <div id="session-archive">
+      <h4>📦 Session précédente (pour le mode Duo)</h4>
+      <p id="session-archive-info"></p>
+      <button id="archive-session-btn" onclick="archiveSession()">Archiver le classement actuel</button>
     </div>
     <p id="edit-hint">Cliquez sur une cellule pour modifier sa valeur (scores, bonus, malus)</p>
     <p style="text-align:center;font-size:.7rem;color:#334155;font-weight:700;margin-bottom:10px">⬛ Score en noir = ajouté automatiquement (rattrapage, la personne n'a pas joué)</p>
@@ -518,6 +537,8 @@ let malus    = {};
 let validated = {};
 let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a pas joué)
 let codes = {}; // { [idx]: "123456" } — code à 6 chiffres de chaque compte
+let previousSession = null; // { order:[{idx,name,total}], savedAt:ISOString } — classement final archivé de la session précédente, pour le mode Duo
+let duoMode = false; // affichage local uniquement, jamais sauvegardé
 
 let adminUnlocked = false;
 let editCell = null;
@@ -1148,7 +1169,7 @@ function setConnStatus(ok) {
 
 async function persist() {
   try {
-    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, codes });
+    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, codes, previousSession });
     setConnStatus(true);
     return true;
   } catch (e) {
@@ -1181,6 +1202,7 @@ function listenState() {
         if (d.malus)  malus  = d.malus;
         if (d.autoScores) autoScores = d.autoScores;
         if (d.codes) codes = d.codes;
+        previousSession = d.previousSession || null;
       } else {
         // Aucun document Firestore pour cette ligue : c'est une ligue toute neuve.
         // Seule la ligue par défaut ("ics") récupère les 8 joueurs historiques ;
@@ -1194,6 +1216,7 @@ function listenState() {
           N = 0;
         }
         scores = {}; bonus = {}; malus = {}; autoScores = {}; codes = {};
+        previousSession = null;
       }
       if (!stateReady) { stateReady = true; maybeReady(); }
       else if (dataReady) rerenderAll();
@@ -1396,8 +1419,123 @@ async function doValidate(i) {
   renderPanel1();
 }
 
+// ─── mode Duo ────────────────────────────────────────────
+// Un joueur est considéré "a joué" la session archivée s'il a au moins un
+// score réel (non issu du rattrapage automatique) sur un des jours du défi.
+function computeSessionPlayedRanking() {
+  const totals = getTotals();
+  const result = [];
+  for (let i=0;i<N;i++) {
+    const played = WORKING_DAYS.some(day => {
+      const ds = scores[day];
+      if (!ds || ds[i]===undefined) return false;
+      const isAuto = autoScores[day] && autoScores[day][i];
+      return !isAuto;
+    });
+    if (played) result.push({ idx:i, name:names[i], total:totals[i] });
+  }
+  result.sort((a,b)=>b.total-a.total);
+  return result;
+}
+
+async function archiveSession() {
+  if (!adminUnlocked) return;
+  const order = computeSessionPlayedRanking();
+  if (order.length===0) {
+    alert("Aucun joueur n'a de score réel enregistré sur ce défi, impossible d'archiver.");
+    return;
+  }
+  if (!confirm(`Archiver le classement actuel (${order.length} joueur(s) ayant joué) comme "session précédente" pour le mode Duo ?\n\nCela remplacera l'archive existante s'il y en a une.`)) return;
+  const btn = document.getElementById("archive-session-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Archivage…"; }
+  const backup = previousSession;
+  previousSession = { order, savedAt: new Date().toISOString() };
+  const ok = await persist();
+  if (btn) { btn.disabled = false; btn.textContent = "Archiver le classement actuel"; }
+  if (!ok) {
+    previousSession = backup;
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    return;
+  }
+  renderArchiveInfo();
+  renderDuoToggle();
+  alert("✅ Session archivée ! Le mode Duo peut maintenant l'utiliser.");
+}
+
+// Construit l'ordre des N joueurs actuels d'après le classement archivé :
+// les joueurs qui avaient joué gardent leur position (meilleur → pire), et
+// tout joueur absent de l'archive (n'a pas joué la session précédente, ou a
+// rejoint après coup) est inséré au milieu de cet ordre plutôt qu'en dernier.
+function buildDuoOrder() {
+  if (!previousSession || !previousSession.order || previousSession.order.length===0) return null;
+  const playedIdxs = previousSession.order.map(e=>e.idx).filter(idx=>idx<N);
+  const presentSet = new Set(playedIdxs);
+  const absentIdxs = [];
+  for (let i=0;i<N;i++) if (!presentSet.has(i)) absentIdxs.push(i);
+  const order = [...playedIdxs];
+  const midPos = Math.floor(order.length/2);
+  order.splice(midPos, 0, ...absentIdxs);
+  return order;
+}
+
+function duoModeAvailable() {
+  return N>0 && N%2===0 && !!buildDuoOrder();
+}
+
+// 1er avec dernier, 2e avec avant-dernier, etc. Duos triés par score combiné.
+function getDuoPairs() {
+  const order = buildDuoOrder();
+  if (!order || order.length!==N || N%2!==0) return null;
+  const totals = getTotals();
+  const pairs = [];
+  for (let i=0;i<N/2;i++) {
+    const a = order[i], b = order[N-1-i];
+    pairs.push({ idxs:[a,b], names:[names[a],names[b]], total: totals[a]+totals[b] });
+  }
+  pairs.sort((p,q)=>q.total-p.total);
+  return pairs;
+}
+
+function toggleDuoMode() {
+  if (!duoModeAvailable()) return;
+  duoMode = !duoMode;
+  renderPanel2();
+}
+
+function renderDuoToggle() {
+  const bar = document.getElementById("duo-toggle-bar");
+  if (!bar) return;
+  if (N===0) { bar.innerHTML=""; return; }
+  const available = duoModeAvailable();
+  if (!available) duoMode = false;
+  let hint = "";
+  if (N%2!==0) hint = "Nécessite un nombre pair de joueurs.";
+  else if (!previousSession || !previousSession.order || previousSession.order.length===0) hint = "Aucune session précédente archivée.";
+  bar.innerHTML = `
+    <button id="duo-toggle-btn" class="duo-toggle-btn${duoMode?' on':''}" ${available?'':'disabled'} onclick="toggleDuoMode()">
+      👥 Mode Duo : ${duoMode?'ON':'OFF'}
+    </button>
+    ${hint?`<span class="duo-hint">${hint}</span>`:''}`;
+}
+
+function renderArchiveInfo() {
+  const div = document.getElementById("session-archive");
+  const info = document.getElementById("session-archive-info");
+  if (!div || !info) return;
+  div.style.display = adminUnlocked ? "block" : "none";
+  if (!adminUnlocked) return;
+  if (previousSession && previousSession.order && previousSession.order.length>0) {
+    const d = previousSession.savedAt ? new Date(previousSession.savedAt) : null;
+    const dateStr = d ? d.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "date inconnue";
+    info.textContent = `Dernière session archivée le ${dateStr} — ${previousSession.order.length} joueur(s) classé(s).`;
+  } else {
+    info.textContent = "Aucune session archivée pour l'instant.";
+  }
+}
+
 // ─── panel 2 ─────────────────────────────────────────────
 function renderPanel2() {
+  renderDuoToggle();
   if (N === 0) {
     document.getElementById("podium-wrap").innerHTML = "";
     document.getElementById("rank-list").innerHTML = `<div class="empty-state">Aucun joueur pour l'instant.</div>`;
@@ -1405,8 +1543,13 @@ function renderPanel2() {
     document.getElementById("chart-empty").style.display = "block";
     return;
   }
-  renderPodium();
-  renderRankList();
+  if (duoMode && duoModeAvailable()) {
+    renderDuoPodium();
+    renderDuoRankList();
+  } else {
+    renderPodium();
+    renderRankList();
+  }
   renderChart();
 }
 
@@ -1471,6 +1614,70 @@ function renderRankList() {
   });
 }
 
+function renderDuoPodium() {
+  const pairs = getDuoPairs();
+  const wrap = document.getElementById("podium-wrap");
+  wrap.innerHTML = "";
+  if (!pairs || pairs.length===0) return;
+  const duoAvatars = (idxs, big) => idxs.map(idx=>`
+      <div class="podium-avatar${big?' first':''}" style="background:${playerColor(idx)};box-shadow:0 4px 12px ${playerColor(idx)}55;margin:0 -4px">
+        ${names[idx][0]?.toUpperCase()}
+      </div>`).join("");
+  const duoLabel = idxs => idxs.map(i=>names[i]).join(" & ");
+
+  if (pairs.length < 3) {
+    const heights = [118, 80, 58];
+    const bgColors = ["#facc15","#cbd5e1","#d97706"];
+    pairs.forEach((p,rank)=>{
+      const col = document.createElement("div");
+      col.className = "podium-col";
+      const crown = rank===0 ? `<div class="crown">👑</div>` : "";
+      col.innerHTML = `
+        ${crown}
+        <div style="display:flex">${duoAvatars(p.idxs, rank===0)}</div>
+        <div class="podium-pname">${duoLabel(p.idxs)}</div>
+        <div class="podium-pts" style="color:${playerColor(p.idxs[0])}">${p.total} pts</div>
+        <div class="podium-block" style="height:${heights[rank]}px;background:${bgColors[rank]}">${MEDAL[rank]}</div>`;
+      wrap.appendChild(col);
+    });
+    return;
+  }
+  const order = [pairs[1], pairs[0], pairs[2]];
+  const heights = [80, 118, 58];
+  const bgColors = ["#cbd5e1","#facc15","#d97706"];
+  order.forEach((p,pos) => {
+    const rank = pos===1?0:pos===0?1:2;
+    const col = document.createElement("div");
+    col.className = "podium-col";
+    const crown = rank===0 ? `<div class="crown">👑</div>` : "";
+    col.innerHTML = `
+      ${crown}
+      <div style="display:flex">${duoAvatars(p.idxs, rank===0)}</div>
+      <div class="podium-pname">${duoLabel(p.idxs)}</div>
+      <div class="podium-pts" style="color:${playerColor(p.idxs[0])}">${p.total} pts</div>
+      <div class="podium-block" style="height:${heights[pos]}px;background:${bgColors[pos]}">${MEDAL[rank]}</div>`;
+    wrap.appendChild(col);
+  });
+}
+
+function renderDuoRankList() {
+  const pairs = getDuoPairs();
+  const list = document.getElementById("rank-list");
+  list.innerHTML = "";
+  if (!pairs) return;
+  pairs.forEach((p,pos) => {
+    const row = document.createElement("div");
+    row.className="rank-row";
+    const dots = p.idxs.map(idx=>`<div class="rank-dot" style="background:${playerColor(idx)}"></div>`).join("");
+    row.innerHTML=`
+      <span class="rank-pos" style="color:${pos<3?'#4f46e5':'#94a3b8'}">${pos<3?MEDAL[pos]:`${pos+1}.`}</span>
+      <div style="display:flex;gap:2px">${dots}</div>
+      <span class="rank-name">${p.names.join(" & ")}</span>
+      <span class="rank-total" style="color:${playerColor(p.idxs[0])}">${p.total} pts</span>`;
+    list.appendChild(row);
+  });
+}
+
 function renderChart() {
   const data = getCumData();
   const chartEl = document.getElementById("myChart");
@@ -1514,6 +1721,7 @@ function renderPanel3() {
   renderDbHead();
   renderDbBody();
   renderNamesEditor();
+  renderArchiveInfo();
 }
 
 function renderDbHead() {
@@ -1649,6 +1857,7 @@ function checkCode(v) {
   else if(v.length>0){ st.className="err"; st.textContent="Code incorrect"; }
   else { st.textContent=""; }
   renderNamesEditor();
+  renderArchiveInfo();
   renderDbBody();
 }
 
