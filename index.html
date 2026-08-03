@@ -256,31 +256,15 @@
   <div id="login-card">
     <button id="login-close" onclick="closeLoginOverlay()">✕</button>
     <h2>👋 Qui es-tu ?</h2>
-    <p>Choisis ton prénom puis entre ton code à 6 chiffres.</p>
+    <p>Choisis ton prénom dans la liste.</p>
     <div id="login-grid"></div>
     <div id="login-newplayer-form">
       <input id="login-newplayer-input" type="text" placeholder="Ton prénom" maxlength="24"
-        onkeydown="if(event.key==='Enter')document.getElementById('login-newplayer-code').focus()"/>
-      <input id="login-newplayer-code" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Code à 6 chiffres" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"
         onkeydown="if(event.key==='Enter')submitNewPlayer()"/>
-      <p class="login-code-hint">Ce code te servira à te reconnecter, choisis-le bien !</p>
       <p id="login-newplayer-err"></p>
       <div class="login-newplayer-actions">
         <button class="login-newplayer-cancel" onclick="hideNewPlayerForm()">Annuler</button>
         <button id="login-newplayer-submit" class="login-newplayer-submit" onclick="submitNewPlayer()">Créer</button>
-      </div>
-    </div>
-    <div id="login-entercode-form">
-      <p id="login-entercode-title">Code de <span id="login-entercode-name"></span></p>
-      <p class="login-code-hint" id="login-entercode-hint">Entre ton code à 6 chiffres.</p>
-      <input id="login-entercode-input" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"
-        onkeydown="if(event.key==='Enter')submitEnterCode()"/>
-      <p id="login-entercode-err"></p>
-      <div class="login-newplayer-actions">
-        <button class="login-newplayer-cancel" onclick="hideEnterCodeForm()">Annuler</button>
-        <button id="login-entercode-submit" class="login-newplayer-submit" onclick="submitEnterCode()">Valider</button>
       </div>
     </div>
   </div>
@@ -290,41 +274,14 @@
   <div id="settings-card">
     <button id="settings-close" onclick="closeSettingsOverlay()">✕</button>
     <h2>⚙️ Réglages</h2>
-    <p id="settings-subtitle">Entre ton code pour accéder à tes réglages.</p>
-
-    <div id="settings-verify-form">
-      <input id="settings-verify-input" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"
-        onkeydown="if(event.key==='Enter')submitSettingsVerify()"/>
-      <p id="settings-verify-err"></p>
-      <div class="login-newplayer-actions">
-        <button class="login-newplayer-cancel" onclick="closeSettingsOverlay()">Annuler</button>
-        <button id="settings-verify-submit" class="login-newplayer-submit" onclick="submitSettingsVerify()">Valider</button>
-      </div>
-    </div>
+    <p id="settings-subtitle">Réglages de ton compte.</p>
 
     <div id="settings-menu">
-      <button class="settings-menu-btn" onclick="showChangePasswordForm()">🔑 Changer mon code</button>
       <button class="settings-menu-btn danger" onclick="showLeaveConfirm()">🚪 Sortir de la ligue</button>
     </div>
 
-    <div id="settings-changepw-form">
-      <input id="settings-changepw-new" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Nouveau code" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"/>
-      <input id="settings-changepw-confirm" class="login-code-input" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="Confirme le code" maxlength="6"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"
-        onkeydown="if(event.key==='Enter')submitChangePassword()"/>
-      <p class="login-code-hint">Choisis un nouveau code à 6 chiffres.</p>
-      <p id="settings-changepw-err"></p>
-      <p id="settings-changepw-ok"></p>
-      <div class="login-newplayer-actions">
-        <button class="login-newplayer-cancel" onclick="hideChangePasswordForm()">Annuler</button>
-        <button id="settings-changepw-submit" class="login-newplayer-submit" onclick="submitChangePassword()">Enregistrer</button>
-      </div>
-    </div>
-
     <div id="settings-leave-confirm">
-      <p>Tu vas quitter cette ligue sur cet appareil. Tu pourras la rejoindre à nouveau plus tard avec ton prénom et ton code.</p>
+      <p>Tu vas quitter cette ligue sur cet appareil. Tu pourras la rejoindre à nouveau plus tard avec ton prénom.</p>
       <div class="login-newplayer-actions">
         <button class="login-newplayer-cancel" onclick="hideLeaveConfirm()">Annuler</button>
         <button id="settings-leave-submit" class="login-newplayer-submit" style="background:linear-gradient(135deg,#ef4444,#dc2626)" onclick="submitLeaveLeague()">Confirmer</button>
@@ -536,7 +493,6 @@ let bonus    = {};
 let malus    = {};
 let validated = {};
 let autoScores = {}; // { [day]: { [idx]: true } } — scores ajoutés automatiquement (rattrapage, personne n'a pas joué)
-let codes = {}; // { [idx]: "123456" } — code à 6 chiffres de chaque compte
 let previousSession = null; // { order:[{idx,name,total}], savedAt:ISOString } — classement final archivé de la session précédente, pour le mode Duo
 let duoMode = false; // affichage local uniquement, jamais sauvegardé
 
@@ -708,7 +664,7 @@ function renderLoginGrid() {
   const grid = document.getElementById("login-grid");
   if (!grid) return;
   grid.innerHTML = names.map((n,i)=>`
-    <button class="login-opt" onclick="promptCode(${i})">
+    <button class="login-opt" onclick="selectPlayer(${i})">
       <span class="login-avatar" style="background:${playerColor(i)}">${n[0]?.toUpperCase()||"?"}</span>
       ${n}
     </button>`).join("") + `
@@ -720,7 +676,6 @@ function renderLoginGrid() {
 
 function openLoginOverlay(isChange) {
   hideNewPlayerForm();
-  hideEnterCodeForm();
   renderLoginGrid();
   const overlay = document.getElementById("login-overlay");
   const closeBtn = document.getElementById("login-close");
@@ -730,7 +685,7 @@ function openLoginOverlay(isChange) {
   if (title) title.textContent = isChange ? "🔄 Changer d'identité" : "👋 Qui es-tu ?";
   if (sub) sub.textContent = (!isChange && names.length===0)
     ? "Cette ligue est toute neuve : crée le premier joueur !"
-    : "Choisis ton prénom puis entre ton code à 6 chiffres.";
+    : "Choisis ton prénom dans la liste.";
   if (overlay) overlay.style.display = "flex";
   // Ligue vide : on saute directement au formulaire de création du 1er joueur.
   if (names.length===0) showNewPlayerForm();
@@ -741,97 +696,9 @@ function closeLoginOverlay() {
   if (overlay) overlay.style.display = "none";
 }
 
-// ─── saisie du code à 6 chiffres pour se connecter ─────────
-let pendingCodeIdx = null;
-
-function promptCode(i) {
-  pendingCodeIdx = i;
-  const grid = document.getElementById("login-grid");
-  const newform = document.getElementById("login-newplayer-form");
-  const codeform = document.getElementById("login-entercode-form");
-  if (grid) grid.style.display = "none";
-  if (newform) newform.style.display = "none";
-  if (codeform) codeform.style.display = "flex";
-  const nameSpan = document.getElementById("login-entercode-name");
-  if (nameSpan) nameSpan.textContent = names[i];
-  const hint = document.getElementById("login-entercode-hint");
-  const hasCode = codes[i] !== undefined;
-  if (hint) hint.textContent = hasCode
-    ? "Entre ton code à 6 chiffres."
-    : "Ce compte n'a pas encore de code : choisis-en un maintenant (6 chiffres).";
-  const err = document.getElementById("login-entercode-err");
-  if (err) err.style.display = "none";
-  const input = document.getElementById("login-entercode-input");
-  if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
-}
-function hideEnterCodeForm() {
-  pendingCodeIdx = null;
-  const grid = document.getElementById("login-grid");
-  const codeform = document.getElementById("login-entercode-form");
-  if (codeform) codeform.style.display = "none";
-  if (grid) grid.style.display = "grid";
-}
-
-async function setAccountCode(idx, code) {
-  const stateRef = db.collection(COLLECTION).doc("state");
-  try {
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(stateRef);
-      const data = snap.exists ? snap.data() : {};
-      const currentCodes = data.codes || {};
-      if (currentCodes[idx] !== undefined) throw new Error("TDF_ALREADY_SET");
-      tx.set(stateRef, { ...data, codes: { ...currentCodes, [idx]: code } }, { merge:true });
-    });
-    return { ok:true };
-  } catch(e) {
-    if (e.message === "TDF_ALREADY_SET") return { ok:false, reason:"already" };
-    console.error("Erreur d'enregistrement du code", e);
-    return { ok:false, reason:"error" };
-  }
-}
-
-async function submitEnterCode() {
-  const input = document.getElementById("login-entercode-input");
-  const err = document.getElementById("login-entercode-err");
-  const btn = document.getElementById("login-entercode-submit");
-  if (!input || pendingCodeIdx===null) return;
-  const idx = pendingCodeIdx;
-  const v = input.value.trim();
-  if (err) err.style.display = "none";
-  if (!/^\d{6}$/.test(v)) {
-    if (err) { err.textContent = "Le code doit contenir exactement 6 chiffres."; err.style.display = "block"; }
-    return;
-  }
-
-  const hasCode = codes[idx] !== undefined;
-  if (hasCode) {
-    if (v !== codes[idx]) {
-      if (err) { err.textContent = "Code incorrect."; err.style.display = "block"; }
-      return;
-    }
-    hideEnterCodeForm();
-    applyIdentity(idx);
-    return;
-  }
-
-  // Compte existant sans code (ancien compte V1) : on en définit un maintenant
-  if (btn) { btn.disabled = true; btn.textContent = "Enregistrement…"; }
-  const result = await setAccountCode(idx, v);
-  if (btn) { btn.disabled = false; btn.textContent = "Valider"; }
-
-  if (!result.ok) {
-    if (result.reason === "already") {
-      // quelqu'un d'autre vient de définir un code entre-temps : on relit et on redemande
-      codes[idx] = codes[idx] !== undefined ? codes[idx] : "________";
-      if (err) { err.textContent = "Un code vient d'être défini pour ce compte. Entre-le."; err.style.display = "block"; }
-    } else {
-      alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
-    }
-    return;
-  }
-  codes[idx] = v;
-  hideEnterCodeForm();
-  applyIdentity(idx);
+// ─── sélection directe d'un joueur (plus de code) ──────────
+function selectPlayer(i) {
+  applyIdentity(i);
 }
 function applyIdentity(i) {
   myPlayerIdx = i;
@@ -844,7 +711,6 @@ function applyIdentity(i) {
 }
 
 function showNewPlayerForm() {
-  hideEnterCodeForm();
   const grid = document.getElementById("login-grid");
   const form = document.getElementById("login-newplayer-form");
   const err = document.getElementById("login-newplayer-err");
@@ -852,8 +718,6 @@ function showNewPlayerForm() {
   if (form) form.style.display = "flex";
   if (err) err.style.display = "none";
   const input = document.getElementById("login-newplayer-input");
-  const codeInput = document.getElementById("login-newplayer-code");
-  if (codeInput) codeInput.value = "";
   if (input) { input.value = ""; setTimeout(()=>input.focus(), 10); }
 }
 function hideNewPlayerForm() {
@@ -866,10 +730,9 @@ function hideNewPlayerForm() {
   if (grid) grid.style.display = "grid";
 }
 
-async function createNewPlayer(rawName, code) {
+async function createNewPlayer(rawName) {
   const trimmed = (rawName||"").trim();
   if (!trimmed) return { ok:false, reason:"empty" };
-  if (!/^\d{6}$/.test(code||"")) return { ok:false, reason:"badcode" };
   const stateRef = db.collection(COLLECTION).doc("state");
   let newIdx = -1;
   try {
@@ -882,15 +745,12 @@ async function createNewPlayer(rawName, code) {
       if (dup) throw new Error("TDF_DUP_NAME");
       const updatedNames = [...currentNames, trimmed];
       newIdx = updatedNames.length - 1;
-      const currentCodes = data.codes || {};
-      const updatedCodes = { ...currentCodes, [newIdx]: code };
       tx.set(stateRef, {
         names: updatedNames,
         scores: data.scores || {},
         bonus: data.bonus || {},
         malus: data.malus || {},
-        autoScores: data.autoScores || {},
-        codes: updatedCodes
+        autoScores: data.autoScores || {}
       });
     });
   } catch(e) {
@@ -903,32 +763,24 @@ async function createNewPlayer(rawName, code) {
 
 async function submitNewPlayer() {
   const input = document.getElementById("login-newplayer-input");
-  const codeInput = document.getElementById("login-newplayer-code");
   const err = document.getElementById("login-newplayer-err");
-  if (!input || !codeInput) return;
+  if (!input) return;
   const trimmed = input.value.trim();
-  const code = codeInput.value.trim();
   if (err) err.style.display = "none";
   if (!trimmed) {
     if (err) { err.textContent = "Entre un prénom."; err.style.display = "block"; }
     return;
   }
-  if (!/^\d{6}$/.test(code)) {
-    if (err) { err.textContent = "Choisis un code à exactement 6 chiffres."; err.style.display = "block"; }
-    return;
-  }
   const btn = document.getElementById("login-newplayer-submit");
   if (btn) { btn.disabled = true; btn.textContent = "Création…"; }
 
-  const result = await createNewPlayer(trimmed, code);
+  const result = await createNewPlayer(trimmed);
 
   if (btn) { btn.disabled = false; btn.textContent = "Créer"; }
 
   if (!result.ok) {
     if (result.reason === "duplicate") {
       alert(`Le prénom "${trimmed}" est déjà utilisé. Choisis un autre prénom, ou sélectionne ce joueur dans la liste.`);
-    } else if (result.reason === "badcode") {
-      if (err) { err.textContent = "Choisis un code à exactement 6 chiffres."; err.style.display = "block"; }
     } else {
       alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
     }
@@ -937,7 +789,6 @@ async function submitNewPlayer() {
 
   names.push(trimmed);
   N = names.length;
-  codes[result.idx] = code;
   hideNewPlayerForm();
   applyIdentity(result.idx);
 }
@@ -956,25 +807,14 @@ function renderWhoamiTag() {
   }
 }
 
-// ─── réglages (changer de code / quitter la ligue) ─────────
-let settingsUnlocked = false;
-
+// ─── réglages (quitter la ligue) ────────────────────────────
 function resetSettingsForms() {
-  const verifyForm = document.getElementById("settings-verify-form");
   const menu = document.getElementById("settings-menu");
-  const pwForm = document.getElementById("settings-changepw-form");
   const leaveForm = document.getElementById("settings-leave-confirm");
   const sub = document.getElementById("settings-subtitle");
-  const verifyErr = document.getElementById("settings-verify-err");
-  const verifyInput = document.getElementById("settings-verify-input");
-  if (verifyForm) verifyForm.style.display = "flex";
-  if (menu) menu.style.display = "none";
-  if (pwForm) pwForm.style.display = "none";
+  if (menu) menu.style.display = "flex";
   if (leaveForm) leaveForm.style.display = "none";
-  if (sub) sub.textContent = "Entre ton code pour accéder à tes réglages.";
-  if (verifyErr) verifyErr.style.display = "none";
-  if (verifyInput) verifyInput.value = "";
-  settingsUnlocked = false;
+  if (sub && myPlayerIdx!==null && names[myPlayerIdx]!==undefined) sub.textContent = `Réglages de ${names[myPlayerIdx]}.`;
 }
 
 function openSettingsOverlay() {
@@ -982,108 +822,11 @@ function openSettingsOverlay() {
   resetSettingsForms();
   const overlay = document.getElementById("settings-overlay");
   if (overlay) overlay.style.display = "flex";
-  setTimeout(()=>{
-    const input = document.getElementById("settings-verify-input");
-    if (input) input.focus();
-  }, 10);
 }
 function closeSettingsOverlay() {
   const overlay = document.getElementById("settings-overlay");
   if (overlay) overlay.style.display = "none";
   resetSettingsForms();
-}
-
-function submitSettingsVerify() {
-  const input = document.getElementById("settings-verify-input");
-  const err = document.getElementById("settings-verify-err");
-  if (!input) return;
-  const v = input.value.trim();
-  if (err) err.style.display = "none";
-  if (!/^\d{6}$/.test(v)) {
-    if (err) { err.textContent = "Le code doit contenir exactement 6 chiffres."; err.style.display = "block"; }
-    return;
-  }
-  const myCode = codes[myPlayerIdx];
-  if (myCode===undefined || v !== myCode) {
-    if (err) { err.textContent = "Code incorrect."; err.style.display = "block"; }
-    return;
-  }
-  settingsUnlocked = true;
-  const verifyForm = document.getElementById("settings-verify-form");
-  const menu = document.getElementById("settings-menu");
-  const sub = document.getElementById("settings-subtitle");
-  if (verifyForm) verifyForm.style.display = "none";
-  if (menu) menu.style.display = "flex";
-  if (sub) sub.textContent = `Réglages de ${names[myPlayerIdx]}.`;
-}
-
-function showChangePasswordForm() {
-  const menu = document.getElementById("settings-menu");
-  const form = document.getElementById("settings-changepw-form");
-  const err = document.getElementById("settings-changepw-err");
-  const ok = document.getElementById("settings-changepw-ok");
-  if (menu) menu.style.display = "none";
-  if (form) form.style.display = "flex";
-  if (err) err.style.display = "none";
-  if (ok) ok.style.display = "none";
-  const newInp = document.getElementById("settings-changepw-new");
-  const confInp = document.getElementById("settings-changepw-confirm");
-  if (newInp) newInp.value = "";
-  if (confInp) confInp.value = "";
-  setTimeout(()=>{ if(newInp) newInp.focus(); }, 10);
-}
-function hideChangePasswordForm() {
-  const menu = document.getElementById("settings-menu");
-  const form = document.getElementById("settings-changepw-form");
-  if (form) form.style.display = "none";
-  if (menu) menu.style.display = "flex";
-}
-
-async function updateAccountCode(idx, newCode) {
-  const stateRef = db.collection(COLLECTION).doc("state");
-  try {
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(stateRef);
-      const data = snap.exists ? snap.data() : {};
-      const currentCodes = data.codes || {};
-      tx.set(stateRef, { ...data, codes: { ...currentCodes, [idx]: newCode } }, { merge:true });
-    });
-    return { ok:true };
-  } catch(e) {
-    console.error("Erreur de mise à jour du code", e);
-    return { ok:false };
-  }
-}
-
-async function submitChangePassword() {
-  if (!settingsUnlocked || myPlayerIdx===null) return;
-  const newInp = document.getElementById("settings-changepw-new");
-  const confInp = document.getElementById("settings-changepw-confirm");
-  const err = document.getElementById("settings-changepw-err");
-  const ok = document.getElementById("settings-changepw-ok");
-  if (!newInp || !confInp) return;
-  const v1 = newInp.value.trim(), v2 = confInp.value.trim();
-  if (err) err.style.display = "none";
-  if (ok) ok.style.display = "none";
-  if (!/^\d{6}$/.test(v1)) {
-    if (err) { err.textContent = "Choisis un code à exactement 6 chiffres."; err.style.display = "block"; }
-    return;
-  }
-  if (v1 !== v2) {
-    if (err) { err.textContent = "Les deux codes ne correspondent pas."; err.style.display = "block"; }
-    return;
-  }
-  const btn = document.getElementById("settings-changepw-submit");
-  if (btn) { btn.disabled = true; btn.textContent = "Enregistrement…"; }
-  const result = await updateAccountCode(myPlayerIdx, v1);
-  if (btn) { btn.disabled = false; btn.textContent = "Enregistrer"; }
-  if (!result.ok) {
-    if (err) { err.textContent = "Erreur d'enregistrement, réessaie."; err.style.display = "block"; }
-    return;
-  }
-  codes[myPlayerIdx] = v1;
-  if (ok) { ok.textContent = "✅ Code mis à jour !"; ok.style.display = "block"; }
-  newInp.value = ""; confInp.value = "";
 }
 
 function showLeaveConfirm() {
@@ -1099,7 +842,6 @@ function hideLeaveConfirm() {
   if (menu) menu.style.display = "flex";
 }
 function submitLeaveLeague() {
-  if (!settingsUnlocked) return;
   try {
     localStorage.removeItem(LOGIN_KEY);
     localStorage.removeItem(LEAGUE_KEY);
@@ -1169,7 +911,7 @@ function setConnStatus(ok) {
 
 async function persist() {
   try {
-    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, codes, previousSession });
+    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, previousSession });
     setConnStatus(true);
     return true;
   } catch (e) {
@@ -1201,7 +943,6 @@ function listenState() {
         if (d.bonus)  bonus  = d.bonus;
         if (d.malus)  malus  = d.malus;
         if (d.autoScores) autoScores = d.autoScores;
-        if (d.codes) codes = d.codes;
         previousSession = d.previousSession || null;
       } else {
         // Aucun document Firestore pour cette ligue : c'est une ligue toute neuve.
@@ -1215,7 +956,7 @@ function listenState() {
           names = [];
           N = 0;
         }
-        scores = {}; bonus = {}; malus = {}; autoScores = {}; codes = {};
+        scores = {}; bonus = {}; malus = {}; autoScores = {};
         previousSession = null;
       }
       if (!stateReady) { stateReady = true; maybeReady(); }
