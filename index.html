@@ -181,6 +181,13 @@
   #archive-session-btn{background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border:none;border-radius:10px;padding:7px 16px;font-size:.75rem;font-weight:900;cursor:pointer}
   #archive-session-btn:disabled{opacity:.6;cursor:default}
 
+  #new-session{background:#fef2f2;border:2px solid #fecaca;border-radius:16px;padding:14px;margin-bottom:12px;display:none}
+  #new-session h4{font-size:.72rem;font-weight:900;color:#b91c1c;margin-bottom:8px}
+  #new-session p{font-size:.72rem;color:#b91c1c;margin-bottom:10px}
+  #new-session-start{border:1px solid #fecaca;border-radius:8px;padding:6px 8px;font-size:.78rem;font-weight:600;outline:none;margin-bottom:10px;width:100%}
+  #new-session-btn{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none;border-radius:10px;padding:7px 16px;font-size:.75rem;font-weight:900;cursor:pointer}
+  #new-session-btn:disabled{opacity:.6;cursor:default}
+
   /* table */
   .table-wrap{border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px #0000000d;overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:.72rem;background:white;min-width:420px}
@@ -336,6 +343,12 @@
       <h4>📦 Session précédente (pour le mode Duo)</h4>
       <p id="session-archive-info"></p>
       <button id="archive-session-btn" onclick="archiveSession()">Archiver le classement actuel</button>
+    </div>
+    <div id="new-session">
+      <h4>🔄 Démarrer une nouvelle session</h4>
+      <p>Archive le classement actuel (pour le mode Duo), puis remet tous les scores, bonus et malus à zéro et démarre un nouveau défi de 10 jours à partir de la date choisie.</p>
+      <input id="new-session-start" type="date"/>
+      <button id="new-session-btn" onclick="startNewSession()">Démarrer la nouvelle session</button>
     </div>
     <p id="edit-hint">Cliquez sur une cellule pour modifier sa valeur (scores, bonus, malus)</p>
     <p style="text-align:center;font-size:.7rem;color:#334155;font-weight:700;margin-bottom:10px">⬛ Score en noir = ajouté automatiquement (rattrapage, la personne n'a pas joué)</p>
@@ -884,8 +897,12 @@ const now = new Date();
 // ─── défi 2 semaines (lundi → vendredi × 2 = 10 tests) ─────
 // Remplace l'ancien système "mois civil" : classement, podium, graphique
 // et tableau ne portent QUE sur ces 10 jours, sans possibilité de continuer après.
-const CHALLENGE_START = "2026-08-03"; // premier lundi du défi
+// `CHALLENGE_START_DEFAULT` sert de valeur de secours tant qu'aucune session
+// n'a encore été démarrée / archivée via le bouton admin "Nouvelle session"
+// (dans ce cas la date effective est stockée dans Firestore, champ `challengeStart`).
+const CHALLENGE_START_DEFAULT = "2026-08-03";
 const CHALLENGE_LENGTH = 10;
+let currentChallengeStart = CHALLENGE_START_DEFAULT;
 function getChallengeDays(startISO, count) {
   const [y,m,d] = startISO.split("-").map(Number);
   const cur = new Date(y, m-1, d);
@@ -896,10 +913,22 @@ function getChallengeDays(startISO, count) {
   }
   return days;
 }
-const WORKING_DAYS = getChallengeDays(CHALLENGE_START, CHALLENGE_LENGTH);
+let WORKING_DAYS = getChallengeDays(currentChallengeStart, CHALLENGE_LENGTH);
 let TODAY = getActiveQuizDay();
-if (TODAY < WORKING_DAYS[0]) TODAY = WORKING_DAYS[0];
-if (TODAY > WORKING_DAYS[WORKING_DAYS.length-1]) TODAY = WORKING_DAYS[WORKING_DAYS.length-1];
+function clampToday() {
+  if (TODAY < WORKING_DAYS[0]) TODAY = WORKING_DAYS[0];
+  if (TODAY > WORKING_DAYS[WORKING_DAYS.length-1]) TODAY = WORKING_DAYS[WORKING_DAYS.length-1];
+}
+clampToday();
+
+// Recalcule WORKING_DAYS / TODAY quand challengeStart change (nouvelle session).
+// Ré-attache aussi l'écoute Firestore "validated_<jour>" puisque son id dépend de TODAY.
+function recomputeChallengeDates() {
+  WORKING_DAYS = getChallengeDays(currentChallengeStart, CHALLENGE_LENGTH);
+  TODAY = getActiveQuizDay();
+  clampToday();
+  listenValidated();
+}
 
 // ─── Firestore persistence ──
 function setConnStatus(ok) {
@@ -911,7 +940,7 @@ function setConnStatus(ok) {
 
 async function persist() {
   try {
-    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, previousSession });
+    await db.collection(COLLECTION).doc("state").set({ names, scores, bonus, malus, autoScores, previousSession, challengeStart: currentChallengeStart });
     setConnStatus(true);
     return true;
   } catch (e) {
@@ -936,6 +965,7 @@ function listenState() {
   db.collection(COLLECTION).doc("state").onSnapshot(
     (doc) => {
       setConnStatus(true);
+      const prevChallengeStart = currentChallengeStart;
       if (doc.exists) {
         const d = doc.data();
         if (d.names)  { names = d.names; N = names.length; }
@@ -944,6 +974,7 @@ function listenState() {
         if (d.malus)  malus  = d.malus;
         if (d.autoScores) autoScores = d.autoScores;
         previousSession = d.previousSession || null;
+        currentChallengeStart = d.challengeStart || CHALLENGE_START_DEFAULT;
       } else {
         // Aucun document Firestore pour cette ligue : c'est une ligue toute neuve.
         // Seule la ligue par défaut ("ics") récupère les 8 joueurs historiques ;
@@ -958,15 +989,20 @@ function listenState() {
         }
         scores = {}; bonus = {}; malus = {}; autoScores = {};
         previousSession = null;
+        currentChallengeStart = CHALLENGE_START_DEFAULT;
       }
+      if (currentChallengeStart !== prevChallengeStart) recomputeChallengeDates();
       if (!stateReady) { stateReady = true; maybeReady(); }
       else if (dataReady) rerenderAll();
     },
     (err) => { console.error(err); setConnStatus(false); }
   );
 }
+let validatedUnsub = null;
 function listenValidated() {
-  db.collection(COLLECTION).doc("validated_"+TODAY).onSnapshot(
+  if (validatedUnsub) { validatedUnsub(); validatedUnsub = null; }
+  validatedReady = false;
+  validatedUnsub = db.collection(COLLECTION).doc("validated_"+TODAY).onSnapshot(
     (doc) => {
       setConnStatus(true);
       validated = doc.exists ? doc.data() : {};
@@ -1201,6 +1237,73 @@ async function archiveSession() {
   renderArchiveInfo();
   renderDuoToggle();
   alert("✅ Session archivée ! Le mode Duo peut maintenant l'utiliser.");
+}
+
+// ─── nouvelle session (reset complet du classement) ─────────
+// 1. Archive automatiquement le classement actuel (mode Duo), sauf s'il n'y
+//    a aucun joueur ayant un score réel (dans ce cas on ne touche pas à
+//    l'archive existante — pas de session vide écrasant une vraie archive).
+// 2. Vide scores / bonus / malus / autoScores.
+// 3. Met à jour challengeStart (persisté) et recalcule WORKING_DAYS / TODAY.
+function defaultNextSessionStart() {
+  // Propose le prochain lundi (ou aujourd'hui si on est déjà lundi et que la
+  // session en cours vient de se terminer) comme date de départ suggérée.
+  const d = new Date();
+  const day = d.getDay(); // 0=dim..6=sam
+  const diff = (8 - day) % 7 || 7; // jours jusqu'au prochain lundi
+  d.setDate(d.getDate() + (day===1 ? 0 : diff));
+  return toISO(d);
+}
+function renderNewSessionBlock() {
+  const div = document.getElementById("new-session");
+  if (!div) return;
+  div.style.display = adminUnlocked ? "block" : "none";
+  if (!adminUnlocked) return;
+  const input = document.getElementById("new-session-start");
+  if (input && !input.value) input.value = defaultNextSessionStart();
+}
+async function startNewSession() {
+  if (!adminUnlocked) return;
+  const input = document.getElementById("new-session-start");
+  const rawDate = input ? input.value : "";
+  if (!rawDate) { alert("Choisis une date de départ pour la nouvelle session."); return; }
+
+  if (!confirm(`Démarrer une nouvelle session à partir du ${dispDate(rawDate)} ?\n\nLe classement actuel sera archivé (mode Duo) puis tous les scores, bonus et malus seront remis à zéro. Cette action est irréversible.`)) return;
+
+  const btn = document.getElementById("new-session-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Démarrage…"; }
+
+  // 1. Archivage automatique si des scores réels existent
+  const order = computeSessionPlayedRanking();
+  const backupPreviousSession = previousSession;
+  if (order.length > 0) {
+    previousSession = { order, savedAt: new Date().toISOString() };
+  }
+
+  // 2. Reset des scores + 3. nouvelle date de départ
+  const backupScores = scores, backupBonus = bonus, backupMalus = malus, backupAuto = autoScores, backupStart = currentChallengeStart;
+  scores = {}; bonus = {}; malus = {}; autoScores = {};
+  currentChallengeStart = rawDate;
+
+  const ok = await persist();
+
+  if (btn) { btn.disabled = false; btn.textContent = "Démarrer la nouvelle session"; }
+
+  if (!ok) {
+    previousSession = backupPreviousSession;
+    scores = backupScores; bonus = backupBonus; malus = backupMalus; autoScores = backupAuto;
+    currentChallengeStart = backupStart;
+    alert("Erreur d'enregistrement, merci de vérifier votre connexion et de réessayer.");
+    return;
+  }
+
+  recomputeChallengeDates();
+  validated = {}; // la nouvelle journée TODAY n'a pas encore de validations
+  renderArchiveInfo();
+  renderDuoToggle();
+  renderPanel1(); renderPanel2(); renderPanel3();
+  if (input) input.value = "";
+  alert("✅ Nouvelle session démarrée ! Le classement a été remis à zéro.");
 }
 
 // Construit l'ordre des N joueurs actuels d'après le classement archivé :
@@ -1463,6 +1566,7 @@ function renderPanel3() {
   renderDbBody();
   renderNamesEditor();
   renderArchiveInfo();
+  renderNewSessionBlock();
 }
 
 function renderDbHead() {
@@ -1599,6 +1703,7 @@ function checkCode(v) {
   else { st.textContent=""; }
   renderNamesEditor();
   renderArchiveInfo();
+  renderNewSessionBlock();
   renderDbBody();
 }
 
