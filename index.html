@@ -1268,12 +1268,11 @@ async function archiveSession() {
 // 2. Vide scores / bonus / malus / autoScores.
 // 3. Met à jour challengeStart (persisté) et recalcule WORKING_DAYS / TODAY.
 function defaultNextSessionStart() {
-  // Propose le prochain lundi (ou aujourd'hui si on est déjà lundi et que la
-  // session en cours vient de se terminer) comme date de départ suggérée.
+  // Propose aujourd'hui comme date de départ suggérée (ou le prochain jour
+  // ouvré si on est un samedi/dimanche), pour que la nouvelle session démarre
+  // immédiatement plutôt que d'attendre le prochain lundi par défaut.
   const d = new Date();
-  const day = d.getDay(); // 0=dim..6=sam
-  const diff = (8 - day) % 7 || 7; // jours jusqu'au prochain lundi
-  d.setDate(d.getDate() + (day===1 ? 0 : diff));
+  while (!isWeekday(d)) d.setDate(d.getDate()+1);
   return toISO(d);
 }
 function renderNewSessionBlock() {
