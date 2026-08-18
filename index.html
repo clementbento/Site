@@ -930,6 +930,28 @@ function recomputeChallengeDates() {
   listenValidated();
 }
 
+// ─── bascule automatique du jour actif à midi ──────────────
+// `TODAY` n'était calculé qu'une seule fois au chargement de la page : si
+// l'onglet reste ouvert et que midi passe, rien ne détectait le changement
+// de jour tant que personne ne rechargeait manuellement. On vérifie donc
+// régulièrement si le "jour actif" (getActiveQuizDay) a changé, et si oui on
+// réaligne tout l'état (écoute Firestore du nouveau jour, rattrapage des
+// jours passés, ré-affichage).
+function checkDayRollover() {
+  const active = getActiveQuizDay();
+  if (active !== TODAY) {
+    TODAY = active;
+    clampToday();
+    listenValidated();          // se réabonne à validated_<nouveauJour>
+    if (dataReady) {
+      backfillPastDays();       // rattrape les jours passés non joués
+      rerenderAll();            // met à jour l'affichage (panel actif)
+      if (currentTab===2) renderPanel3(); // tableau "Base de données" aussi
+    }
+  }
+}
+setInterval(checkDayRollover, 60000); // vérifie chaque minute
+
 // ─── Firestore persistence ──
 function setConnStatus(ok) {
   const el = document.getElementById("conn-status");
